@@ -22,6 +22,7 @@ struct RemoteDjiData
 {
     uint16_t ch0, ch1, ch2, ch3;
     uint8_t s1, s2;
+    float x, y, r;
 };
 
 class RemoteDjiDR16

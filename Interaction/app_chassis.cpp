@@ -29,6 +29,7 @@ void Chassis::Init()
     // 启动任务，将 this 传入
     osThreadNew(Chassis::TaskEntry, this, &kChassisTaskAttr);
 }
+
 // 任务入口（静态函数）—— osThreadNew 需要这个原型
 void Chassis::TaskEntry(void *argument)
 {
@@ -41,19 +42,18 @@ void Chassis::Task()
 {
     for (;;)
     {
-        // 平移速度 + 自旋速度（发送转速rad / s）
-        // motor_chassis_1_.SetTargetOmega( 10);
-        // motor_chassis_2_.SetTargetOmega( 10);
-        // motor_chassis_3_.SetTargetOmega( 10);
-        // motor_chassis_4_.SetTargetOmega( 10);
-        // printf("%f,%f\n", motor_chassis_1_.out_, motor_chassis_2_.out_);
+        // 设置平移速度 + 自旋速度（发送转速rad / s）
+        motor_chassis_1_.SetTargetOmega(-target_velocity_x_ + target_velocity_rotation_);
+        motor_chassis_2_.SetTargetOmega( target_velocity_y_ + target_velocity_rotation_);
+        motor_chassis_3_.SetTargetOmega( target_velocity_x_ + target_velocity_rotation_);
+        motor_chassis_4_.SetTargetOmega(-target_velocity_y_ + target_velocity_rotation_);
 
-        // motor_chassis_1_.CalculatePeriodElapsedCallback();
-        // motor_chassis_2_.CalculatePeriodElapsedCallback();
-        // motor_chassis_3_.CalculatePeriodElapsedCallback();
-        // motor_chassis_4_.CalculatePeriodElapsedCallback();
-        // // 全向轮底盘电机
-        // can_send_data(&hcan1, 0x200, g_can1_0x200_tx_data, 8);
+        motor_chassis_1_.CalculatePeriodElapsedCallback();
+        motor_chassis_2_.CalculatePeriodElapsedCallback();
+        motor_chassis_3_.CalculatePeriodElapsedCallback();
+        motor_chassis_4_.CalculatePeriodElapsedCallback();
+        // 全向轮底盘电机
+        can_send_data(&hcan1, 0x200, g_can1_0x200_tx_data, 8);
         osDelay(pdMS_TO_TICKS(10));
     }
 }

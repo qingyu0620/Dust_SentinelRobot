@@ -9,12 +9,13 @@
  * 
  */
 #include "app_gimbal.h"
+#include "can.h"
 
 void Gimbal::Init()
 {
     // 6220电机初始化
-    motor_yaw_.Init(&hcan2, 0x12, 0x01);
-    motor_pitch_.Init(&hcan2, 0x11, 0x02);
+    motor_yaw_.Init(&hcan1, 0x12, 0x01);
+    motor_pitch_.Init(&hcan1, 0x11, 0x02);
 
     motor_yaw_.CanSendClearError();
     HAL_Delay(1000);
@@ -61,7 +62,6 @@ void Gimbal::SelfResolution()
 
     // // pitch轴角度归化到±PI / 2之间
     // now_pitch_angle_ = Math_Modulus_Normalization(-motor_pitch_.GetNowAngle(), 2.0f * PI);
-
 }
 
 /**
@@ -88,7 +88,6 @@ void Gimbal::Output()
 
     motor_yaw_.Output();
     motor_pitch_.Output();
-
 }
 
 /**

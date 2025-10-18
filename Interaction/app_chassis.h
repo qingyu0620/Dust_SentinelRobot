@@ -23,7 +23,7 @@
 class Chassis
 {
 public:
-    // 底盘4个3508， 控制全向轮
+    // 底盘4个3508，控制全向轮
     MotorDjiC620 motor_chassis_1_,
                  motor_chassis_2_,
                  motor_chassis_3_,
@@ -31,6 +31,7 @@ public:
 
     void Init();
     void Task();
+    inline void GetTargetVelocity();
     inline void SetTargetVelocityX(float target_velocity_x);
     inline void SetTargetVelocityY(float target_velocity_y);
     inline void SetTargetVelocityRotation(float target_velocity_rotation);
@@ -46,6 +47,7 @@ protected:
     void OutputToMotor();
     static void TaskEntry(void *param);  // FreeRTOS 入口，静态函数
 };
+
 /**
  * @brief 设定目标速度X
  *
