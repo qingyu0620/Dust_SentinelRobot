@@ -14,7 +14,7 @@ set(SIZE arm-none-eabi-size)
 set(CMAKE_TRY_COMPILE_TARGET_TYPE STATIC_LIBRARY)
 
 # 文件名称
-project(Dust_SentinelRobotChassis C CXX ASM)
+project(Dust_SentinelRobotChassis_L C CXX ASM)
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_C_STANDARD 11)
 
@@ -130,4 +130,4 @@ add_custom_command(TARGET ${PROJECT_NAME}.elf POST_BUILD
         COMMENT "Building ${HEX_FILE}
 Building ${BIN_FILE}")
 
-target_link_options(Dust_SentinelRobotChassis.elf PRIVATE -u _printf_float)
+target_link_options(Dust_SentinelRobotChassis_L.elf PRIVATE -u _printf_float)

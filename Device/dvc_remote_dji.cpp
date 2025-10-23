@@ -15,10 +15,9 @@
 
 /* Private macros ------------------------------------------------------------*/
 
-#define k               1.0f / 660.0f
-#define c               -256.0f / 165.0f
 #define MaxVelocity     10
 #define MaxOmega        10
+#define MaxReload       15
 
 /* Private types -------------------------------------------------------------*/
 
@@ -36,16 +35,21 @@
 void RemoteDjiDR16::DbusTransformation(uint8_t* buffer)
 {
     // 读取数据值
-    remotedata.ch0 =  ((int16_t)buffer[0]       | ((int16_t)buffer[1] << 8)) & 0x07FF;
-    remotedata.ch1 = (((int16_t)buffer[1] >> 3) | ((int16_t)buffer[2] << 5)) & 0x07FF;
-    remotedata.ch2 = (((int16_t)buffer[2] >> 6) | ((int16_t)buffer[3] << 2)  | ((int16_t)buffer[4] << 10)) & 0x07FF;
-    remotedata.ch3 = (((int16_t)buffer[4] >> 1) | ((int16_t)buffer[5] << 7)) & 0x07FF;
+    data.ch0 =  ((int16_t)buffer[0]       | ((int16_t)buffer[1] << 8)) & 0x07FF;
+    data.ch1 = (((int16_t)buffer[1] >> 3) | ((int16_t)buffer[2] << 5)) & 0x07FF;
+    data.ch2 = (((int16_t)buffer[2] >> 6) | ((int16_t)buffer[3] << 2)  | ((int16_t)buffer[4] << 10)) & 0x07FF;
+    data.ch3 = (((int16_t)buffer[4] >> 1) | ((int16_t)buffer[5] << 7)) & 0x07FF;
 
-    remotedata.s1 = ((buffer[5] >> 4) & 0x000C) >> 2;
-    remotedata.s2 = ((buffer[5] >> 4) & 0x0003);
+    data.s1 = ((buffer[5] >> 4) & 0x000C) >> 2;
+    data.s2 = ((buffer[5] >> 4) & 0x0003);
 
     //线性函数归一化（-1 ~ 1） * 放大系数
-    remotedata.x = (k * remotedata.ch0 + c) * MaxVelocity;
-    remotedata.y = (k * remotedata.ch1 + c) * MaxVelocity;
-    remotedata.r = (k * remotedata.ch2 + c) * MaxOmega;
+    output.x  = (k_nor * data.ch0 + c_nor) * MaxVelocity;
+    // output.y  = (k_nor * data.ch1 + c_nor) * MaxVelocity;
+    output.y  = (k_pitch * data.ch1 - c_pitch);
+    output.r  = (k_nor * data.ch2 + c_nor) * MaxOmega;
+    output.r0 = (k_nor * data.ch3 + c_nor) * MaxReload;
+    
+    output.keyL = data.s1;
+    output.keyR = data.s2;
 }

@@ -28,13 +28,15 @@ public:
                  motor_chassis_2_,
                  motor_chassis_3_,
                  motor_chassis_4_;
+    // 拨弹盘1个2006，控制进退弹
+    MotorDjiC610 motor_reload_1_;
 
     void Init();
     void Task();
-    inline void GetTargetVelocity();
     inline void SetTargetVelocityX(float target_velocity_x);
     inline void SetTargetVelocityY(float target_velocity_y);
     inline void SetTargetVelocityRotation(float target_velocity_rotation);
+    inline void SetTargetReloadRotation(float target_reload_rotation);
 protected:
     // 目标速度X
     float target_velocity_x_ = 0.0f;
@@ -42,6 +44,9 @@ protected:
     float target_velocity_y_ = 0.0f;
     // 目标速度 旋转
     float target_velocity_rotation_ = 0.0f;
+
+    // 目标装载速度 旋转
+    float target_reload_rotation_ = 0.0f;
 
     void KinematicsInverseResolution();
     void OutputToMotor();
@@ -78,5 +83,14 @@ inline void Chassis::SetTargetVelocityRotation(float target_velocity_rotation)
     target_velocity_rotation_ = target_velocity_rotation;
 }
 
+/**
+ * @brief 设定目标装载速度旋转
+ * 
+ * @param target_reload_rotation 
+ */
+inline void Chassis::SetTargetReloadRotation(float target_reload_rotation)
+{
+    target_reload_rotation_ = target_reload_rotation;
+}
 
 #endif // !APP_CHASSIS_H_

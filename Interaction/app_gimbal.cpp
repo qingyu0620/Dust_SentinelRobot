@@ -15,28 +15,19 @@ void Gimbal::Init()
 {
     // 6220电机初始化
     motor_yaw_.Init(&hcan1, 0x12, 0x01);
-    motor_pitch_.Init(&hcan1, 0x11, 0x02);
 
     motor_yaw_.CanSendClearError();
     HAL_Delay(1000);
     motor_yaw_.CanSendEnter();
-    motor_pitch_.CanSendEnter();
     HAL_Delay(1000);
 
     motor_yaw_.SetKp(0); //MIT模式kp
-    motor_pitch_.SetKp(25);
 
     motor_yaw_.SetKd(0.3); // MIT模式kd
-    motor_pitch_.SetKd(0.06);
 
     motor_yaw_.SetControlOmega(0);
-    motor_pitch_.SetControlOmega(45);
-
-    motor_pitch_.SetControlTorque(0.1);
 
     motor_yaw_.Output();
-
-    motor_pitch_.Output();
 
     static const osThreadAttr_t kGimbalTaskAttr = {
         .name = "gimbal_task",
@@ -54,7 +45,6 @@ void Gimbal::Init()
  */
 void Gimbal::SelfResolution()
 {
-    now_pitch_angle_ = motor_pitch_.GetNowAngle();
     now_yaw_angle_   = motor_yaw_.GetNowAngle();
     // yaw_angle_pid_.SetNow(now_yaw_angle_);
     // yaw_angle_pid_.CalculatePeriodElapsedCallback();
@@ -84,10 +74,8 @@ void Gimbal::Output()
 
 
     motor_yaw_.SetControlOmega(target_yaw_omega_);
-    motor_pitch_.SetControlAngle(target_pitch_angle_);
 
     motor_yaw_.Output();
-    motor_pitch_.Output();
 }
 
 /**
