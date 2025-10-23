@@ -12,10 +12,12 @@
 
 #include "Init.h"
 
+#include "Robot.h"
 #include "app_shoot.h"
 #include "bsp_uart.h"
 
 #include "dvc_remote_dji.h"
+#include "dvc_MCU_comm.h"
 
 #include "app_gimbal.h"
 
@@ -25,9 +27,7 @@
 
 /* Private types -------------------------------------------------------------*/
 
-RemoteDjiDR16 remote_dr16_;
-Gimbal gimbal_;
-Shoot shoot_;
+Robot robot_;
 
 /* Private variables ---------------------------------------------------------*/
 
@@ -42,6 +42,11 @@ void can1_callback_function(CanRxBuffer *CAN_RxMessage)
 {
     switch (CAN_RxMessage->header.StdId)
     {
+        case (0x00):
+        {
+            robot_.mcu_comm_.CanRxCpltCallback(CAN_RxMessage->data);
+            break;
+        }
         default:
             break;
     }
@@ -58,17 +63,17 @@ void can2_callback_function(CanRxBuffer* CAN_RxMessage)
     {
         case (0x04):
         {
-            gimbal_.motor_yaw_.CanRxCpltCallback(CAN_RxMessage->data);
+            robot_.gimbal_.motor_yaw_.CanRxCpltCallback(CAN_RxMessage->data);
             break;
         }
         case (0x201):
         {
-            shoot_.motor_shoot_1_.CanRxCpltCallback(CAN_RxMessage->data);
+            robot_.shoot_.motor_shoot_1_.CanRxCpltCallback(CAN_RxMessage->data);
             break;
         }
         case (0x202):
         {
-            shoot_.motor_shoot_2_.CanRxCpltCallback(CAN_RxMessage->data);
+            robot_.shoot_.motor_shoot_2_.CanRxCpltCallback(CAN_RxMessage->data);
             break;
         }
         default:
@@ -84,17 +89,19 @@ void can2_callback_function(CanRxBuffer* CAN_RxMessage)
  */
 void uart3_callback_function(uint8_t* buffer, uint16_t length) 
 {	
-	remote_dr16_.DbusTransformation(buffer);
-    gimbal_.SetTargetPitchAngle(remote_dr16_.output.y);
+	robot_.remote_dr16_.DbusTransformation(buffer);
+    robot_.mcu_comm_.mcu_comm_data_.start_of_frame = 0xAB;
+    robot_.mcu_comm_.mcu_comm_data_.yaw = 0;
+    robot_.mcu_comm_.mcu_comm_data_.chassis_speed_x  = robot_.remote_dr16_.output.chassis_x;
+    robot_.mcu_comm_.mcu_comm_data_.chassis_speed_y  = robot_.remote_dr16_.output.chassis_y;
+    robot_.mcu_comm_.mcu_comm_data_.chassis_rotation = robot_.remote_dr16_.output.chassis_r;
 }
 
 /* Function prototypes -------------------------------------------------------*/
 
 void Init()
 {
-    uart_init(&huart3, uart3_callback_function, UART_BUFFER_LENGTH);
     can_init(&hcan1, can1_callback_function);
     can_init(&hcan2, can2_callback_function);
-    gimbal_.Init();
-    // shoot_.Init();
+    robot_.Init();
 }

@@ -13,6 +13,7 @@
 /* Includes ------------------------------------------------------------------*/
 
 #include "main.h"
+#include "bsp_uart.h"
 
 /* Exported macros -----------------------------------------------------------*/
 
@@ -32,14 +33,15 @@ struct RemoteDjiData
 struct RemoteOutput
 {
     uint8_t keyL, keyR;
-    float x, y, r;      // x, y, r 采用右手系
-    float r0;           // r0为保留位，对应左摇杆上下
+    float chassis_x, chassis_y, chassis_r;      // x, y, r 采用右手系
+    float r0;                                   // r0为保留位，对应左摇杆上下
 };
 
 class RemoteDjiDR16
 {
 public:
     RemoteOutput output;
+    void Init(UART_HandleTypeDef* huart, Uart_Callback callback_function, uint16_t rx_buffer_length);
     void DbusTransformation(uint8_t* buffer);
 protected:
     RemoteDjiData data;
