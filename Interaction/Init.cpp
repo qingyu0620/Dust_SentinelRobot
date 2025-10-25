@@ -13,9 +13,6 @@
 #include "Init.h"
 #include "Robot.h"
 
-
-
-
 /* Private macros ------------------------------------------------------------*/
 
 /* Private types -------------------------------------------------------------*/
@@ -38,6 +35,7 @@ void can1_callback_function(CanRxBuffer* CAN_RxMessage)
         case (0x01):
         {
             robot_.mcu_comm_.CanRxCpltCallback(CAN_RxMessage->data);
+            break;
         }
         case (0x201):
         {
@@ -64,8 +62,8 @@ void can1_callback_function(CanRxBuffer* CAN_RxMessage)
             robot_.chassis_.motor_reload_1_.CanRxCpltCallback(CAN_RxMessage->data);
             break;
         }
-        default:
-            break;
+        // default:
+        //     break;
     }
 }
 

@@ -24,7 +24,7 @@ void McuComm::Init(
           .priority = (osPriority_t) osPriorityNormal
      };
      // 启动任务，将 this 传入
-     osThreadNew(McuComm::TaskEntry, this, &kMcuCommTaskAttr);
+     // osThreadNew(McuComm::TaskEntry, this, &kMcuCommTaskAttr);
 }
 
 // 任务入口（静态函数）—— osThreadNew 需要这个原型
@@ -39,10 +39,10 @@ void McuComm::Task()
      struct McuCommData mcu_comm_data_local;
      for (;;)
      {    // 用临界区一次性复制，避免撕裂
-          // __disable_irq();
-          // mcu_comm_data__Local = *const_cast<const struct McuCommData*>(&(mcu_comm_data_));
-          // __enable_irq();
-          // osDelay(pdMS_TO_TICKS(10));
+          __disable_irq();
+          mcu_comm_data_local = *const_cast<const struct McuCommData*>(&(mcu_comm_data_));
+          __enable_irq();
+          osDelay(pdMS_TO_TICKS(10));
      }
 }
 
@@ -90,12 +90,10 @@ void McuComm::CanRxCpltCallback(uint8_t* rx_data)
      {
           case 0xAB: // 遥控包
                mcu_comm_data_.start_of_frame       = rx_data[0];
-               mcu_comm_data_.yaw                  = rx_data[1];
-               mcu_comm_data_.pitch_angle          = rx_data[2];
-               mcu_comm_data_.chassis_speed_x      = rx_data[3];
-               mcu_comm_data_.chassis_speed_y      = rx_data[4];
-               mcu_comm_data_.chassis_rotation     = rx_data[5];
-               switch(rx_data[6])
+               mcu_comm_data_.chassis_speed_x      = rx_data[1] << 8 | rx_data[2];
+               mcu_comm_data_.chassis_speed_y      = rx_data[3] << 8 | rx_data[4];
+               mcu_comm_data_.chassis_rotation     = rx_data[5] << 8 | rx_data[6];
+               switch(rx_data[7])
                {
                     case 0:
                     mcu_comm_data_.chassis_spin = CHASSIS_SPIN_CLOCKWISE;
@@ -110,7 +108,6 @@ void McuComm::CanRxCpltCallback(uint8_t* rx_data)
                     mcu_comm_data_.chassis_spin = CHASSIS_SPIN_DISABLE;
                     break;
                }
-               mcu_comm_data_.supercap             = rx_data[7];
                break;
           case 0xAC: // 自瞄yaw包
                mcu_autoaim_data_.start_of_yaw_frame = rx_data[0];

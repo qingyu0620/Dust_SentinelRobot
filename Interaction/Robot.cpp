@@ -16,16 +16,19 @@
 
 #include "app_gimbal.h"
 
+constexpr float K = 1.0f / 66.f;
+constexpr float C = 512.f / 33.f;
+
 void Robot::Init()
 {
+    HAL_Delay(3000);
     // 上下板通讯组件初始化
     mcu_comm_.Init(&hcan1, 0x01, 0x00);
     // 云台初始化
-    gimbal_.Init();
+    // gimbal_.Init();
     // 摩擦轮初始化
     chassis_.Init();
 
-    HAL_Delay(3000);
     static const osThreadAttr_t kRobotTaskAttr = 
     {
         .name = "robot_task",
@@ -46,13 +49,10 @@ void Robot::TaskEntry(void *argument)
 void Robot::Task()
 {
     McuCommData mcu_comm_data_local;
-    mcu_comm_data_local.yaw                 = 127;
-    mcu_comm_data_local.pitch_angle         = 127;
-    mcu_comm_data_local.chassis_speed_x     = 127;
-    mcu_comm_data_local.chassis_speed_y     = 127;
-    mcu_comm_data_local.chassis_rotation    = 127;
+    mcu_comm_data_local.chassis_speed_x     = 1024;
+    mcu_comm_data_local.chassis_speed_y     = 1024;
+    mcu_comm_data_local.chassis_rotation    = 1024;
     mcu_comm_data_local.chassis_spin        = CHASSIS_SPIN_DISABLE;
-    // mcu_comm_data_local.supercap            = NULL;
 
     for(;;)
     {
@@ -60,6 +60,16 @@ void Robot::Task()
         __disable_irq();
         mcu_comm_data_local = *const_cast<const McuCommData*>(&(mcu_comm_.mcu_comm_data_));
         __enable_irq();
+
+        chassis_.SetTargetVelocityX(mcu_comm_data_local.chassis_speed_x * K - C);
+        chassis_.SetTargetVelocityY(mcu_comm_data_local.chassis_speed_y * K - C);
+        chassis_.SetTargetVelocityRotation(mcu_comm_data_local.chassis_rotation * K - C);
+
+        // chassis_.SetTargetVelocityX(0);
+        // chassis_.SetTargetVelocityY(0);
+        // chassis_.SetTargetVelocityRotation(5);
+
+        osDelay(pdMS_TO_TICKS(10));
     }
 }
 
