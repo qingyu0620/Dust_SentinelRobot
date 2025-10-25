@@ -34,6 +34,7 @@ struct RemoteOutput
 {
     uint8_t keyL, keyR;
     float chassis_x, chassis_y, chassis_r;      // x, y, r 采用右手系
+    float shoot_speed;
     float r0;                                   // r0为保留位，对应左摇杆上下
 };
 

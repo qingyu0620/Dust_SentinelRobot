@@ -16,7 +16,6 @@ void Gimbal::Init()
     // 4310电机初始化
     motor_pitch_.Init(&hcan2, 0x04, 0x04);
 
-    HAL_Delay(1000);
     motor_pitch_.CanSendEnter();
     HAL_Delay(1000);
 
@@ -115,6 +114,6 @@ void Gimbal::Task()
     {
         SelfResolution();
         Output();
-        osDelay(pdMS_TO_TICKS(1));
+        osDelay(pdMS_TO_TICKS(10));
     }
 }

@@ -23,22 +23,20 @@ enum ChassisSpinMode{
 
 struct McuCommData
 {
-    uint8_t         start_of_frame;     // 帧头
-    uint8_t         yaw;                // yaw
-    uint8_t         pitch_angle;        // 俯仰角度
-    uint8_t         chassis_speed_x;    // 平移方向：前、后、左、右
-    uint8_t         chassis_speed_y;    // 底盘移动总速度
-    uint8_t         chassis_rotation;   // 自转：不转、顺时针转、逆时针转
-    ChassisSpinMode chassis_spin;       // 小陀螺：不转、顺时针转、逆时针转
-    uint8_t         supercap;           // 超级电容：充电、放电
+    uint8_t          start_of_frame;     // 帧头
+    uint16_t         chassis_speed_x;    // 平移方向：前、后、左、右
+    uint16_t         chassis_speed_y;    // 底盘移动总速度
+    uint16_t         chassis_rotation;   // 自转：不转、顺时针转、逆时针转
+    ChassisSpinMode  chassis_spin;       // 小陀螺：不转、顺时针转、逆时针转
 };
 
 struct McuSendData
 {
-    uint8_t start_of_frame = 0xAB;
-    uint8_t armor;
-    float yaw;   // 4字节浮点数
-    float pitch; // 4字节浮点数
+    uint8_t         start_of_frame = 0xAB;
+    uint8_t         armor;
+    uint16_t        yaw;                        // yaw
+    uint16_t        relord;                     // 拨弹盘
+    uint8_t         supercap;                   // 超级电容：充电、放电
 };
 
 struct McuAutoaimData
@@ -57,13 +55,10 @@ public:
 
     volatile McuCommData mcu_comm_data_ = {
             0xAB,
-            127,
-            127,
-            127,
-            127,
-            127,
+            1024,
+            1024,
+            1024,
             CHASSIS_SPIN_DISABLE,
-            0,
     };
     McuSendData mcu_send_data_;
 

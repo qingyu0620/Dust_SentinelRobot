@@ -91,7 +91,6 @@ void uart3_callback_function(uint8_t* buffer, uint16_t length)
 {	
 	robot_.remote_dr16_.DbusTransformation(buffer);
     robot_.mcu_comm_.mcu_comm_data_.start_of_frame = 0xAB;
-    robot_.mcu_comm_.mcu_comm_data_.yaw = 0;
     robot_.mcu_comm_.mcu_comm_data_.chassis_speed_x  = robot_.remote_dr16_.output.chassis_x;
     robot_.mcu_comm_.mcu_comm_data_.chassis_speed_y  = robot_.remote_dr16_.output.chassis_y;
     robot_.mcu_comm_.mcu_comm_data_.chassis_rotation = robot_.remote_dr16_.output.chassis_r;
@@ -101,7 +100,9 @@ void uart3_callback_function(uint8_t* buffer, uint16_t length)
 
 void Init()
 {
+    // 下板通讯
     can_init(&hcan1, can1_callback_function);
+    // 摩擦轮   pitch角电机
     can_init(&hcan2, can2_callback_function);
     robot_.Init();
 }

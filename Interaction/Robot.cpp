@@ -12,23 +12,25 @@
 
 #include "bsp_uart.h"
 
+#include "cmsis_os2.h"
 #include "dvc_MCU_comm.h"
 
 #include "app_gimbal.h"
 #include "app_shoot.h"
+#include "projdefs.h"
 
 void Robot::Init()
 {
     // 遥控初始化
     remote_dr16_.Init(&huart3, uart3_callback_function, UART_BUFFER_LENGTH);
     // 上下板通讯组件初始化
-    mcu_comm_.Init(&hcan2, 0x00, 0x01);
+    mcu_comm_.Init(&hcan1, 0x00, 0x01);
     // 云台初始化
-    gimbal_.Init();
+    // gimbal_.Init();
     // 摩擦轮初始化
     shoot_.Init();
 
-    HAL_Delay(3000);
+    HAL_Delay(1000);
     static const osThreadAttr_t kRobotTaskAttr = 
     {
         .name = "robot_task",
@@ -55,7 +57,8 @@ void Robot::Task()
         // 设置pitch角
         // gimbal_.SetTargetPitchAngle(remote_dr16_.output.chassis_y);
         // 摩擦轮转速
-        // shoot_.SetTargetShootSpeed(remote_dr16_.output.chassis_x);
+        shoot_.SetTargetShootSpeed(remote_dr16_.output.shoot_speed);
+        osDelay(pdMS_TO_TICKS(10));
     }
 }
 
