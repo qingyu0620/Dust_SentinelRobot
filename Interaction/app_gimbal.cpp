@@ -9,12 +9,11 @@
  * 
  */
 #include "app_gimbal.h"
-#include "can.h"
 
 void Gimbal::Init()
 {
     // 6220电机初始化
-    motor_yaw_.Init(&hcan1, 0x12, 0x01);
+    motor_yaw_.Init(&hcan1, 0x06, 0x06);
 
     motor_yaw_.CanSendClearError();
     HAL_Delay(1000);

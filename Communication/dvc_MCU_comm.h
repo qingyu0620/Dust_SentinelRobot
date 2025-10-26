@@ -14,28 +14,35 @@
 #include "FreeRTOS.h"
 #include "cmsis_os2.h"
 
+enum RemoteSwitchStatus
+{
+    Switch_UP    = (uint8_t)1,
+    Switch_MID   = (uint8_t)3,
+    Switch_DOWN  = (uint8_t)2,
+};
 
 enum ChassisSpinMode{
-    CHASSIS_SPIN_CLOCKWISE          = 0,
-    CHASSIS_SPIN_DISABLE            = 1,
+    CHASSIS_SPIN_CLOCKWISE          = 1,
+    CHASSIS_SPIN_DISABLE            = 3,
     CHASSIS_SPIN_COUNTER_CLOCK_WISE = 2,
+};
+
+struct McuChassisData
+{
+    uint8_t          start_of_frame = 0xAA;     // 帧头
+    uint16_t         chassis_speed_x;           // 平移方向：左、右
+    uint16_t         chassis_speed_y;           // 平移方向：前、后
+    uint16_t         chassis_rotation;          // 选装方向：不转、顺时针转、逆时针转
+    ChassisSpinMode  chassis_spin;              // 小陀螺：不转、顺时针转、逆时针转
 };
 
 struct McuCommData
 {
-    uint8_t          start_of_frame;     // 帧头
-    uint16_t         chassis_speed_x;    // 平移方向：前、后、左、右
-    uint16_t         chassis_speed_y;    // 底盘移动总速度
-    uint16_t         chassis_rotation;   // 自转：不转、顺时针转、逆时针转
-    ChassisSpinMode  chassis_spin;       // 小陀螺：不转、顺时针转、逆时针转
-};
-
-struct McuSendData
-{
-    uint8_t start_of_frame = 0xAB;
-    uint8_t armor;
-    float yaw;   // 4字节浮点数
-    float pitch; // 4字节浮点数
+    uint8_t             start_of_frame = 0xAB;
+    uint8_t             armor;                      // 自瞄
+    uint16_t            yaw;                        // yaw
+    uint8_t             supercap;                   // 超级电容：充电、放电
+    RemoteSwitchStatus  switch_r;
 };
 
 struct McuAutoaimData
@@ -52,14 +59,20 @@ class McuComm
 {
 public:
 
-    volatile McuCommData mcu_comm_data_ = {
-            0xAB,
+    volatile McuChassisData mcu_chassis_data_ = {
+            0xAA,
             1024,
             1024,
             1024,
             CHASSIS_SPIN_DISABLE,
     };
-    McuSendData mcu_send_data_;
+    volatile McuCommData mcu_comm_data_ = {
+            0xAB,
+            0,
+            1024,
+            0,
+            Switch_MID
+    };
 
     McuAutoaimData mcu_autoaim_data_ = {    0xAC,
                                             0xAD,

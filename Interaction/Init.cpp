@@ -37,6 +37,11 @@ void can1_callback_function(CanRxBuffer* CAN_RxMessage)
             robot_.mcu_comm_.CanRxCpltCallback(CAN_RxMessage->data);
             break;
         }
+        case (0x06):
+        {
+            robot_.gimbal_.motor_yaw_.CanRxCpltCallback(CAN_RxMessage->data);
+            break;
+        }
         case (0x201):
         {
             robot_.chassis_.motor_chassis_1_.CanRxCpltCallback(CAN_RxMessage->data);

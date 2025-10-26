@@ -16,8 +16,10 @@
 
 #include "app_gimbal.h"
 
-constexpr float K = 1.0f / 66.f;
-constexpr float C = 512.f / 33.f;
+#define K                       1.0f / 66.f
+#define C                       512.f / 33.f
+#define MAX_ROTATION_SPEED      10.f
+#define MAX_RELOAD_SPEED        -10.f
 
 void Robot::Init()
 {
@@ -25,7 +27,7 @@ void Robot::Init()
     // 上下板通讯组件初始化
     mcu_comm_.Init(&hcan1, 0x01, 0x00);
     // 云台初始化
-    // gimbal_.Init();
+    gimbal_.Init();
     // 摩擦轮初始化
     chassis_.Init();
 
@@ -48,27 +50,67 @@ void Robot::TaskEntry(void *argument)
 
 void Robot::Task()
 {
+    McuChassisData mcu_chassis_data_local;
+    mcu_chassis_data_local.chassis_speed_x     = 1024;
+    mcu_chassis_data_local.chassis_speed_y     = 1024;
+    mcu_chassis_data_local.chassis_rotation    = 1024;
+    mcu_chassis_data_local.chassis_spin        = CHASSIS_SPIN_DISABLE;
+
     McuCommData mcu_comm_data_local;
-    mcu_comm_data_local.chassis_speed_x     = 1024;
-    mcu_comm_data_local.chassis_speed_y     = 1024;
-    mcu_comm_data_local.chassis_rotation    = 1024;
-    mcu_comm_data_local.chassis_spin        = CHASSIS_SPIN_DISABLE;
+    mcu_comm_data_local.armor = 0;
+    mcu_comm_data_local.supercap = 0;
+    mcu_comm_data_local.switch_r = Switch_MID;
+    mcu_comm_data_local.yaw = 1024;
 
     for(;;)
     {
         // 用临界区一次性复制，避免撕裂
         __disable_irq();
+        mcu_chassis_data_local = *const_cast<const McuChassisData*>(&(mcu_comm_.mcu_chassis_data_));
         mcu_comm_data_local = *const_cast<const McuCommData*>(&(mcu_comm_.mcu_comm_data_));
         __enable_irq();
 
-        chassis_.SetTargetVelocityX(mcu_comm_data_local.chassis_speed_x * K - C);
-        chassis_.SetTargetVelocityY(mcu_comm_data_local.chassis_speed_y * K - C);
-        chassis_.SetTargetVelocityRotation(mcu_comm_data_local.chassis_rotation * K - C);
-
-        // chassis_.SetTargetVelocityX(0);
-        // chassis_.SetTargetVelocityY(0);
-        // chassis_.SetTargetVelocityRotation(5);
-
+        chassis_.SetTargetVelocityX(mcu_chassis_data_local.chassis_speed_x * K - C);
+        chassis_.SetTargetVelocityY(mcu_chassis_data_local.chassis_speed_y * K - C);
+        switch (mcu_chassis_data_local.chassis_spin) 
+        {
+            case CHASSIS_SPIN_DISABLE:
+            {
+                chassis_.SetTargetVelocityRotation(mcu_chassis_data_local.chassis_rotation * K - C);
+                break;
+            }
+            case CHASSIS_SPIN_CLOCKWISE:
+            {
+                chassis_.SetTargetVelocityRotation(MAX_ROTATION_SPEED);
+                break;
+            }
+            case CHASSIS_SPIN_COUNTER_CLOCK_WISE:
+            {
+                chassis_.SetTargetVelocityRotation(-MAX_ROTATION_SPEED);
+                break;
+            }
+            default:
+                chassis_.SetTargetVelocityRotation(mcu_chassis_data_local.chassis_rotation * K - C);
+                break;
+        }
+        switch (mcu_comm_data_local.switch_r)
+        {
+            case Switch_MID:
+            {
+                chassis_.SetTargetReloadRotation(0);
+                break;
+            }
+            case Switch_DOWN:
+            {
+                chassis_.SetTargetReloadRotation(MAX_RELOAD_SPEED);
+                break;
+            }
+            default:
+            {
+                chassis_.SetTargetReloadRotation(0);
+                break;
+            }
+        }
         osDelay(pdMS_TO_TICKS(10));
     }
 }
