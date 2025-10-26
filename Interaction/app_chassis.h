@@ -11,14 +11,18 @@
 #ifndef APP_CHASSIS_H_
 #define APP_CHASSIS_H_
 
+/* Includes ------------------------------------------------------------------*/
+
 #include "FreeRTOS.h"
 // device
 #include "dvc_motor_dji.h"
-#include "dvc_remote_dji.h"
 // bsp
 #include "cmsis_os2.h"
 #include "bsp_can.h"
 
+/* Exported macros -----------------------------------------------------------*/
+
+/* Exported types ------------------------------------------------------------*/
 
 class Chassis
 {
@@ -52,6 +56,10 @@ protected:
     void OutputToMotor();
     static void TaskEntry(void *param);  // FreeRTOS 入口，静态函数
 };
+
+/* Exported variables --------------------------------------------------------*/
+
+/* Exported function declarations ---------------------------------------------*/
 
 /**
  * @brief 设定目标速度X

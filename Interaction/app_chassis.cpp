@@ -1,6 +1,29 @@
-// app
+/**
+ * @file app_chassis.cpp
+ * @author qingyu
+ * @brief 
+ * @version 0.1
+ * @date 2025-10-26
+ * 
+ * @copyright Copyright (c) 2025
+ * 
+ */
+/* Includes ------------------------------------------------------------------*/
+
 #include "app_chassis.h"
 
+/* Private macros ------------------------------------------------------------*/
+
+/* Private types -------------------------------------------------------------*/
+
+/* Private variables ---------------------------------------------------------*/
+
+/* Private function declarations ---------------------------------------------*/
+
+/**
+ * @brief Chassis初始化函数
+ * 
+ */
 void Chassis::Init()
 {
     // 2006电机初始化（拨弹盘电机）
@@ -36,14 +59,21 @@ void Chassis::Init()
     osThreadNew(Chassis::TaskEntry, this, &kChassisTaskAttr);
 }
 
-// 任务入口（静态函数）—— osThreadNew 需要这个原型
+/**
+ * @brief 任务入口（静态函数）—— osThreadNew 需要这个原型
+ * 
+ * @param argument 
+ */
 void Chassis::TaskEntry(void *argument)
 {
     Chassis *self = static_cast<Chassis *>(argument);  // 还原 this 指针
     self->Task();  // 调用成员函数
 }
 
-// 实际任务逻辑
+/**
+ * @brief Chassis任务函数
+ * 
+ */
 void Chassis::Task()
 {
     for (;;)

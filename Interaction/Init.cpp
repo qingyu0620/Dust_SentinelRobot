@@ -67,8 +67,6 @@ void can1_callback_function(CanRxBuffer* CAN_RxMessage)
             robot_.chassis_.motor_reload_1_.CanRxCpltCallback(CAN_RxMessage->data);
             break;
         }
-        // default:
-        //     break;
     }
 }
 

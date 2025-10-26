@@ -10,13 +10,12 @@
  */
 #ifndef BSP_CAN_H_
 #define BSP_CAN_H_
-#ifdef __cplusplus
-extern "C"{
-#endif
+
 /* Includes ------------------------------------------------------------------*/
 
 #include "stm32f4xx_hal.h"
 #include "can.h"
+
 /* Exported macros -----------------------------------------------------------*/
 
 // 滤波器编号
@@ -96,9 +95,7 @@ void can_filter_mask_config(CAN_HandleTypeDef *hcan, uint8_t object_para, uint32
 uint8_t can_send_data(CAN_HandleTypeDef *hcan, uint16_t id, uint8_t *data, uint16_t length);
 
 void can_period_elapsed_callback();
-#ifdef __cplusplus
-}
-#endif
+
 #endif // BSP_CAN_H_
 
 /************************ COPYRIGHT(C) HNUST-DUST **************************/

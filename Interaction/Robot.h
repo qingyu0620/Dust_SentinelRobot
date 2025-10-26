@@ -11,11 +11,16 @@
 #ifndef __ROBOT_H__
 #define __ROBOT_H__
 
-#include "app_gimbal.h"
-#include "app_chassis.h"
+/* Includes ------------------------------------------------------------------*/
 
 #include "dvc_MCU_comm.h"
 
+#include "app_gimbal.h"
+#include "app_chassis.h"
+
+/* Exported macros -----------------------------------------------------------*/
+
+/* Exported types ------------------------------------------------------------*/
 
 class Robot
 {
@@ -29,11 +34,15 @@ public:
 
     void Init();
     void Task();
+    
 protected:
-
     // 机器人等级
     int32_t robot_level_ = 1;
     static void TaskEntry(void *param);  // FreeRTOS 入口，静态函数
 };
+
+/* Exported variables --------------------------------------------------------*/
+
+/* Exported function declarations --------------------------------------------*/
 
 #endif
