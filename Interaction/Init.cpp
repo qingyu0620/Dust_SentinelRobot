@@ -11,14 +11,7 @@
 /* Includes ------------------------------------------------------------------*/
 
 #include "Init.h"
-
 #include "Robot.h"
-#include "app_shoot.h"
-
-#include "dvc_remote_dji.h"
-#include "dvc_MCU_comm.h"
-
-#include "app_gimbal.h"
 
 /* Private macros ------------------------------------------------------------*/
 
@@ -85,7 +78,7 @@ void can2_callback_function(CanRxBuffer* CAN_RxMessage)
 void uart3_callback_function(uint8_t* buffer, uint16_t length) 
 {	
 	robot_.remote_dr16_.DataProcess(buffer);
-    
+
     robot_.mcu_comm_.mcu_comm_data_.start_of_frame      = 0xAA;
     robot_.mcu_comm_.mcu_chassis_data_.chassis_speed_x  = robot_.remote_dr16_.output.chassis_x;
     robot_.mcu_comm_.mcu_chassis_data_.chassis_speed_y  = robot_.remote_dr16_.output.chassis_y;

@@ -11,11 +11,17 @@
 #ifndef APP_SHOOT_H_
 #define APP_SHOOT_H_
 
+/* Includes ------------------------------------------------------------------*/
+
 #include "FreeRTOS.h"
-#include "cmsis_os2.h"
-#include "main.h"
+
 #include "dvc_motor_dji.h"
 
+#include "cmsis_os2.h"
+
+/* Exported macros -----------------------------------------------------------*/
+
+/* Exported types ------------------------------------------------------------*/
 
 class Shoot
 {
@@ -35,6 +41,9 @@ protected:
     static void TaskEntry(void *param);   // FreeRTOS 入口，静态函数
 };
 
+/* Exported variables --------------------------------------------------------*/
+
+/* Exported function declarations ---------------------------------------------*/
 
 /**
  * @brief 设定目标发射速度

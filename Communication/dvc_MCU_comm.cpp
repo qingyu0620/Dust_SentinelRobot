@@ -1,10 +1,34 @@
+/**
+ * @file dvc_MCU_comm.cpp
+ * @author qingyu
+ * @brief 
+ * @version 0.1
+ * @date 2025-10-26
+ * 
+ * @copyright Copyright (c) 2025
+ * 
+ */
+/* Includes ------------------------------------------------------------------*/
+
 #include "dvc_MCU_comm.h"
 #include "dvc_motor_dm.h"
 
-void McuComm::Init(
-     CAN_HandleTypeDef* hcan,
-     uint8_t can_rx_id,
-     uint8_t can_tx_id)
+/* Private macros ------------------------------------------------------------*/
+
+/* Private types -------------------------------------------------------------*/
+
+/* Private variables ---------------------------------------------------------*/
+
+/* Private function declarations ---------------------------------------------*/
+
+/**
+ * @brief MCU通讯函数
+ * 
+ * @param hcan can句柄
+ * @param can_rx_id 接收id
+ * @param can_tx_id 发送id
+ */
+void McuComm::Init(CAN_HandleTypeDef* hcan, uint8_t can_rx_id, uint8_t can_tx_id)
 {
      if (hcan->Instance == CAN1)
      {
@@ -27,16 +51,23 @@ void McuComm::Init(
      osThreadNew(McuComm::TaskEntry, this, &kMcuCommTaskAttr);
 }
 
-// 任务入口（静态函数）—— osThreadNew 需要这个原型
+/**
+ * @brief MCU任务入口（静态函数）—— osThreadNew 需要这个原型
+ * 
+ * @param argument 
+ */
 void McuComm::TaskEntry(void *argument) {
      McuComm *self = static_cast<McuComm *>(argument);  // 还原 this 指针
      self->Task();  // 调用成员函数
 }
 
-// 实际任务逻辑
+/**
+ * @brief MCU任务函数
+ * 
+ */
 void McuComm::Task()
 {
-     struct McuCommData mcu_comm_data_local;
+     McuCommData mcu_comm_data_local;
      for (;;)
      {    // 用临界区一次性复制，避免撕裂
           // __disable_irq();
@@ -46,6 +77,10 @@ void McuComm::Task()
      }
 }
 
+/**
+ * @brief MCU can发送命令函数
+ * 
+ */
 void McuComm::CanSendCommand()
 {
      static uint8_t can_tx_frame[8];
@@ -72,7 +107,11 @@ void McuComm::CanSendCommand()
      can_send_data(can_manage_object_->can_handler, can_tx_id_, can_tx_frame, 8);
 }
 
-
+/**
+ * @brief MCU can回调函数
+ * 
+ * @param rx_data 
+ */
 void McuComm::CanRxCpltCallback(uint8_t* rx_data)
 {
      // 判断在线

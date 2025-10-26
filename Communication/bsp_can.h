@@ -17,6 +17,7 @@ extern "C"{
 
 #include "stm32f4xx_hal.h"
 #include "can.h"
+
 /* Exported macros -----------------------------------------------------------*/
 
 // 滤波器编号

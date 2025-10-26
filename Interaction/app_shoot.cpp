@@ -8,9 +8,22 @@
  * @copyright Copyright (c) 2025
  * 
  */
+/* Includes ------------------------------------------------------------------*/
+
 #include "app_shoot.h"
 
+/* Private macros ------------------------------------------------------------*/
 
+/* Private types -------------------------------------------------------------*/
+
+/* Private variables ---------------------------------------------------------*/
+
+/* Private function declarations ---------------------------------------------*/
+
+/**
+ * @brief Shoot初始化函数
+ * 
+ */
 void Shoot::Init()
 {
     motor_shoot_1_.pid_omega_.Init(1.0f, 0.0f, 0.0f);
@@ -32,12 +45,21 @@ void Shoot::Init()
     osThreadNew(Shoot::TaskEntry, this, &kShootTaskAttr);
 }
 
+/**
+ * @brief 任务入口（静态函数）—— osThreadNew 需要这个原型
+ * 
+ * @param argument 
+ */
 void Shoot::TaskEntry(void *argument)
 {
     Shoot *self = static_cast<Shoot *>(argument);  // 还原 this 指针
     self->Task();  // 调用成员函数
 }
 
+/**
+ * @brief Shoot任务函数
+ * 
+ */
 void Shoot::Task()
 {
     for(;;)

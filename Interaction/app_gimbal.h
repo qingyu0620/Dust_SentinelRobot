@@ -1,9 +1,9 @@
 /**
  * @file app_gimbal.h
- * @author noe (noneofever@gmail.com)
+ * @author qingyu
  * @brief 
- * @version 0.1
- * @date 2025-08-04
+ * @version 0.2
+ * @date 2025-10-26
  * 
  * @copyright Copyright (c) 2025
  * 
@@ -11,12 +11,18 @@
 #ifndef APP_GIMBAL_H
 #define APP_GIMBAL_H
 
+/* Includes ------------------------------------------------------------------*/
+
 #include "FreeRTOS.h"
 // module
 #include "dvc_motor_dm.h"
 // bsp
 #include "cmsis_os2.h"
 #include "bsp_can.h"
+
+/* Exported macros -----------------------------------------------------------*/
+
+/* Exported types ------------------------------------------------------------*/
 
 /**
  * @brief 云台控制类型
@@ -107,6 +113,10 @@ protected:
     void Output();
     static void TaskEntry(void *param);  // FreeRTOS 入口，静态函数
 };
+
+/* Exported variables --------------------------------------------------------*/
+
+/* Exported function declarations ---------------------------------------------*/
 
 /**
  * @brief 获取yaw轴当前角度

@@ -1,15 +1,29 @@
 /**
- * @file app_gimbal.cpp
- * @author noe (noneofever@gmail.com)
+ * @file app_chassis.cpp
+ * @author qingyu
  * @brief 
  * @version 0.1
- * @date 2025-08-04
+ * @date 2025-10-26
  * 
  * @copyright Copyright (c) 2025
  * 
  */
+/* Includes ------------------------------------------------------------------*/
+
 #include "app_gimbal.h"
 
+/* Private macros ------------------------------------------------------------*/
+
+/* Private types -------------------------------------------------------------*/
+
+/* Private variables ---------------------------------------------------------*/
+
+/* Private function declarations ---------------------------------------------*/
+
+/**
+ * @brief Gimbal初始化函数
+ * 
+ */
 void Gimbal::Init()
 {
     // 4310电机初始化
@@ -39,7 +53,18 @@ void Gimbal::Init()
 }
 
 /**
- * @brief 自身解算
+ * @brief 任务入口（静态函数）—— osThreadNew 需要这个原型
+ * 
+ * @param argument 
+ */
+void Gimbal::TaskEntry(void *argument)
+{
+    Gimbal *self = static_cast<Gimbal *>(argument);  // 还原 this 指针
+    self->Task();  // 调用成员函数
+}
+
+/**
+ * @brief Gimbal自身解算函数
  *
  */
 void Gimbal::SelfResolution()
@@ -54,7 +79,7 @@ void Gimbal::SelfResolution()
 }
 
 /**
- * @brief 输出到电机
+ * @brief Gimbal输出函数
  *
  */
 void Gimbal::Output()
@@ -70,14 +95,12 @@ void Gimbal::Output()
     //     target_yaw_omega_ = yaw_angle_pid_.GetOut();
     // }
 
-
     motor_pitch_.SetControlAngle(target_pitch_angle_);
-
     motor_pitch_.Output();
 }
 
 /**
- * @brief 电机就近转位
+ * @brief Gimbal就近转位函数
  *
  */
 void Gimbal::MotorNearestTransposition()
@@ -100,14 +123,11 @@ void Gimbal::MotorNearestTransposition()
     // tmp_delta_angle = target_pitch_angle_ - now_pitch_angle_;
     // target_pitch_angle_ = -motor_pitch_.GetNowAngle() + tmp_delta_angle;
 }
-// 任务入口（静态函数）—— osThreadNew 需要这个原型
-void Gimbal::TaskEntry(void *argument)
-{
-    Gimbal *self = static_cast<Gimbal *>(argument);  // 还原 this 指针
-    self->Task();  // 调用成员函数
-}
 
-// 实际任务逻辑（无限循环）
+/**
+ * @brief Gimbal任务函数
+ * 
+ */
 void Gimbal::Task()
 {
     for (;;)

@@ -8,21 +8,24 @@
  * @copyright Copyright (c) 2025
  * 
  */
+/* Includes ------------------------------------------------------------------*/
+
 #include "Robot.h"
 
-#include "bsp_uart.h"
-
-#include "cmsis_os2.h"
-#include "dvc_MCU_comm.h"
-#include "dvc_remote_dji.h"
-
-#include "app_gimbal.h"
-#include "app_shoot.h"
-
+/* Private macros ------------------------------------------------------------*/
 
 #define MAX_SHOOT_SPEED     10.f
 
+/* Private types -------------------------------------------------------------*/
 
+/* Private variables ---------------------------------------------------------*/
+
+/* Private function declarations ---------------------------------------------*/
+
+/**
+ * @brief Robot初始化函数
+ * 
+ */
 void Robot::Init()
 {
     // 遥控初始化
@@ -45,13 +48,21 @@ void Robot::Init()
     osThreadNew(Robot::TaskEntry, this, &kRobotTaskAttr);
 }
 
-// 任务入口（静态函数）—— osThreadNew 需要这个原型
+/**
+ * @brief 任务入口（静态函数）—— osThreadNew 需要这个原型
+ * 
+ * @param argument 
+ */
 void Robot::TaskEntry(void *argument)
 {
     Robot *self = static_cast<Robot *>(argument);  // 还原 this 指针
     self->Task();  // 调用成员函数
 }
 
+/**
+ * @brief Robot任务函数
+ * 
+ */
 void Robot::Task()
 {
     for(;;)
@@ -79,7 +90,6 @@ void Robot::Task()
                 break;
             }
         }
-        
         osDelay(pdMS_TO_TICKS(10));
     }
 }
