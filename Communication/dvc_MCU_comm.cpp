@@ -49,16 +49,26 @@ void McuComm::Task()
 void McuComm::CanSendCommand()
 {
      static uint8_t can_tx_frame[8];
+     // 第一帧发送底盘数据
+     can_tx_frame[0] = mcu_chassis_data_.start_of_frame;
+     can_tx_frame[1] = mcu_chassis_data_.chassis_speed_x >> 8;
+     can_tx_frame[2] = mcu_chassis_data_.chassis_speed_x;
+     can_tx_frame[3] = mcu_chassis_data_.chassis_speed_y >> 8;
+     can_tx_frame[4] = mcu_chassis_data_.chassis_speed_y;
+     can_tx_frame[5] = mcu_chassis_data_.chassis_rotation >> 8;
+     can_tx_frame[6] = mcu_chassis_data_.chassis_rotation;
+     can_tx_frame[7] = mcu_chassis_data_.chassis_spin;
+     can_send_data(can_manage_object_->can_handler, can_tx_id_, can_tx_frame, 8);
 
+     // 第二帧发送拨弹盘，yaw角数据
      can_tx_frame[0] = mcu_comm_data_.start_of_frame;
-     can_tx_frame[1] = mcu_comm_data_.chassis_speed_x >> 8;
-     can_tx_frame[2] = mcu_comm_data_.chassis_speed_x;
-     can_tx_frame[3] = mcu_comm_data_.chassis_speed_y >> 8;
-     can_tx_frame[4] = mcu_comm_data_.chassis_speed_y;
-     can_tx_frame[5] = mcu_comm_data_.chassis_rotation >> 8;
-     can_tx_frame[6] = mcu_comm_data_.chassis_rotation;
-     can_tx_frame[7] = mcu_comm_data_.chassis_spin;
-
+     can_tx_frame[1] = mcu_comm_data_.armor;
+     can_tx_frame[2] = mcu_comm_data_.yaw >> 8;
+     can_tx_frame[3] = mcu_comm_data_.yaw;
+     can_tx_frame[4] = mcu_comm_data_.supercap;
+     can_tx_frame[5] = mcu_comm_data_.switch_r;
+     can_tx_frame[6] = 0x00;
+     can_tx_frame[7] = 0x00;
      can_send_data(can_manage_object_->can_handler, can_tx_id_, can_tx_frame, 8);
 }
 

@@ -45,7 +45,7 @@ void RemoteDjiDR16::Init(UART_HandleTypeDef* huart, Uart_Callback callback_funct
  * 
  * @param buffer 传入遥控数据
  */
-void RemoteDjiDR16::DbusTransformation(uint8_t* buffer)
+void RemoteDjiDR16::DataProcess(uint8_t* buffer)
 {
     // 读取数据值
     data.ch0 =  ((int16_t)buffer[0]       | ((int16_t)buffer[1] << 8)) & 0x07FF;
@@ -56,22 +56,17 @@ void RemoteDjiDR16::DbusTransformation(uint8_t* buffer)
     data.s1 = ((buffer[5] >> 4) & 0x000C) >> 2;
     data.s2 = ((buffer[5] >> 4) & 0x0003);
 
-    // 线性函数归一化（-1 ~ 1） * 放大系数
-    // output.chassis_x  = (k_nor * data.ch0 + c_nor) * MaxVelocity;
-    // output.chassis_y  = (k_nor * data.ch1 + c_nor) * MaxVelocity;
-    // output.chassis_r  = (k_nor * data.ch2 + c_nor) * MaxOmega;
-    // output.chassis_y  = (k_pitch * data.ch1 - c_pitch);
-
-    // 摩擦轮速度
-    output.shoot_speed = (k_nor * data.ch0 + c_nor) * MaxShoot;
-
-    // 原始值发送给下板
+    // 上板数据
+    // output.shoot_speed = (k_nor * data.ch0 + c_nor) * MaxShoot;
+    output.gimbal_pitch = k_pitch * data.ch3 - c_pitch;
+    
+    // 下板数据
     output.chassis_x  = data.ch0;
     output.chassis_y  = data.ch1;
     output.chassis_r  = data.ch2;
+    output.gimbal_yaw = data.ch2;
 
-    // output.r0 = (k_nor * data.ch3 + c_nor) * MaxReload;
-    
-    output.keyL = data.s1;
-    output.keyR = data.s2;
+    // 通用数据
+    output.SwitchL = data.s1;
+    output.SwitchR = data.s2;
 }

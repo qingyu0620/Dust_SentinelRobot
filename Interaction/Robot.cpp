@@ -14,10 +14,14 @@
 
 #include "cmsis_os2.h"
 #include "dvc_MCU_comm.h"
+#include "dvc_remote_dji.h"
 
 #include "app_gimbal.h"
 #include "app_shoot.h"
-#include "projdefs.h"
+
+
+#define MAX_SHOOT_SPEED     10.f
+
 
 void Robot::Init()
 {
@@ -26,7 +30,7 @@ void Robot::Init()
     // 上下板通讯组件初始化
     mcu_comm_.Init(&hcan1, 0x00, 0x01);
     // 云台初始化
-    // gimbal_.Init();
+    gimbal_.Init();
     // 摩擦轮初始化
     shoot_.Init();
 
@@ -55,9 +59,27 @@ void Robot::Task()
         // 将遥控器数据发给下板
         mcu_comm_.CanSendCommand();
         // 设置pitch角
-        // gimbal_.SetTargetPitchAngle(remote_dr16_.output.chassis_y);
+        gimbal_.SetTargetPitchAngle(remote_dr16_.output.gimbal_pitch);
         // 摩擦轮转速
-        shoot_.SetTargetShootSpeed(remote_dr16_.output.shoot_speed);
+        switch (mcu_comm_.mcu_comm_data_.switch_r)
+        {
+            case Switch_UP:
+            {
+                shoot_.SetTargetShootSpeed(MAX_SHOOT_SPEED);
+                break;
+            }
+            case Switch_MID:
+            {
+                shoot_.SetTargetShootSpeed(0);
+                break;
+            }
+            default:
+            {
+                shoot_.SetTargetShootSpeed(0);
+                break;
+            }
+        }
+        
         osDelay(pdMS_TO_TICKS(10));
     }
 }

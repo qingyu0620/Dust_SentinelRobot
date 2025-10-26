@@ -19,9 +19,11 @@
 
 /* Exported types ------------------------------------------------------------*/
 
-struct RemoteParameter
+enum RemoteSwitchStatus
 {
-    float k, c;
+    Switch_UP    = (uint8_t)1,
+    Switch_MID   = (uint8_t)3,
+    Switch_DOWN  = (uint8_t)2,
 };
 
 struct RemoteDjiData
@@ -32,10 +34,11 @@ struct RemoteDjiData
 
 struct RemoteOutput
 {
-    uint8_t keyL, keyR;
+    uint8_t SwitchL, SwitchR;
     float chassis_x, chassis_y, chassis_r;      // x, y, r 采用右手系
     float shoot_speed;
-    float r0;                                   // r0为保留位，对应左摇杆上下
+    float gimbal_pitch;                         
+    float gimbal_yaw;                           
 };
 
 class RemoteDjiDR16
@@ -43,7 +46,7 @@ class RemoteDjiDR16
 public:
     RemoteOutput output;
     void Init(UART_HandleTypeDef* huart, Uart_Callback callback_function, uint16_t rx_buffer_length);
-    void DbusTransformation(uint8_t* buffer);
+    void DataProcess(uint8_t* buffer);
 protected:
     RemoteDjiData data;
 

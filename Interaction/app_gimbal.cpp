@@ -9,19 +9,19 @@
  * 
  */
 #include "app_gimbal.h"
-#include "can.h"
 
 void Gimbal::Init()
 {
     // 4310电机初始化
     motor_pitch_.Init(&hcan2, 0x04, 0x04);
 
+    HAL_Delay(1000);
     motor_pitch_.CanSendEnter();
     HAL_Delay(1000);
 
-    motor_pitch_.SetKp(22);     //MIT模式kp
+    motor_pitch_.SetKp(8.5);     //MIT模式kp
 
-    motor_pitch_.SetKd(0.16);
+    motor_pitch_.SetKd(0.5);
 
     motor_pitch_.SetControlOmega(0);
 
@@ -114,6 +114,6 @@ void Gimbal::Task()
     {
         SelfResolution();
         Output();
-        osDelay(pdMS_TO_TICKS(10));
+        osDelay(pdMS_TO_TICKS(1));
     }
 }
