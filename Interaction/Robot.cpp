@@ -14,7 +14,7 @@
 
 /* Private macros ------------------------------------------------------------*/
 
-#define MAX_SHOOT_SPEED     10.f
+#define MAX_SHOOT_SPEED     50.f
 
 /* Private types -------------------------------------------------------------*/
 
@@ -32,6 +32,8 @@ void Robot::Init()
     remote_dr16_.Init(&huart3, uart3_callback_function, UART_BUFFER_LENGTH);
     // 上下板通讯组件初始化
     mcu_comm_.Init(&hcan1, 0x00, 0x01);
+    // 上位机通讯
+    pc_comm_.Init();
     // 云台初始化
     gimbal_.Init();
     // 摩擦轮初始化

@@ -92,13 +92,36 @@ void uart3_callback_function(uint8_t* buffer, uint16_t length)
     robot_.mcu_comm_.mcu_comm_data_.switch_r            = robot_.remote_dr16_.output.SwitchR;
 }
 
+/**
+ * @bief USB接收完成回调函数
+ *
+ * @param len 接收到的数据长度
+ */
+void usb_rx_callback(uint16_t len)
+{
+    robot_.pc_comm_.RxCpltCallback();
+}
+
+/**
+ * @bief USB发送完成回调函数
+ *
+ * @param len 发送的数据长度
+ */
+void usb_tx_callback(uint16_t len)
+{
+
+}
+
 /* Function prototypes -------------------------------------------------------*/
 
 void Init()
 {
+    // 上位机通讯
+    usb_init(usb_tx_callback, usb_rx_callback);
     // 下板通讯
     can_init(&hcan1, can1_callback_function);
-    // 摩擦轮   pitch角电机
+    // 摩擦轮 pitch角电机
     can_init(&hcan2, can2_callback_function);
+    
     robot_.Init();
 }

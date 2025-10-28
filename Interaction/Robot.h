@@ -13,8 +13,9 @@
 
 #include "main.h"
 
-#include "dvc_MCU_comm.h"
 #include "dvc_remote_dji.h"
+#include "dvc_MCU_comm.h"
+#include "dvc_PC_comm.h"
 
 #include "app_gimbal.h"
 #include "app_shoot.h"
@@ -23,13 +24,16 @@
 class Robot
 {
 public:
+    // 遥控
     RemoteDjiDR16 remote_dr16_;
-
+    // 上下板通讯
     McuComm mcu_comm_;
-
+    // pitch角云台
     Gimbal gimbal_;
-
+    // 摩擦轮
     Shoot shoot_;
+    // 上位机通讯
+    PcComm pc_comm_;
 
     void Init();
     void Task();
