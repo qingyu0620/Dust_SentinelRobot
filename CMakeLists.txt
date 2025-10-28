@@ -68,6 +68,12 @@ include_directories(
         Middlewares/Third_Party/FreeRTOS/Source/include
         Middlewares/Third_Party/FreeRTOS/Source/CMSIS_RTOS_V2
         Middlewares/Third_Party/FreeRTOS/Source/portable/GCC/ARM_CM4F
+        Middlewares/ST/STM32_USB_Device_Library/Core/Inc
+        Middlewares/ST/STM32_USB_Device_Library/Class/CDC/Inc
+        Middlewares/SEGGER/Config
+        Middlewares/SEGGER/RTT
+        USB_DEVICE/App
+        USB_DEVICE/Target
 )
 
 # 头文件目录
@@ -77,6 +83,7 @@ include_directories(
         Device
         Interaction
         Modules
+        Bsp
 )
 
 
@@ -93,20 +100,15 @@ add_definitions(
 file(
     GLOB_RECURSE SOURCES 
     "Algorithm/*.*"
+    "Bsp/*.*"
     "Core/*.*"
-    "Core/Src/*.*"
     "Communication/*.*"
     "Device/*.*"
-
-    "Drivers/ARM/DSP/Inc/*.*"
-    "Drivers/STM32F4xx_HAL_Driver/Src/*.*"
-    "Middlewares/Third_Party/FreeRTOS/Source/*.*"
-    "Middlewares/Third_Party/FreeRTOS/Source/portable/GCC/ARM_CM4F/*.*"
-    "Middlewares/Third_Party/FreeRTOS/Source/CMSIS_RTOS_V2/*.*"
-    "Middlewares/Third_Party/FreeRTOS/Source/portable/MemMang/*.*"
-
+    "Drivers/*.*"
     "Interaction/*.*"
+    "Middlewares/*.*"
     "Modules/*.*"
+    "USB_DEVICE/*.*"
 )
 
 

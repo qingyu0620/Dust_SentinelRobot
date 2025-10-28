@@ -14,6 +14,7 @@
 /* Includes ------------------------------------------------------------------*/
 
 #include "dvc_MCU_comm.h"
+#include "dvc_PC_comm.h"
 
 #include "app_gimbal.h"
 #include "app_chassis.h"
@@ -31,6 +32,8 @@ public:
     Chassis chassis_;
     // yaw角云台
     Gimbal gimbal_;
+    // 上位机通讯
+    PcComm pc_comm_;
 
     void Init();
     void Task();

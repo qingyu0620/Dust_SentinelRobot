@@ -154,8 +154,6 @@ void can_period_elapsed_callback()
  */
 void HAL_CAN_RxFifo0MsgPendingCallback(CAN_HandleTypeDef *hcan)
 {
-    // if ((RxFifo0ITs & FDCAN_IT_RX_FIFO0_NEW_MESSAGE) != RESET)
-    // {
     if (hcan->Instance == CAN1)
     {
         HAL_CAN_GetRxMessage(hcan, CAN_FIFO_0, 
@@ -170,7 +168,6 @@ void HAL_CAN_RxFifo0MsgPendingCallback(CAN_HandleTypeDef *hcan)
                                 g_can2_manage_object.rx_buffer.data);
         g_can2_manage_object.callback_function(&g_can2_manage_object.rx_buffer);
     }
-    // }
 }
 
 /**
@@ -180,8 +177,6 @@ void HAL_CAN_RxFifo0MsgPendingCallback(CAN_HandleTypeDef *hcan)
  */
 void HAL_CAN_RxFifo1MsgPendingCallback(CAN_HandleTypeDef *hcan)
 {
-    // if ((RxFifo1ITs & FDCAN_IT_RX_FIFO1_NEW_MESSAGE) != RESET)
-    // {
     if (hcan->Instance == CAN1)
     {
         HAL_CAN_GetRxMessage(hcan, CAN_RX_FIFO1,
@@ -196,7 +191,6 @@ void HAL_CAN_RxFifo1MsgPendingCallback(CAN_HandleTypeDef *hcan)
                                 g_can2_manage_object.rx_buffer.data);
         g_can2_manage_object.callback_function(&g_can2_manage_object.rx_buffer);
     }
-    // }
 }
 
 

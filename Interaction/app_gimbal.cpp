@@ -11,6 +11,7 @@
 /* Includes ------------------------------------------------------------------*/
 
 #include "app_gimbal.h"
+#include "stdio.h"
 
 /* Private macros ------------------------------------------------------------*/
 
@@ -34,7 +35,7 @@ void Gimbal::Init()
     motor_yaw_.CanSendEnter();
     HAL_Delay(1000);
 
-    motor_yaw_.SetKp(0); //MIT模式kp
+    motor_yaw_.SetKp(0);  //MIT模式kp
 
     motor_yaw_.SetKd(0.3); // MIT模式kd
 
@@ -42,7 +43,8 @@ void Gimbal::Init()
 
     motor_yaw_.Output();
 
-    static const osThreadAttr_t kGimbalTaskAttr = {
+    static const osThreadAttr_t kGimbalTaskAttr = 
+    {
         .name = "gimbal_task",
         .stack_size = 512,
         .priority = (osPriority_t) osPriorityNormal
@@ -69,6 +71,7 @@ void Gimbal::TaskEntry(void *argument)
 void Gimbal::SelfResolution()
 {
     now_yaw_angle_   = motor_yaw_.GetNowAngle();
+    printf("%f\n", now_yaw_angle_);
     // yaw_angle_pid_.SetNow(now_yaw_angle_);
     // yaw_angle_pid_.CalculatePeriodElapsedCallback();
     // target_yaw_omega_ = yaw_angle_pid_.GetOut();
