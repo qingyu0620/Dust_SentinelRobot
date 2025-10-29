@@ -11,7 +11,10 @@
 #ifndef __ROBOT_H__
 #define __ROBOT_H__
 
-#include "main.h"
+/* Includes ------------------------------------------------------------------*/
+
+#include "bsp_dwt.h"
+#include "imu.hpp"
 
 #include "dvc_remote_dji.h"
 #include "dvc_MCU_comm.h"
@@ -20,6 +23,9 @@
 #include "app_gimbal.h"
 #include "app_shoot.h"
 
+/* Exported macros -----------------------------------------------------------*/
+
+/* Exported types ------------------------------------------------------------*/
 
 class Robot
 {
@@ -34,6 +40,8 @@ public:
     Shoot shoot_;
     // 上位机通讯
     PcComm pc_comm_;
+    // 云台陀螺仪
+    Imu imu_;
 
     void Init();
     void Task();
@@ -43,5 +51,9 @@ protected:
     int32_t robot_level_ = 1;
     static void TaskEntry(void *param);  // FreeRTOS 入口，静态函数
 };
+
+/* Exported variables --------------------------------------------------------*/
+
+/* Exported function declarations --------------------------------------------*/
 
 #endif

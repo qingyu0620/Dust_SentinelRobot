@@ -471,9 +471,6 @@ extern "C"
 #define DELTA_Q31          ((q31_t)(0x100))
 #define DELTA_Q15          ((q15_t)0x5)
 #define INDEX_MASK         0x0000003F
-#ifndef PI
-  #define PI               3.14159265358979f
-#endif
 
   /**
    * @brief Macros required for SINE and COSINE Fast math approximations

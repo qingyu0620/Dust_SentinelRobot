@@ -58,14 +58,12 @@ endif ()
 # 头文件目录
 include_directories(
         Core/Inc
-        BSP/
         Drivers/ARM/DSP/Inc
         Drivers/CMSIS/Include
         Drivers/CMSIS/DSP/Include
         Drivers/CMSIS/Device/ST/STM32F4xx/Include
         Drivers/STM32F4xx_HAL_Driver/Inc
         Drivers/STM32F4xx_HAL_Driver/Inc/Legacy
-        Middlewares/Third_Party/ARM/DSP/Inc
         Middlewares/Third_Party/FreeRTOS/Source/include
         Middlewares/Third_Party/FreeRTOS/Source/CMSIS_RTOS_V2
         Middlewares/Third_Party/FreeRTOS/Source/portable/GCC/ARM_CM4F
@@ -80,6 +78,7 @@ include_directories(
 # 头文件目录
 include_directories(
         Algorithm
+        Bsp
         Communication
         Device
         Interaction
@@ -121,7 +120,12 @@ add_link_options(-Wl,-gc-sections,--print-memory-usage,-Map=${PROJECT_BINARY_DIR
 add_link_options(-mcpu=cortex-m4 -mthumb -mthumb-interwork)
 add_link_options(-T ${LINKER_SCRIPT})
 
+link_directories(${CMAKE_SOURCE_DIR}/Drivers/ARM/DSP/Lib)
+
 add_executable(${PROJECT_NAME}.elf ${SOURCES} ${LINKER_SCRIPT})
+
+target_link_options(Dust_SentinelRobotChassis_H.elf PRIVATE -u _printf_float)
+target_link_libraries(${PROJECT_NAME}.elf arm_cortexM4lf_math)
 
 set(HEX_FILE ${PROJECT_BINARY_DIR}/${PROJECT_NAME}.hex)
 set(BIN_FILE ${PROJECT_BINARY_DIR}/${PROJECT_NAME}.bin)
@@ -132,4 +136,3 @@ add_custom_command(TARGET ${PROJECT_NAME}.elf POST_BUILD
         COMMENT "Building ${HEX_FILE}
 Building ${BIN_FILE}")
 
-target_link_options(Dust_SentinelRobotChassis_H.elf PRIVATE -u _printf_float)

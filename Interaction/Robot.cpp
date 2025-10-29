@@ -28,18 +28,22 @@
  */
 void Robot::Init()
 {
+    dwt_init(168);
     // 遥控初始化
     remote_dr16_.Init(&huart3, uart3_callback_function, UART_BUFFER_LENGTH);
     // 上下板通讯组件初始化
     mcu_comm_.Init(&hcan1, 0x00, 0x01);
+    // 底盘陀螺仪初始化
+    imu_.Init();
+    // 10s时间等待陀螺仪收敛
+    osDelay(pdMS_TO_TICKS(10000));
     // 上位机通讯
-    pc_comm_.Init();
+    // pc_comm_.Init();
     // 云台初始化
     gimbal_.Init();
     // 摩擦轮初始化
     shoot_.Init();
-
-    HAL_Delay(1000);
+    
     static const osThreadAttr_t kRobotTaskAttr = 
     {
         .name = "robot_task",

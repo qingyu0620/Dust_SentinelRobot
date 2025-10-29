@@ -11,11 +11,11 @@
 #include "bsp_dwt.h"
 #include "cmsis_os.h"
 
-static DwtTime  systime;
+DwtTime  systime;
 static uint32_t cpu_frequncy_hz, cpu_frequncy_hz_ms, cpu_frequncy_hz_us;
 static uint32_t cyccnt_rount_count;
 static uint32_t cyccnt_last;
-static uint64_t cyccnt64;
+uint64_t cyccnt64;
 
 /**
  * @brief 私有函数,用于检查DWT CYCCNT寄存器是否溢出,并更新cyccnt_rount_count
@@ -128,10 +128,10 @@ uint64_t dwt_get_timeline_us(void)
     return dwt_timeline_f32;
 }
 
-void DWT_Delay(float Delay)
+void dwt_delay(float delay)
 {
     uint32_t tickstart = DWT->CYCCNT;
-    float wait         = Delay;
+    float wait         = delay;
 
     while ((float)(DWT->CYCCNT - tickstart) < wait * (float)cpu_frequncy_hz)
         ;
