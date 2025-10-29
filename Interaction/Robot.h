@@ -13,6 +13,9 @@
 
 /* Includes ------------------------------------------------------------------*/
 
+#include "bsp_dwt.h"
+#include "imu.hpp"
+
 #include "dvc_MCU_comm.h"
 #include "dvc_PC_comm.h"
 
@@ -32,8 +35,8 @@ public:
     Chassis chassis_;
     // yaw角云台
     Gimbal gimbal_;
-    // 上位机通讯
-    PcComm pc_comm_;
+    // 底盘陀螺仪
+    Imu imu_;
 
     void Init();
     void Task();

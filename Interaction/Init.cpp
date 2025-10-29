@@ -73,31 +73,10 @@ void can1_callback_function(CanRxBuffer* CAN_RxMessage)
     }
 }
 
-/**
- * @bief USB接收完成回调函数
- *
- * @param len 接收到的数据长度
- */
-void usb_rx_callback(uint16_t len)
-{
-    robot_.pc_comm_.RxCpltCallback();
-}
-
-/**
- * @bief USB发送完成回调函数
- *
- * @param len 发送的数据长度
- */
-void usb_tx_callback(uint16_t len)
-{
-
-}
-
 /* Function prototypes -------------------------------------------------------*/
 
 void Init()
 {
-    // usb_init(usb_tx_callback, usb_rx_callback);
     can_init(&hcan1, can1_callback_function);
     robot_.Init();
 }

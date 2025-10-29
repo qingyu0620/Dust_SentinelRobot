@@ -31,9 +31,9 @@ void Gimbal::Init()
     motor_yaw_.Init(&hcan1, 0x06, 0x06);
 
     motor_yaw_.CanSendClearError();
-    HAL_Delay(1000);
+    osDelay(pdMS_TO_TICKS(1000));
     motor_yaw_.CanSendEnter();
-    HAL_Delay(1000);
+    osDelay(pdMS_TO_TICKS(1000));
 
     motor_yaw_.SetKp(0);  //MIT模式kp
 
@@ -71,7 +71,7 @@ void Gimbal::TaskEntry(void *argument)
 void Gimbal::SelfResolution()
 {
     now_yaw_angle_   = motor_yaw_.GetNowAngle();
-    printf("%f\n", now_yaw_angle_);
+    // printf("%f\n", now_yaw_angle_);
     // yaw_angle_pid_.SetNow(now_yaw_angle_);
     // yaw_angle_pid_.CalculatePeriodElapsedCallback();
     // target_yaw_omega_ = yaw_angle_pid_.GetOut();

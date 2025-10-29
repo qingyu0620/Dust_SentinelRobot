@@ -31,18 +31,18 @@
  */
 void Robot::Init()
 {
-    // 等待云台上电
-    HAL_Delay(2000);
+    dwt_init(168);
     // 上下板通讯组件初始化
     mcu_comm_.Init(&hcan1, 0x01, 0x00);
+    // 底盘陀螺仪初始化
+    imu_.Init();
+    // 10s时间等待陀螺仪收敛
+    osDelay(pdMS_TO_TICKS(10000));
     // 云台初始化
     gimbal_.Init();
     // 摩擦轮初始化
     chassis_.Init();
-    // 上位机通讯
-    // pc_comm_.Init();
 
-    HAL_Delay(1000);
     static const osThreadAttr_t kRobotTaskAttr = 
     {
         .name = "robot_task",
@@ -93,28 +93,28 @@ void Robot::Task()
         chassis_.SetTargetVelocityX(mcu_chassis_data_local.chassis_speed_x * K - C);
         chassis_.SetTargetVelocityY(mcu_chassis_data_local.chassis_speed_y * K - C);
         chassis_.SetTargetVelocityRotation(0);
-        gimbal_.SetTargetYawOmega(mcu_comm_data_local.yaw * K - C);
-        // switch (mcu_chassis_data_local.chassis_spin) 
-        // {
-        //     case CHASSIS_SPIN_DISABLE:
-        //     {
-        //         chassis_.SetTargetVelocityRotation(mcu_chassis_data_local.chassis_rotation * K - C);
-        //         break;
-        //     }
-        //     case CHASSIS_SPIN_CLOCKWISE:
-        //     {
-        //         chassis_.SetTargetVelocityRotation(MAX_ROTATION_SPEED);
-        //         break;
-        //     }
-        //     case CHASSIS_SPIN_COUNTER_CLOCK_WISE:
-        //     {
-        //         chassis_.SetTargetVelocityRotation(-MAX_ROTATION_SPEED / 4);
-        //         break;
-        //     }
-        //     default:
-        //         chassis_.SetTargetVelocityRotation(mcu_chassis_data_local.chassis_rotation * K - C);
-        //         break;
-        // }
+        // gimbal_.SetTargetYawOmega(mcu_comm_data_local.yaw * K - C);
+        switch (mcu_chassis_data_local.chassis_spin) 
+        {
+            case CHASSIS_SPIN_DISABLE:
+            {
+                chassis_.SetTargetVelocityRotation(mcu_chassis_data_local.chassis_rotation * K - C);
+                break;
+            }
+            case CHASSIS_SPIN_CLOCKWISE:
+            {
+                chassis_.SetTargetVelocityRotation(MAX_ROTATION_SPEED);
+                break;
+            }
+            case CHASSIS_SPIN_COUNTER_CLOCK_WISE:
+            {
+                chassis_.SetTargetVelocityRotation(-MAX_ROTATION_SPEED / 4);
+                break;
+            }
+            default:
+                chassis_.SetTargetVelocityRotation(mcu_chassis_data_local.chassis_rotation * K - C);
+                break;
+        }
         switch (mcu_comm_data_local.switch_r)
         {
             case Switch_UP:
