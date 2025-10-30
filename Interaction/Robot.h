@@ -23,6 +23,8 @@
 #include "app_gimbal.h"
 #include "app_shoot.h"
 
+#include "stdio.h"
+
 /* Exported macros -----------------------------------------------------------*/
 
 /* Exported types ------------------------------------------------------------*/

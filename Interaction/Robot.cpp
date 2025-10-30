@@ -77,6 +77,7 @@ void Robot::Task()
         mcu_comm_.CanSendCommand();
         // 设置pitch角
         gimbal_.SetTargetPitchAngle(remote_dr16_.output.gimbal_pitch);
+        // printf("%f\n", imu_.GetYawAngleTotalAngle());
         // 摩擦轮转速
         switch (mcu_comm_.mcu_comm_data_.switch_r)
         {

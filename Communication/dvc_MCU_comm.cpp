@@ -84,6 +84,8 @@ void McuComm::Task()
 void McuComm::CanSendCommand()
 {
      static uint8_t can_tx_frame[8];
+     union { float f; uint8_t b[4]; } conv;
+
      // 第一帧发送底盘数据
      can_tx_frame[0] = mcu_chassis_data_.start_of_frame;
      can_tx_frame[1] = mcu_chassis_data_.chassis_speed_x >> 8;
@@ -95,6 +97,7 @@ void McuComm::CanSendCommand()
      can_tx_frame[7] = mcu_chassis_data_.chassis_spin;
      can_send_data(can_manage_object_->can_handler, can_tx_id_, can_tx_frame, 8);
 
+     conv.f = mcu_comm_data_.yaw;
      // 第二帧发送拨弹盘，yaw角数据
      can_tx_frame[0] = mcu_comm_data_.start_of_frame;
      can_tx_frame[1] = mcu_comm_data_.armor;
