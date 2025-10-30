@@ -11,6 +11,7 @@
 /* Includes ------------------------------------------------------------------*/
 
 #include "app_gimbal.h"
+#include "cmsis_os2.h"
 #include "stdio.h"
 
 /* Private macros ------------------------------------------------------------*/
@@ -35,12 +36,22 @@ void Gimbal::Init()
     motor_yaw_.CanSendEnter();
     osDelay(pdMS_TO_TICKS(1000));
 
-    motor_yaw_.SetKp(0);  //MIT模式kp
-
     motor_yaw_.SetKd(0.3); // MIT模式kd
+    motor_yaw_.SetControlTorque(0.1);
+    // 小Kp粗调
+    motor_yaw_.SetKp(1.0);  //MIT模式kp
+    motor_yaw_.SetControlAngle(1);
+    motor_yaw_.Output();
+    osDelay(pdMS_TO_TICKS(2000));
+    // 大Kp细调
+    motor_yaw_.SetKp(40);  //MIT模式kp
+    motor_yaw_.SetControlAngle(1);
+    motor_yaw_.Output();
+    osDelay(pdMS_TO_TICKS(1000));
 
+    // 速度控制
+    motor_yaw_.SetKp(0);  //MIT模式kp
     motor_yaw_.SetControlOmega(0);
-
     motor_yaw_.Output();
 
     static const osThreadAttr_t kGimbalTaskAttr = 

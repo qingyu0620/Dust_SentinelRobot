@@ -11,13 +11,15 @@
 /* Includes ------------------------------------------------------------------*/
 
 #include "Robot.h"
+#include "cmsis_os2.h"
 
 /* Private macros ------------------------------------------------------------*/
 
-#define K                       1.f / 66.f
-#define C                       512.f / 33.f
-#define MAX_ROTATION_SPEED      10.f
-#define MAX_RELOAD_SPEED        -10.f
+#define K                    1.f / 660.f
+#define C                    -256.f / 165.f
+#define MAX_OMEGA_SPEED      15.f
+#define MAX_YAW_SPEED        10.f
+#define MAX_RELOAD_SPEED     -10.f
 
 /* Private types -------------------------------------------------------------*/
 
@@ -31,13 +33,14 @@
  */
 void Robot::Init()
 {
-    dwt_init(168);
+    osDelay(1000);
+    // dwt_init(168);
     // 上下板通讯组件初始化
     mcu_comm_.Init(&hcan1, 0x01, 0x00);
     // 底盘陀螺仪初始化
-    imu_.Init();
+    // imu_.Init();
     // 10s时间等待陀螺仪收敛
-    osDelay(pdMS_TO_TICKS(10000));
+    // osDelay(pdMS_TO_TICKS(10000));
     // 云台初始化
     gimbal_.Init();
     // 摩擦轮初始化
@@ -90,31 +93,31 @@ void Robot::Task()
         mcu_comm_data_local = *const_cast<const McuCommData*>(&(mcu_comm_.mcu_comm_data_));
         __enable_irq();
 
-        chassis_.SetTargetVelocityX(mcu_chassis_data_local.chassis_speed_x * K - C);
-        chassis_.SetTargetVelocityY(mcu_chassis_data_local.chassis_speed_y * K - C);
+        chassis_.SetTargetVelocityX((mcu_chassis_data_local.chassis_speed_x * K + C) * MAX_OMEGA_SPEED);
+        chassis_.SetTargetVelocityY((mcu_chassis_data_local.chassis_speed_y * K + C) * MAX_OMEGA_SPEED);
         chassis_.SetTargetVelocityRotation(0);
-        // gimbal_.SetTargetYawOmega(mcu_comm_data_local.yaw * K - C);
-        switch (mcu_chassis_data_local.chassis_spin) 
-        {
-            case CHASSIS_SPIN_DISABLE:
-            {
-                chassis_.SetTargetVelocityRotation(mcu_chassis_data_local.chassis_rotation * K - C);
-                break;
-            }
-            case CHASSIS_SPIN_CLOCKWISE:
-            {
-                chassis_.SetTargetVelocityRotation(MAX_ROTATION_SPEED);
-                break;
-            }
-            case CHASSIS_SPIN_COUNTER_CLOCK_WISE:
-            {
-                chassis_.SetTargetVelocityRotation(-MAX_ROTATION_SPEED / 4);
-                break;
-            }
-            default:
-                chassis_.SetTargetVelocityRotation(mcu_chassis_data_local.chassis_rotation * K - C);
-                break;
-        }
+        gimbal_.SetTargetYawOmega((mcu_comm_data_local.yaw * K + C) * MAX_YAW_SPEED);
+        // switch (mcu_chassis_data_local.chassis_spin) 
+        // {
+        //     case CHASSIS_SPIN_DISABLE:
+        //     {
+        //         chassis_.SetTargetVelocityRotation((mcu_chassis_data_local.chassis_rotation * K + C) * MAX_OMEGA_SPEED);
+        //         break;
+        //     }
+        //     case CHASSIS_SPIN_CLOCKWISE:
+        //     {
+        //         chassis_.SetTargetVelocityRotation(MAX_OMEGA_SPEED);
+        //         break;
+        //     }
+        //     case CHASSIS_SPIN_COUNTER_CLOCK_WISE:
+        //     {
+        //         chassis_.SetTargetVelocityRotation(-MAX_OMEGA_SPEED);
+        //         break;
+        //     }
+        //     default:
+        //         chassis_.SetTargetVelocityRotation((mcu_chassis_data_local.chassis_rotation * K + C) * MAX_OMEGA_SPEED);
+        //         break;
+        // }
         switch (mcu_comm_data_local.switch_r)
         {
             case Switch_UP:
@@ -129,7 +132,7 @@ void Robot::Task()
             }
             case Switch_DOWN:
             {
-                chassis_.SetTargetReloadRotation(-MAX_RELOAD_SPEED);
+                chassis_.SetTargetReloadRotation(-MAX_RELOAD_SPEED / 4);
                 break;
             }
             default:

@@ -34,10 +34,10 @@ void Chassis::Init()
     motor_reload_1_.SetTargetOmega(0.0f);
 
     // 3508电机初始化（底盘电机）
-    motor_chassis_1_.pid_omega_.Init(3.f,0.2f,0.0f);
-    motor_chassis_2_.pid_omega_.Init(3.f,0.2f,0.0f);
-    motor_chassis_3_.pid_omega_.Init(3.f,0.2f,0.0f);
-    motor_chassis_4_.pid_omega_.Init(3.f,0.2f,0.0f);
+    motor_chassis_1_.pid_omega_.Init(1.5f,0.2f,0.0f);
+    motor_chassis_2_.pid_omega_.Init(1.5f,0.2f,0.0f);
+    motor_chassis_3_.pid_omega_.Init(1.5f,0.2f,0.0f);
+    motor_chassis_4_.pid_omega_.Init(1.5f,0.2f,0.0f);
 
     motor_chassis_1_.Init(&hcan1, MOTOR_DJI_ID_0x201, MOTOR_DJI_CONTROL_METHOD_OMEGA);
     motor_chassis_2_.Init(&hcan1, MOTOR_DJI_ID_0x202, MOTOR_DJI_CONTROL_METHOD_OMEGA);
@@ -84,10 +84,10 @@ void Chassis::Task()
         motor_reload_1_ .CalculatePeriodElapsedCallback();
 
         // 设置平移速度 + 自旋速度（发送转速rad / s）
-        motor_chassis_1_.SetTargetOmega(-target_velocity_x_ + target_velocity_rotation_);
-        motor_chassis_2_.SetTargetOmega( target_velocity_y_ + target_velocity_rotation_);
-        motor_chassis_3_.SetTargetOmega( target_velocity_x_ + target_velocity_rotation_);
-        motor_chassis_4_.SetTargetOmega(-target_velocity_y_ + target_velocity_rotation_);
+        motor_chassis_1_.SetTargetOmega(-target_velocity_x_ - target_velocity_y_ + target_velocity_rotation_);
+        motor_chassis_2_.SetTargetOmega(-target_velocity_x_ + target_velocity_y_ + target_velocity_rotation_);
+        motor_chassis_3_.SetTargetOmega( target_velocity_x_ + target_velocity_y_ + target_velocity_rotation_);
+        motor_chassis_4_.SetTargetOmega( target_velocity_x_ - target_velocity_y_ + target_velocity_rotation_);
         
         motor_chassis_1_.CalculatePeriodElapsedCallback();
         motor_chassis_2_.CalculatePeriodElapsedCallback();
