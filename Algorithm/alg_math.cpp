@@ -274,7 +274,7 @@ float CalcYawErrorAngle(float target, float now)
  */
 float normalize_angle_pm_pi(float angle)
 {
-    float m = fmod(angle, 2.0f * M_PI);
+    float m = fmodf(angle * M_PI / 180.0f, 2.0f * M_PI);
     if (m > M_PI){
         m -= 2.0f * M_PI;
     }else if(m < -M_PI){
@@ -282,6 +282,23 @@ float normalize_angle_pm_pi(float angle)
     }
     return m;
 };
+
+/**
+ * @brief 弧度归一角度值
+ * 
+ * @param angle_deg 
+ * @return float 
+ */
+float normalize_pi_pm_angle(float pi)
+{
+    float m = fmodf(pi * 180.f / M_PI, 360.0f);
+    if (m > 180.0f){
+        m -= 360.0f;
+    }else if(m < -180.0f){
+        m += 360.0f;
+    }
+    return m;
+}
 
 /**
  * @brief 归一角度
@@ -304,6 +321,23 @@ float normalize_angle(float angle)
     }
 
     return angle;
+}
+
+/**
+ * @brief 归一弧度
+ * 
+ * @param pi 目标弧度
+ * @return float 目标归一弧度 -pi ~ pi
+ */
+float normalize_pi(float pi)
+{
+    pi = fmodf(pi, 2 * M_PI);
+    if (pi > M_PI){
+        pi -= 2.0f * M_PI;
+    }else if(pi < -M_PI){
+        pi += 2.0f * M_PI;
+    }
+    return pi;
 }
 
 /************************ COPYRIGHT(C) HNUST-DUST **************************/

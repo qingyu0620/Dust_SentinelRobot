@@ -106,12 +106,9 @@ struct SupercapSendData
 class Supercap
 {
 public:
-    // 底盘功率
-    float chassis_power_ = 0.0f;
-
     void Init(CAN_HandleTypeDef *hcan, uint16_t can_rx_id = 0x030, uint16_t can_tx_id1 = 0x02E, uint16_t can_tx_id2 = 0x02F,
               uint16_t chassis_power_limit = 55, uint16_t chassis_power_buffer = 50, int16_t discharge_power_limit = 50, 
-              uint16_t charge_power_limit = 50, SupercapSwitchStatus switch_status = SUPERCAP_STATUS_SWITCH_ENABLE, 
+              uint16_t charge_power_limit = 50, SupercapSwitchStatus switch_status = SUPERCAP_STATUS_SWITCH_DISABLE, 
               SupercapRecordStatus record_status = SUPERCAP_STATUS_RECORD_DISABLE);
 
     void Task();
@@ -139,6 +136,8 @@ public:
     inline float GetSupercapCurrent();
 
     inline uint16_t GetSupercapStatus();
+
+    inline float GetSupercapPower();
 
 protected:
     // CAN管理模块
@@ -173,7 +172,10 @@ protected:
     int16_t discharge_power_limit_;
 
     // 超电充电功率限制
-    uint16_t charge_power_limit_;     
+    uint16_t charge_power_limit_;    
+    
+    // 底盘功率
+    float supercap_power_ = 0.0f;
     
     // 超电控制
     SupercapControl supercap_control_;
@@ -277,6 +279,11 @@ inline float Supercap::GetSupercapCurrent()
 inline uint16_t Supercap::GetSupercapStatus()
 {
     return (received_data_.supercap_status_code.all);
+}
+
+inline float Supercap::GetSupercapPower()
+{
+    return (supercap_power_);
 }
 
 

@@ -12,8 +12,6 @@
 
 #include "dvc_motor_dji.h"
 #include "arm_math.h"
-#include "stddef.h"
-#include "stdio.h"
 
 /* Private macros ------------------------------------------------------------*/
 
@@ -483,13 +481,15 @@ void MotorDjiC620::CalculatePeriodElapsedCallback()
     out_ = tmp_value * current_to_out_;
 
     // 计算功率估计值
-    // power_estimate_ = power_calculate(
-    //                     power_k_0_, 
-    //                     power_k_1_, 
-    //                     power_k_2_, 
-    //                     power_A_, 
-    //                     target_current_, 
-    //                     rx_data_.now_omega / gearbox_rate_);
+    power_estimate_ = power_calculate(
+                        power_k_0_,
+                        power_k_1_,
+                        power_k_2_,
+                        power_k_3_,
+                        power_k_4_,
+                        power_k_5_,
+                        target_current_,
+                        rx_data_.now_omega * gearbox_rate_);
 
     Output();
 
@@ -552,18 +552,23 @@ void MotorDjiC620::DataProcess()
     rx_data_.total_encoder = rx_data_.total_round * encoder_num_per_round_ + tmp_encoder;
 
     // 计算电机本身信息
-    rx_data_.now_angle = 
-        (float) rx_data_.total_encoder / (float) encoder_num_per_round_ * 2.0f * PI / gearbox_rate_;
+    rx_data_.now_angle = (float) rx_data_.total_encoder / (float) encoder_num_per_round_ * 2.0f * PI / gearbox_rate_;
+
     rx_data_.now_omega = (float) tmp_omega * RPM_TO_RADPS / gearbox_rate_;
+
     rx_data_.now_current = tmp_current / current_to_out_;
+
     rx_data_.now_temperature = tmp_buffer->temperature + CELSIUS_TO_KELVIN;
-    // rx_data_.now_power = power_calculate(
-    //                         power_k_0_, 
-    //                         power_k_1_, 
-    //                         power_k_2_, 
-    //                         power_A_, 
-    //                         rx_data_.now_current, 
-    //                         rx_data_.now_omega * gearbox_rate_);
+
+    rx_data_.now_power = power_calculate(
+                        power_k_0_,
+                        power_k_1_,
+                        power_k_2_,
+                        power_k_3_,
+                        power_k_4_,
+                        power_k_5_,
+                        rx_data_.now_current,
+                        rx_data_.now_omega * gearbox_rate_);
 
     // 存储预备信息
     rx_data_.pre_encoder = tmp_encoder;
@@ -634,12 +639,12 @@ void MotorDjiC620::PowerLimitControl()
             // 需要功率控制
 
             // 根据功率估计公式解一元二次方程求电流值
-            float a = power_k_2_;
-            float b = power_k_0_ * rx_data_.now_omega;
-            float c = power_A_ 
-                    + power_k_1_ * rx_data_.now_omega * rx_data_.now_omega 
-                    - power_factor_ * power_estimate_;
+            float a = power_k_4_;
+            float b = power_k_1_ + power_k_3_ * rx_data_.now_omega;
+            float c = power_k_5_ * rx_data_.now_omega * rx_data_.now_omega
+                    + power_k_2_ * rx_data_.now_omega + power_k_0_ - power_factor_ * power_estimate_;
             float delta, h;
+
             delta = b * b - 4 * a * c;
             if (delta < 0.0f)
             {

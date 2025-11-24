@@ -70,6 +70,7 @@ void can1_callback_function(CanRxBuffer* CAN_RxMessage)
         case (0x030):
         {
             robot_.supercap_.CanRxCpltCallback(CAN_RxMessage->data);
+            break;
         }
     }
 }
@@ -93,7 +94,7 @@ void uart3_callback_function(uint8_t* buffer, uint16_t length)
  */
 void uart6_callback_function(uint8_t* buffer, uint16_t length)
 {	
-
+    
 }
 
 /* Function prototypes -------------------------------------------------------*/

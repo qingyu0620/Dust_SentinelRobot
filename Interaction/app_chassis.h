@@ -19,6 +19,7 @@
 // bsp
 #include "cmsis_os2.h"
 #include "bsp_can.h"
+#include "stdio.h"
 
 /* Exported macros -----------------------------------------------------------*/
 

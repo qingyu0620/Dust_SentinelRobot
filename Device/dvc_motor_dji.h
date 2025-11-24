@@ -135,7 +135,11 @@ public:
 
     inline float GetPowerK2();
 
-    inline float GetPowerA();
+    inline float GetPowerK3();
+
+    inline float GetPowerK4();
+
+    inline float GetPowerK5();
 
     inline float GetTheoreticalOutputCurrentMax();
 
@@ -214,10 +218,12 @@ protected:
     // 常量
 
     // 功率计算系数
-    float power_k_0_ = 0.0171687401695532f;
-    float power_k_1_ = 0.00004319062337601348f;
-    float power_k_2_ = 0.12785662198126574f;
-    float power_A_   = 1.598658371452403f;
+    float power_k_0_ = 0.6641993412640775f;
+    float power_k_1_ = 0.006444284468539646f;
+    float power_k_2_ = 0.0001423857226262331f;
+    float power_k_3_ = 0.017644430204543864f;
+    float power_k_4_ = 0.1650143850678086f;
+    float power_k_5_ = 3.096721772539512e-05f;
 
     // 一圈编码器刻度
     uint16_t encoder_num_per_round_ = 8192;
@@ -444,9 +450,29 @@ inline float MotorDjiC620::GetPowerK2()
  *
  * @return float 功率计算系数
  */
-inline float MotorDjiC620::GetPowerA()
+inline float MotorDjiC620::GetPowerK3()
 {
-    return (power_A_);
+    return (power_k_3_);
+}
+
+/**
+ * @brief 获取功率计算系数
+ *
+ * @return float 功率计算系数
+ */
+inline float MotorDjiC620::GetPowerK4()
+{
+    return (power_k_4_);
+}
+
+/**
+ * @brief 获取功率计算系数
+ *
+ * @return float 功率计算系数
+ */
+inline float MotorDjiC620::GetPowerK5()
+{
+    return (power_k_5_);
 }
 
 /**

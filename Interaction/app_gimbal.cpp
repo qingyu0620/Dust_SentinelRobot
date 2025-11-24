@@ -11,6 +11,7 @@
 /* Includes ------------------------------------------------------------------*/
 
 #include "app_gimbal.h"
+#include "alg_math.h"
 
 /* Private macros ------------------------------------------------------------*/
 
@@ -28,9 +29,9 @@ void Gimbal::Init()
 {
     // yaw轴角度环pid
     yaw_angle_pid_.Init(
-        0.5f,
+        8.0f,
         0.05f,
-        0.0105f,
+        0.02f,
         0.0f,
         0.f,
         44.0f,
@@ -44,7 +45,7 @@ void Gimbal::Init()
     );
     // yaw轴速度环pid
     yaw_omega_pid_.Init(
-        0.4f,
+        0.7f,
         0.008f,
         0.0f,
         0.0f,
@@ -57,7 +58,6 @@ void Gimbal::Init()
         0.0f,
         PID_D_First_DISABLE,
         0.01
-         
     );
     // yaw轴速度环滤波器
     yaw_omega_filter_.Init(15.0f, 0.001f);
@@ -124,12 +124,11 @@ void Gimbal::SelfResolution()
 {
     // 获取当前数据
     now_yaw_omega_ = motor_yaw_.GetNowOmega();
-    now_yaw_angle_ = motor_yaw_.GetNowAngle() * 14.4;
+    now_yaw_angle_ = normalize_angle_pm_pi(motor_yaw_.GetNowAngle() * 14.4);
 
     // 计算yaw轴偏差
     // yaw_angle_diff_ = CalcYawErrorAngle(imu_yaw_angle_, remote_yaw_angle_);
-    yaw_angle_diff_ = CalcYawErrorAngle(now_yaw_angle_, remote_yaw_angle_);
-
+    yaw_angle_diff_ = CalcYawError(now_yaw_angle_, remote_yaw_angle_);
 
     // 角度环
     yaw_angle_pid_.SetTarget(0);
@@ -143,8 +142,8 @@ void Gimbal::SelfResolution()
     yaw_omega_pid_.CalculatePeriodElapsedCallback();
 
     // 设定目标力矩
-    // SetTargetYawTorque(yaw_omega_pid_.GetOut());
-    // printf("%f,%f,%f\n", yaw_angle_diff_, yaw_angle_pid_.GetOut(), yaw_omega_pid_.GetOut());
+    SetTargetYawTorque(yaw_omega_pid_.GetOut());
+    // printf("%f,%f,%f\n", yaw_angle_pid_.GetOut(), yaw_omega_pid_.GetOut(), yaw_angle_diff_);
 }
 
 /**

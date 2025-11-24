@@ -11,9 +11,6 @@
 /* Includes ------------------------------------------------------------------*/
 
 #include "app_chassis.h"
-#include "dvc_motor_dji.h"
-#include "stdio.h"
-#include <stdint.h>
 
 /* Private macros ------------------------------------------------------------*/
 
@@ -44,7 +41,7 @@ void Chassis::Init()
         0.0f  
     );
     // 底盘3508电机初始化
-    motor_chassis_1_.pid_omega_.Init(0.15f, 0.0f, 0.0f, 0.0f, 20.0f, 20.0f);
+    motor_chassis_1_.pid_omega_.Init(2.0f,0.f,0.0007f);
     motor_chassis_2_.pid_omega_.Init(2.0f,0.f,0.0007f);
     motor_chassis_3_.pid_omega_.Init(2.0f,0.f,0.0007f);
     motor_chassis_4_.pid_omega_.Init(2.0f,0.f,0.0007f);
@@ -86,8 +83,8 @@ void Chassis::TaskEntry(void *argument)
  */
 void Chassis::RotationMatrixTransform()
 {
-    cos_theta_ = cosf(now_yawdiff_ * PI / 180.f);
-    sin_theta_ = sinf(now_yawdiff_ * PI / 180.f);
+    cos_theta_ = cosf(now_yawdiff_);
+    sin_theta_ = sinf(now_yawdiff_);
     target_vx_in_chassis_ = cos_theta_ * target_vx_in_gimbal_ - sin_theta_ * target_vy_in_gimbal_;
     target_vy_in_chassis_ = sin_theta_ * target_vx_in_gimbal_ + cos_theta_ * target_vy_in_gimbal_;
 }
@@ -183,20 +180,18 @@ void Chassis::OutputToMotor()
  */
 void Chassis::Task()
 {
+    float chassis_power = 0.0f;
     for (;;)
     {
-        // // 旋转矩阵转换
-        // RotationMatrixTransform();
-        // // 斜坡规划算法
-        // SlopePlanning();
-        // // 运动学解析
-        // KinematicsInverseResolution();
-        // // 输出
-        // OutputToMotor();
-        
-        motor_chassis_1_.CalculatePeriodElapsedCallback();
-        can_send_data(&hcan1, 0x200, g_can1_0x200_tx_data, 8);
-        
+        // 旋转矩阵转换
+        RotationMatrixTransform();
+        // 斜坡规划算法
+        SlopePlanning();
+        // 运动学解析
+        KinematicsInverseResolution();
+        // 输出
+        OutputToMotor();
+
         osDelay(pdMS_TO_TICKS(1));
     }
 }
