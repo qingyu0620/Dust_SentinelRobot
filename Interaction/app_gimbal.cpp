@@ -11,8 +11,12 @@
 /* Includes ------------------------------------------------------------------*/
 
 #include "app_gimbal.h"
+#include "alg_math.h"
 
 /* Private macros ------------------------------------------------------------*/
+
+#define K_MOTOR_ANGLE      14.4f
+#define C_MOTOR_ANGLE      40.f
 
 /* Private types -------------------------------------------------------------*/
 
@@ -29,27 +33,27 @@ void Gimbal::Init()
     // pitch轴角度环
     pitch_angle_pid_.Init
     (
-        1.8f,
-        0.02f,
-        0.005f,
+        9.0f,
+        0.01f,
+        0.0075f,
         0.0f,
         0.f,
-        15.0f,
+        44.0f,
         0.001f,
         0.0f,
         0.0f,
         0.0f,
-        0.0f  
+        0.0f
     );
     // pitch轴角度环
     pitch_omega_pid_.Init
     (
-        1.0f,
-        0.02f,
+        0.7f,
+        0.008f,
         0.0f,
         0.0f,
         0.0f,
-        3.f,
+        9.9f,
         0.001f,
         0.0f,
         0.0f,
@@ -71,12 +75,9 @@ void Gimbal::Init()
     motor_pitch_.CanSendEnter();
     osDelay(pdMS_TO_TICKS(1000));
 
-    motor_pitch_.SetKp(0);     //MIT模式kp
-
+    motor_pitch_.SetKp(0);      //MIT模式kp
     motor_pitch_.SetKd(0);
-
     motor_pitch_.SetControlTorque(0);
-
     motor_pitch_.Output();
 
     static const osThreadAttr_t kGimbalTaskAttr = {
@@ -107,7 +108,7 @@ void Gimbal::SelfResolution()
 {
     // 获取当前数据
     now_pitch_omega_ = motor_pitch_.GetNowOmega();
-    now_pitch_angle_ = motor_pitch_.GetNowAngle();
+    now_pitch_angle_ = normalize_angle_pm_pi(K_MOTOR_ANGLE * motor_pitch_.GetNowAngle() + C_MOTOR_ANGLE);
 
     // 计算pitch轴偏差
     pitch_angle_diff_ = now_pitch_angle_ - remote_pitch_angle_;
@@ -125,7 +126,7 @@ void Gimbal::SelfResolution()
 
     // 设定目标力矩
     SetTargetPitchTorque(pitch_omega_pid_.GetOut());
-    // printf("%f,%f\n", remote_pitch_angle_, pitch_omega_pid_.GetOut());
+    // printf("%f,%f,%f\n", pitch_angle_diff_, normalize_angle_pm_pi(now_pitch_angle_), pitch_omega_pid_.GetOut());
 }
 
 /**

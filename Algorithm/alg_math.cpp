@@ -11,6 +11,7 @@
 /* Includes ------------------------------------------------------------------*/
 
 #include "alg_math.h"
+#include <math.h>
 
 /* Private macros ------------------------------------------------------------*/
 
@@ -274,7 +275,7 @@ float CalcYawErrorAngle(float target, float now)
  */
 float normalize_angle_pm_pi(float angle)
 {
-    float m = fmod(angle, 2.0f * M_PI);
+    float m = fmodf(angle * M_PI / 180.0f, 2.0f * M_PI);
     if (m > M_PI){
         m -= 2.0f * M_PI;
     }else if(m < -M_PI){
@@ -282,6 +283,23 @@ float normalize_angle_pm_pi(float angle)
     }
     return m;
 };
+
+/**
+ * @brief 弧度归一角度值
+ * 
+ * @param angle_deg 
+ * @return float 
+ */
+float normalize_pi_pm_angle(float pi)
+{
+    float m = fmodf(pi * 180.f / M_PI, 360.0f);
+    if (m > 180.0f){
+        m -= 360.0f;
+    }else if(m < -180.0f){
+        m += 360.0f;
+    }
+    return m;
+}
 
 /**
  * @brief 归一角度

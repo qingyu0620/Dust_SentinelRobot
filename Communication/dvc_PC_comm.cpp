@@ -40,8 +40,10 @@ void PcComm::Send_Message()
     buffer[0] = send_autoaim_data.start_of_frame;
     buffer[1] = send_autoaim_data.armor;
     memcpy(&buffer[2], send_autoaim_data.end_of_frame, 6);
-    memcpy(&buffer[8], &send_autoaim_data.yaw, 4);
-    memcpy(&buffer[12], &send_autoaim_data.pitch, 4);
+
+    memcpy(&buffer[8], &send_autoaim_data.yaw.b, 4);
+
+    memcpy(&buffer[12], &send_autoaim_data.pitch.b, 4);
     
     usb_transmit(buffer, 16);
 }
@@ -54,14 +56,7 @@ void PcComm::RxCpltCallback()
 {
     if (bsp_usb_rx_buffer[0] == 0xFF)
     {
-        union {float f; uint8_t b[4] ;} conv;
-
-        conv.b[0] = bsp_usb_rx_buffer[1];
-        conv.b[1] = bsp_usb_rx_buffer[2];
-        conv.b[2] = bsp_usb_rx_buffer[3];
-        conv.b[3] = bsp_usb_rx_buffer[4];
-
-        send_autoaim_data.pitch = conv.f;
+        memcpy(send_autoaim_data.pitch.b, &bsp_usb_rx_buffer[1], 4);
     }
     
     if (bsp_usb_rx_buffer[0] == 0xFE)
@@ -73,19 +68,20 @@ void PcComm::RxCpltCallback()
         conv.b[2] = bsp_usb_rx_buffer[3];
         conv.b[3] = bsp_usb_rx_buffer[4];
 
-        send_autoaim_data.yaw = conv.f;
+        send_autoaim_data.yaw.f = conv.f;
     }
 
 
     if (bsp_usb_rx_buffer[0] == recv_autoaim_data.start_of_frame)
     {
-        memcpy(recv_autoaim_data.yaw,   &bsp_usb_rx_buffer[1], 4);
-        memcpy(recv_autoaim_data.pitch, &bsp_usb_rx_buffer[5], 4);
+        memcpy(recv_autoaim_data.yaw.b,   &bsp_usb_rx_buffer[1], 4);
+        memcpy(recv_autoaim_data.pitch.b, &bsp_usb_rx_buffer[5], 4);
 
         recv_autoaim_data.fire      = bsp_usb_rx_buffer[9];
         recv_autoaim_data.crc16[0]  = bsp_usb_rx_buffer[10];
         recv_autoaim_data.crc16[1]  = bsp_usb_rx_buffer[11];
     }
+
     else if(bsp_usb_rx_buffer[0] == recv_navigation_data.start_of_frame)
     {
         memcpy(recv_navigation_data.linear_x, &bsp_usb_rx_buffer[1], 4);

@@ -102,6 +102,9 @@ protected:
     // 原始数据
     RemoteDjiData data_;
 
+    // 掉线时长
+    uint32_t offline_time_;
+
     // 当前时刻flag
     uint32_t flag_ = 0;
 
@@ -114,11 +117,11 @@ protected:
 
     float c_nor = -256.0f / 165.0f;
 
-    // pitch线性转换参数（当前为-27度为摇杆最低，-23为摇杆最高）
+    // pitch线性转换参数（-0.35rad为摇杆最低，0.65rad为摇杆最高）
 
-    float k_pitch = 1.f / 330.f;
+    float k_pitch = 1.f / 1320.f;
 
-    float c_pitch = -4637.f / 165.f;
+    float c_pitch = -413.f / 660.f;
 
     // 掉线清理数据函数
 

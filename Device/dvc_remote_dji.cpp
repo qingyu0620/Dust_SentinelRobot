@@ -11,6 +11,7 @@
 /* Includes ------------------------------------------------------------------*/
 
 #include "dvc_remote_dji.h"
+#include "bsp_uart.h"
 #include "stdio.h"
 
 /* Private macros ------------------------------------------------------------*/
@@ -118,11 +119,16 @@ void RemoteDjiDR16::AlivePeriodElapsedCallback()
     {
         // 断开连接
         remote_dji_alive_status = REMOTE_DJI_STATUS_DISABLE;
-        ClearData();
+        offline_time_ += 1;
+        if(offline_time_ == 10){
+            ClearData();
+            // uart_reinit(uart_manage_object_->uart_handle, uart_manage_object_->callback_function, uart_manage_object_->rx_buffer_length);
+        }
     }
     else
     {
         remote_dji_alive_status = REMOTE_DJI_STATUS_ENABLE;
+        offline_time_ = 0;
     }
     pre_flag_ = flag_;
 }
@@ -136,7 +142,7 @@ void RemoteDjiDR16::Task()
     for(;;)
     {
         AlivePeriodElapsedCallback();
-        osDelay(pdMS_TO_TICKS(500));
+        osDelay(pdMS_TO_TICKS(50));
     }
 }
 

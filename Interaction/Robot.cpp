@@ -11,6 +11,7 @@
 /* Includes ------------------------------------------------------------------*/
 
 #include "Robot.h"
+#include "alg_math.h"
 #include "bsp_uart.h"
 #include "usart.h"
 
@@ -30,22 +31,26 @@
  */
 void Robot::Init()
 {
-    // 上位机通讯
-    pc_comm_.Init();
     // 遥控初始化
     // remote_vt03_.Init(&huart1, uart1_callback_function, UART_BUFFER_LENGTH);
 
     remote_dr16_.Init(&huart3, uart3_callback_function, UART_BUFFER_LENGTH);
+
     // 上下板通讯组件初始化
     mcu_comm_.Init(&hcan1, 0x00, 0x01);
+
+    // 上位机通讯
+    pc_comm_.Init();
+
     // 等待云台yaw角回正
     osDelay(pdMS_TO_TICKS(5000));
-    // 底盘陀螺仪初始化
+
+    // 陀螺仪初始化
     imu_.Init();
-    // 10s时间等待陀螺仪收敛
 
     // 云台初始化
     gimbal_.Init();
+
     // 摩擦轮初始化
     shoot_.Init();
     
@@ -76,10 +81,17 @@ void Robot::TaskEntry(void *argument)
  */
 void Robot::Task()
 {
+    McuCommData mcu_comm_data_local;
+    mcu_comm_data_local.yaw_angle = 0;
     for(;;)
     {
         /****************************   通讯   ****************************/
 
+
+        // 用临界区一次性复制，避免撕裂
+        __disable_irq();
+        mcu_comm_data_local = *const_cast<const McuCommData*>(&(mcu_comm_.recv_comm_data_));
+        __enable_irq();
 
         // 若掉线发送空白数据
         if(remote_dr16_.remote_dji_alive_status == REMOTE_DJI_STATUS_DISABLE)
@@ -93,8 +105,14 @@ void Robot::Task()
 
         /****************************   云台   ****************************/
 
-        gimbal_.SetRemoetPitchAngle(remote_dr16_.output_.pitch);
 
+        if(pc_comm_.recv_autoaim_data.fire == 0){
+            gimbal_.SetRemoetPitchAngle(remote_dr16_.output_.pitch);
+        }else if(pc_comm_.recv_autoaim_data.fire == 1){
+            gimbal_.SetRemoetPitchAngle(pc_comm_.recv_autoaim_data.pitch.f);
+        }
+        
+        
         /****************************   模式   ****************************/
 
 
@@ -122,17 +140,10 @@ void Robot::Task()
         /****************************   调试   ****************************/
 
 
-        // pc_comm_.send_autoaim_data.armor = 0x00;
-        // pc_comm_.send_autoaim_data.yaw   =  0.f;
-        // pc_comm_.send_autoaim_data.pitch =  0.f;
-        // pc_comm_.Send_Message();
-
-        // memcpy(mcu_comm_.send_autoaim_data_.autoaim_yaw, pc_comm_.recv_autoaim_data.yaw, 4);
-        // mcu_comm_.CanSendAutoaim();
-
-        // printf("%f\n", normalize_angle(imu_.GetYawAngleTotalAngle()));
-
-        // printf("%f\n", imu_.GetTemperature());
+        pc_comm_.send_autoaim_data.armor = 0;
+        pc_comm_.send_autoaim_data.yaw.f = 0.0f;
+        pc_comm_.send_autoaim_data.pitch.f =  gimbal_.GetNowPitchAngle();
+        pc_comm_.Send_Message();
 
         osDelay(pdMS_TO_TICKS(1));
     }

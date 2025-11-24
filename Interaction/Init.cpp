@@ -49,6 +49,10 @@ void can2_callback_function(CanRxBuffer* CAN_RxMessage)
 {
     switch (CAN_RxMessage->header.StdId) 
     {
+        case (0x00):
+        {
+            robot_.mcu_comm_.CanRxCpltCallback(CAN_RxMessage->data);
+        }
         case (0x04):
         {
             robot_.gimbal_.motor_pitch_.CanRxCpltCallback(CAN_RxMessage->data);
@@ -64,8 +68,6 @@ void can2_callback_function(CanRxBuffer* CAN_RxMessage)
             robot_.shoot_.motor_shoot_2_.CanRxCpltCallback(CAN_RxMessage->data);
             break;
         }
-        default:
-            break;
     }
 }
 

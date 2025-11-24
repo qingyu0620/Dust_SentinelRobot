@@ -21,6 +21,12 @@
 
 /* Exported types ------------------------------------------------------------*/
 
+union conv
+{
+    uint8_t b[4];
+    float f;
+};
+
 /**
  * @brief 自瞄发送结构体
  * 
@@ -30,8 +36,8 @@ struct Send_AutoAim_Data
     uint8_t start_of_frame = 0x5A;
     uint8_t armor = 0x00;
     uint8_t end_of_frame[6] = {0xCD, 0xCC, 0x00, 0x00, 0x00, 0x00};
-    float yaw = 0;
-    float pitch = 0;
+    conv yaw;
+    conv pitch;
 };
 
 /**
@@ -41,8 +47,8 @@ struct Send_AutoAim_Data
 struct Recv_AutoAim_Data
 {
     uint8_t start_of_frame = 0xA5;
-    uint8_t yaw[4] = {0};
-    uint8_t pitch[4] = {0};
+    conv yaw;
+    conv pitch;
     uint8_t fire = 0x00;
     uint8_t crc16[2] = {0};
 };
