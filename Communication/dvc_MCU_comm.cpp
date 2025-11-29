@@ -98,17 +98,11 @@ void McuComm::CanSendCommand()
 
      // 第二帧发送通用数据
      can_tx_frame[0] = 0xAB;
-
      can_tx_frame[1] = send_comm_data_.armor;
-
      can_tx_frame[2] = send_comm_data_.supercap;
-
      can_tx_frame[3] = send_comm_data_.switch_r;
 
-     can_tx_frame[4] = conv.b[0];
-     can_tx_frame[5] = conv.b[1];
-     can_tx_frame[6] = conv.b[2];
-     can_tx_frame[7] = conv.b[3];
+     memcpy(&can_tx_frame[4], conv.b, 4);
 
      can_send_data(can_manage_object_->can_handler, can_tx_id_, can_tx_frame, 8);
 }
@@ -124,10 +118,13 @@ void McuComm::CanSendAutoaim()
      // 第一帧发送yaw包
      can_tx_frame[0] = 0xAC;
 
-     can_tx_frame[1] = send_autoaim_data_.autoaim_yaw[0];
-     can_tx_frame[2] = send_autoaim_data_.autoaim_yaw[1];
-     can_tx_frame[3] = send_autoaim_data_.autoaim_yaw[2];
-     can_tx_frame[4] = send_autoaim_data_.autoaim_yaw[3];
+     memcpy(&can_tx_frame[1], send_autoaim_data_.autoaim_yaw.b, 4);
+
+     // can_tx_frame[1] = send_autoaim_data_.autoaim_yaw.b[0];
+     // can_tx_frame[2] = send_autoaim_data_.autoaim_yaw.b[1];
+     // can_tx_frame[3] = send_autoaim_data_.autoaim_yaw.b[2];
+     // can_tx_frame[4] = send_autoaim_data_.autoaim_yaw.b[3];
+
      can_tx_frame[5] = 0x00;
      can_tx_frame[6] = 0x00;
      can_tx_frame[7] = 0x00;
@@ -137,6 +134,8 @@ void McuComm::CanSendAutoaim()
      // 第二帧发送pitch包（哨兵pitch角在上板，用不到）
      // can_tx_frame[0] = send_autoaim_data_.start_of_pitch_frame;
 
+     // memcpy(&can_tx_frame[1], send_autoaim_data_.autoaim_pitch.b, 4);
+     
      // can_tx_frame[1] = send_autoaim_data_.autoaim_pitch[0];
      // can_tx_frame[2] = send_autoaim_data_.autoaim_pitch[1];
      // can_tx_frame[3] = send_autoaim_data_.autoaim_pitch[2];
@@ -195,16 +194,10 @@ void McuComm::CanRxCpltCallback(uint8_t* rx_data)
      // 处理数据 , 解包
      switch (rx_data[0])
      {
-         case (0xAB):
+         case (0xAC):
          {
-               union { float f; uint8_t b[4]; } conv;
-
-               conv.b[0]                 = rx_data[4];
-               conv.b[1]                 = rx_data[5];
-               conv.b[2]                 = rx_data[6];
-               conv.b[3]                 = rx_data[7];
-
-               recv_comm_data_.yaw_angle = conv.f;
+               memcpy(&recv_auto_data_.autoaim_yaw.b, &rx_data[1], 4);
+               
                break;
          }
      }

@@ -39,6 +39,7 @@ void PcComm::Send_Message()
     
     buffer[0] = send_autoaim_data.start_of_frame;
     buffer[1] = send_autoaim_data.armor;
+    
     memcpy(&buffer[2], send_autoaim_data.end_of_frame, 6);
 
     memcpy(&buffer[8], &send_autoaim_data.yaw.b, 4);
@@ -54,24 +55,6 @@ void PcComm::Send_Message()
  */
 void PcComm::RxCpltCallback()
 {
-    if (bsp_usb_rx_buffer[0] == 0xFF)
-    {
-        memcpy(send_autoaim_data.pitch.b, &bsp_usb_rx_buffer[1], 4);
-    }
-    
-    if (bsp_usb_rx_buffer[0] == 0xFE)
-    {
-        union {float f; uint8_t b[4] ;} conv;
-
-        conv.b[0] = bsp_usb_rx_buffer[1];
-        conv.b[1] = bsp_usb_rx_buffer[2];
-        conv.b[2] = bsp_usb_rx_buffer[3];
-        conv.b[3] = bsp_usb_rx_buffer[4];
-
-        send_autoaim_data.yaw.f = conv.f;
-    }
-
-
     if (bsp_usb_rx_buffer[0] == recv_autoaim_data.start_of_frame)
     {
         memcpy(recv_autoaim_data.yaw.b,   &bsp_usb_rx_buffer[1], 4);

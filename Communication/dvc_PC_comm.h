@@ -21,7 +21,11 @@
 
 /* Exported types ------------------------------------------------------------*/
 
-union conv
+/**
+ * @brief 转换联合体
+ * 
+ */
+union PcConv
 {
     uint8_t b[4];
     float f;
@@ -36,8 +40,8 @@ struct Send_AutoAim_Data
     uint8_t start_of_frame = 0x5A;
     uint8_t armor = 0x00;
     uint8_t end_of_frame[6] = {0xCD, 0xCC, 0x00, 0x00, 0x00, 0x00};
-    conv yaw;
-    conv pitch;
+    PcConv yaw;
+    PcConv pitch;
 };
 
 /**
@@ -47,10 +51,10 @@ struct Send_AutoAim_Data
 struct Recv_AutoAim_Data
 {
     uint8_t start_of_frame = 0xA5;
-    conv yaw;
-    conv pitch;
-    uint8_t fire = 0x00;
-    uint8_t crc16[2] = {0};
+    PcConv yaw;
+    PcConv pitch;
+    uint8_t fire = 0;
+    uint8_t crc16[2] = {0,0};
 };
 
 /**
@@ -60,8 +64,8 @@ struct Recv_AutoAim_Data
 struct Recv_Navigation_Data
 {
     uint8_t start_of_frame = 0x6A;
-    uint8_t linear_x[4] = {0};
-    uint8_t linear_y[4] = {0};
+    PcConv linear_x[4] = {0, 0, 0, 0};
+    PcConv linear_y[4] = {0, 0, 0, 0};
     uint8_t crc16[2] = {0};
 };
 
@@ -78,16 +82,16 @@ public:
         0x5A,
         0x00,
         {0xCD, 0xCC, 0x00, 0x00, 0x00, 0x00},
-        0,
-        0,
+         {0,0,0,0},
+        {0,0,0,0}
     };
     // 接收自瞄数据
     Recv_AutoAim_Data recv_autoaim_data = 
     {
         0xA5,
-        {0},
-        {0},
-        0X00,
+        {0, 0, 0, 0},
+        {0, 0, 0, 0},
+        0,
         {0},
     };
     // 接收导航数据
@@ -104,6 +108,7 @@ public:
     void Send_Message();
 
     void RxCpltCallback();
+
 private:
 
 };

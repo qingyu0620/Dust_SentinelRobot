@@ -102,9 +102,6 @@ protected:
     // 原始数据
     RemoteDjiData data_;
 
-    // 掉线时长
-    uint32_t offline_time_;
-
     // 当前时刻flag
     uint32_t flag_ = 0;
 

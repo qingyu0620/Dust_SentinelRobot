@@ -13,6 +13,7 @@
 #include "Robot.h"
 #include "alg_math.h"
 #include "bsp_uart.h"
+#include "dvc_MCU_comm.h"
 #include "usart.h"
 
 /* Private macros ------------------------------------------------------------*/
@@ -81,8 +82,9 @@ void Robot::TaskEntry(void *argument)
  */
 void Robot::Task()
 {
-    McuCommData mcu_comm_data_local;
-    mcu_comm_data_local.yaw_angle = 0;
+    McuAutoaimData mcu_auto_data_local;
+    mcu_auto_data_local.autoaim_yaw.f = 0.f;
+    
     for(;;)
     {
         /****************************   通讯   ****************************/
@@ -90,7 +92,7 @@ void Robot::Task()
 
         // 用临界区一次性复制，避免撕裂
         __disable_irq();
-        mcu_comm_data_local = *const_cast<const McuCommData*>(&(mcu_comm_.recv_comm_data_));
+        mcu_auto_data_local = *const_cast<const McuAutoaimData*>(&(mcu_comm_.recv_auto_data_));
         __enable_irq();
 
         // 若掉线发送空白数据
