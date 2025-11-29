@@ -48,14 +48,14 @@ uint8_t g_can_supercap_tx_data[8] = {0};
  */
 void can_init(CAN_HandleTypeDef *hcan, CanCallback callback_function)
 {
-    if (hcan->Instance == CAN1)
+    if(hcan->Instance == CAN1)
     {
         g_can1_manage_object.can_handler = hcan;
         g_can1_manage_object.callback_function = callback_function;
         can_filter_mask_config(hcan, CAN_FILTER(0) | CAN_FIFO_0 | CAN_STDID | CAN_DATA_TYPE, 0, 0);
         can_filter_mask_config(hcan, CAN_FILTER(1) | CAN_FIFO_1 | CAN_STDID | CAN_DATA_TYPE, 0, 0);
     }
-    else if (hcan->Instance == CAN2)
+    else if(hcan->Instance == CAN2)
     {
         g_can2_manage_object.can_handler = hcan;
         g_can2_manage_object.callback_function = callback_function;
@@ -89,7 +89,6 @@ void can_filter_mask_config(CAN_HandleTypeDef *hcan, uint8_t object_para, uint32
     uint8_t id_type_flag = (object_para >> 1) & 0x01;       //ID类型
     uint8_t frame_type   = object_para & 0x01;              //帧类型
 
-
     // 标准ID
     filter.FilterIdHigh = 0x000;
     filter.FilterIdLow = 0x0000;
@@ -101,7 +100,7 @@ void can_filter_mask_config(CAN_HandleTypeDef *hcan, uint8_t object_para, uint32
     filter.FilterMode = CAN_FILTERMODE_IDMASK;
     filter.FilterScale = CAN_FILTERSCALE_32BIT;
     filter.FilterActivation = ENABLE;
-    filter.SlaveStartFilterBank = 14;       //CAN2滤波器为14 - 27
+    filter.SlaveStartFilterBank = 14;       // CAN2滤波器为14 - 27
 
     UNUSED(frame_type);                     // 帧类型在FDCAN中不需要配置
 
@@ -125,14 +124,12 @@ uint8_t can_send_data(CAN_HandleTypeDef *hcan, uint16_t id, uint8_t *data, uint1
     //检测传参是否正确
     assert_param(hcan != NULL);
 
-    tx_header.IDE                   = CAN_ID_STD;               //选择标准ID           
-    tx_header.StdId                 = id;                       //配置id
-    tx_header.ExtId                 = 0x00;                     //配置0
-    tx_header.RTR                   = CAN_RTR_DATA;             //数据帧
-    tx_header.DLC                   = length;                   //数据长度
-    tx_header.TransmitGlobalTime    = DISABLE;                  //不启用全局时间传输
-
-    // UNUSED(used_mailbox); // 避免未使用变量警告
+    tx_header.IDE                   = CAN_ID_STD;               // 选择标准ID           
+    tx_header.StdId                 = id;                       // 配置id
+    tx_header.ExtId                 = 0x00;                     // 配置0
+    tx_header.RTR                   = CAN_RTR_DATA;             // 数据帧
+    tx_header.DLC                   = length;                   // 数据长度
+    tx_header.TransmitGlobalTime    = DISABLE;                  // 不启用全局时间传输
 
     return HAL_CAN_AddTxMessage(hcan, &tx_header, data, &used_mailbox);
 }
@@ -153,14 +150,14 @@ void can_period_elapsed_callback()
  */
 void HAL_CAN_RxFifo0MsgPendingCallback(CAN_HandleTypeDef *hcan)
 {
-    if (hcan->Instance == CAN1)
+    if(hcan->Instance == CAN1)
     {
         HAL_CAN_GetRxMessage(hcan, CAN_FIFO_0, 
                     &g_can1_manage_object.rx_buffer.header,
                        g_can1_manage_object.rx_buffer.data);
         g_can1_manage_object.callback_function(&g_can1_manage_object.rx_buffer);
     }
-    else if (hcan->Instance == CAN2)
+    else if(hcan->Instance == CAN2)
     {
         HAL_CAN_GetRxMessage(hcan, CAN_FIFO_0,
                                 &g_can2_manage_object.rx_buffer.header,
@@ -176,14 +173,14 @@ void HAL_CAN_RxFifo0MsgPendingCallback(CAN_HandleTypeDef *hcan)
  */
 void HAL_CAN_RxFifo1MsgPendingCallback(CAN_HandleTypeDef *hcan)
 {
-    if (hcan->Instance == CAN1)
+    if(hcan->Instance == CAN1)
     {
         HAL_CAN_GetRxMessage(hcan, CAN_RX_FIFO1,
                                 &g_can1_manage_object.rx_buffer.header,
                                 g_can1_manage_object.rx_buffer.data);
         g_can1_manage_object.callback_function(&g_can1_manage_object.rx_buffer);
     }
-    else if (hcan->Instance == CAN2)
+    else if(hcan->Instance == CAN2)
     {
         HAL_CAN_GetRxMessage(hcan, CAN_RX_FIFO1,
                                 &g_can2_manage_object.rx_buffer.header,

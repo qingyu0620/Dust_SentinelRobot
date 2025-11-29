@@ -76,6 +76,33 @@ void can1_callback_function(CanRxBuffer* CAN_RxMessage)
 }
 
 /**
+ * @brief can2回调函数
+ * 
+ * @param CAN_RxMessage 
+ */
+void can2_callback_function(CanRxBuffer* CAN_RxMessage)
+{
+    switch(CAN_RxMessage->header.StdId)
+    {
+        case (0x01):
+        {
+            robot_.mcu_comm_.CanRxCpltCallback(CAN_RxMessage->data);
+            break;
+        }
+        case (0x06):
+        {
+            robot_.gimbal_.motor_yaw_.CanRxCpltCallback(CAN_RxMessage->data);
+            break;
+        }
+        case (0x030):
+        {
+            robot_.supercap_.CanRxCpltCallback(CAN_RxMessage->data);
+            break;
+        }
+    }
+}
+
+/**
  * @brief remote回调函数
  * 
  * @param buffer 
@@ -102,6 +129,7 @@ void uart6_callback_function(uint8_t* buffer, uint16_t length)
 void Init()
 {
     can_init(&hcan1, can1_callback_function);
+    // can_init(&hcan2, can2_callback_function);
     uart_init(&huart6, uart6_callback_function, UART_BUFFER_LENGTH);
     robot_.Init();
 }

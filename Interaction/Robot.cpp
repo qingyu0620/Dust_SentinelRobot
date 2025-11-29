@@ -11,15 +11,14 @@
 /* Includes ------------------------------------------------------------------*/
 
 #include "Robot.h"
-#include <math.h>
 
 /* Private macros ------------------------------------------------------------*/
 
 #define K                       1.f / 660.f
 #define C                       -256.f / 165.f
-#define MAX_OMEGA_SPEED         25.f
+#define MAX_OMEGA_SPEED         15.f
 #define MAX_RELOAD_SPEED        -10.f
-#define MAX_GYROSCOPE_SPEED     30.f
+#define MAX_GYROSCOPE_SPEED     25.f
 
 /* Private types -------------------------------------------------------------*/
 
@@ -90,13 +89,12 @@ void Robot::Task()
     mcu_comm_data_local.armor                  = 0;
     mcu_comm_data_local.supercap               = 0;
     mcu_comm_data_local.switch_r               = Switch_MID;
-    mcu_comm_data_local.yaw_angle              = 0;
+    mcu_comm_data_local.imu_yaw.f            = 0;
 
+    // Mcu自瞄数据
     McuAutoaimData mcu_autoaim_data_local;
-    mcu_autoaim_data_local.autoaim_yaw         = 0;
+    mcu_autoaim_data_local.autoaim_yaw.f       = 0;
 
-    // yaw角角度差，用于角度环
-    float yaw_angle_diff = 0.0f;
     // 底盘yaw角角度差，用于底盘跟随
     float chassis_angle_diff = 0.0f;
 
@@ -118,7 +116,7 @@ void Robot::Task()
 
         // 遥控器累加绝对精准yaw轴角度
         // remote_yaw_angle_ += (mcu_chassis_data_local.rotation * K + C) * 1;
-        remote_yaw_angle_ += (M_PI / 180.f * (remote_.output_.rotation * K + C)) * 1;
+        remote_yaw_angle_ += (M_PI / 180.f * (remote_.output_.rotation * K + C)) * 0.5;
 
         if(remote_yaw_angle_ >= M_PI){
             remote_yaw_angle_ -= 2 * M_PI;
@@ -129,10 +127,10 @@ void Robot::Task()
         if(mcu_comm_data_local.armor == 0){
             gimbal_.SetRemoetYawAngle(remote_yaw_angle_);
         }else if(mcu_comm_data_local.armor == 1){
-            remote_yaw_angle_ +=  mcu_autoaim_data_local.autoaim_yaw;
+            remote_yaw_angle_ +=  mcu_autoaim_data_local.autoaim_yaw.f;
             gimbal_.SetRemoetYawAngle(remote_yaw_angle_);
         }
-        gimbal_.SetImuYawAngle(mcu_comm_data_local.yaw_angle);
+        gimbal_.SetImuYawAngle(mcu_comm_data_local.imu_yaw.f);
 
 
         /****************************   底盘   ****************************/
@@ -157,7 +155,7 @@ void Robot::Task()
         {
             case CHASSIS_SPIN_CLOCKWISE:
             {
-                chassis_.SetTargetVelocityRotation(25);
+                chassis_.SetTargetVelocityRotation(MAX_GYROSCOPE_SPEED);
                 break;
             }
             case CHASSIS_SPIN_DISABLE:
@@ -167,13 +165,13 @@ void Robot::Task()
             }
             case CHASSIS_SPIN_COUNTER_CLOCK_WISE:
             {
-                chassis_angle_diff = CalcYawErrorAngle(normalize_angle(remote_yaw_angle_) ,imu_.GetYawAngle());
+                chassis_angle_diff = CalcYawErrorAngle(remote_yaw_angle_ ,imu_.GetYawAngle());
 
                 chassis_.chassis_follow_pid_.SetTarget(0);
                 chassis_.chassis_follow_pid_.SetNow(chassis_angle_diff);
                 chassis_.chassis_follow_pid_.CalculatePeriodElapsedCallback();
 
-                chassis_.SetTargetVelocityRotation(chassis_.chassis_follow_pid_.GetOut());
+                // chassis_.SetTargetVelocityRotation(chassis_.chassis_follow_pid_.GetOut());
                 break;
             }
             default:

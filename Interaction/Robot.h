@@ -16,12 +16,11 @@
 // alg
 #include "alg_pid.h"
 // bsp
-#include "dvc_remote_dji.h"
 #include "stdio.h"
 #include "bsp_dwt.h"
 // dvc
+#include "dvc_remote_dji.h"
 #include "dvc_MCU_comm.h"
-#include "dvc_PC_comm.h"
 #include "imu.hpp"
 // app
 #include "app_reload.h"

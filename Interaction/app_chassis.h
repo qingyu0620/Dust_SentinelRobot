@@ -84,14 +84,9 @@ protected:
 
     // xyr轴最大加速度
 
-    float max_accel_xy_ = 150.f;
+    float max_accel_xy_ = 180.f;
 
-    float max_accel_r_  = 150.f;
-
-    // xyr轴最大减速度
-    float max_decel_xy_ = -200.f;
-
-    float max_decel_r_  = -200.f;
+    float max_accel_r_  = 180.f;
 
     // xyr当前加速度
 

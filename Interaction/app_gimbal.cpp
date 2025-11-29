@@ -29,9 +29,9 @@ void Gimbal::Init()
 {
     // yaw轴角度环pid
     yaw_angle_pid_.Init(
-        8.0f,
+        11.0f,
         0.05f,
-        0.02f,
+        0.04f,
         0.0f,
         0.f,
         44.0f,

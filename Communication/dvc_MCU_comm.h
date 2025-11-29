@@ -1,9 +1,9 @@
 /**
  * @file dvc_MCU_comm.h
- * @author noe (noneofever@gmail.com)
+ * @author qingyu
  * @brief 
  * @version 0.1
- * @date 2025-08-04
+ * @date 2025-11-26
  * 
  * @copyright Copyright (c) 2025
  * 
@@ -21,6 +21,20 @@
 
 /* Exported types ------------------------------------------------------------*/
 
+/**
+ * @brief 转换联合体
+ * 
+ */
+union McuConv
+{
+    uint8_t b[4];
+    float f;
+};
+
+/**
+ * @brief 遥控状态枚举
+ * 
+ */
 enum RemoteSwitchStatus
 {
     Switch_UP    = (uint8_t)1,
@@ -28,12 +42,21 @@ enum RemoteSwitchStatus
     Switch_DOWN  = (uint8_t)2,
 };
 
-enum ChassisSpinMode{
+/**
+ * @brief 底盘旋转模式枚举
+ * 
+ */
+enum ChassisSpinMode
+{
     CHASSIS_SPIN_CLOCKWISE          = 1,
     CHASSIS_SPIN_DISABLE            = 3,
     CHASSIS_SPIN_COUNTER_CLOCK_WISE = 2,
 };
 
+/**
+ * @brief Mcu底盘数据结构体
+ * 
+ */
 struct McuChassisData
 {
     uint8_t          start_of_frame = 0xAA;     // 帧头
@@ -43,23 +66,35 @@ struct McuChassisData
     uint8_t          switch_l;                  // 小陀螺：不转、顺时针转、逆时针转
 };
 
+/**
+ * @brief Mcu通用数据结构体
+ * 
+ */
 struct McuCommData
 {
     uint8_t         start_of_frame = 0xAB;
     uint8_t         armor;                      // 自瞄
     uint8_t         supercap;                   // 超级电容：充电、放电
     uint8_t         switch_r;
-    float           yaw_angle;               // yaw轴角度
+    McuConv         imu_yaw;                  // yaw轴角度
 };
 
+/**
+ * @brief Mcu自瞄数据结构体
+ * 
+ */
 struct McuAutoaimData
 {
-    uint8_t start_of_yaw_frame = 0xAC;
-    uint8_t start_of_pitch_frame = 0xAD;
-    float autoaim_yaw;
-    float autoaim_pitch;
+    uint8_t         start_of_yaw_frame = 0xAC;
+    uint8_t         start_of_pitch_frame = 0xAD;
+    McuConv         autoaim_yaw;                // 自瞄yaw角
+    McuConv         autoaim_pitch;              // 自瞄pitch角
 };
 
+/**
+ * @brief Mcu通讯类
+ * 
+ */
 class McuComm
 {
 public:
@@ -78,14 +113,21 @@ public:
             0,
             0,
             Switch_MID,
-            0
+            {0, 0, 0, 0},
     };
 
     McuAutoaimData recv_autoaim_data_ = 
     {   0xAC,
         0xAD,
-        0,
-        0,
+        {0, 0, 0, 0},
+        {0, 0, 0, 0},
+    };
+
+    McuAutoaimData send_autoaim_data_ = 
+    {   0xAC,
+        0xAD,
+        {0, 0, 0, 0},
+        {0, 0, 0, 0},
     };
 
     void Init(CAN_HandleTypeDef *hcan,
@@ -96,20 +138,23 @@ public:
 
     void CanSendCommand();
 
+    void CanSendAutoaim();
+
     void Task();
 
 
 protected:
-    // 绑定的CAN
+
     CanManageObject *can_manage_object_;
-    // 收数据绑定的CAN ID, 与上位机驱动参数Master_ID保持一致
+
     uint16_t can_rx_id_;
-    // 发数据绑定的CAN ID, 是上位机驱动参数CAN_ID加上控制模式的偏移量
+
     uint16_t can_tx_id_;
-    // 发送缓冲区
+
     uint8_t tx_data_[8];
-    // 内部函数
+
     void DataProcess();
+
     // FreeRTOS 入口，静态函数
     static void TaskEntry(void *param);
 };

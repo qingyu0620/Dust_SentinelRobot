@@ -180,7 +180,6 @@ void Chassis::OutputToMotor()
  */
 void Chassis::Task()
 {
-    float chassis_power = 0.0f;
     for (;;)
     {
         // 旋转矩阵转换
