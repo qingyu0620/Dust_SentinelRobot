@@ -33,22 +33,27 @@
 void Robot::Init()
 {
     dwt_init(168);
+
     // 上下板通讯组件初始化
-    mcu_comm_.Init(&hcan1, 0x01, 0x00);
-    // 临时遥控
-    remote_.Init(&huart3, uart3_callback_function, UART_BUFFER_LENGTH);
+    mcu_comm_.Init(&hcan2, 0x01, 0x00);
+
     // 云台初始化
     gimbal_.Init();
+
     // 底盘陀螺仪初始化
     imu_.Init();
+
     // 10s时间等待陀螺仪收敛
     osDelay(pdMS_TO_TICKS(10 * 1000));
+
     // 摩擦轮初始化
     chassis_.Init();
+
     // 拨弹盘初始化
     reload_.Init();
+
     // 超级电容初始化 
-    supercap_.Init(&hcan1);
+    supercap_.Init(&hcan2);
 
     static const osThreadAttr_t kRobotTaskAttr = 
     {
@@ -89,7 +94,7 @@ void Robot::Task()
     mcu_comm_data_local.armor                  = 0;
     mcu_comm_data_local.supercap               = 0;
     mcu_comm_data_local.switch_r               = Switch_MID;
-    mcu_comm_data_local.imu_yaw.f            = 0;
+    mcu_comm_data_local.imu_yaw.f              = 0;
 
     // Mcu自瞄数据
     McuAutoaimData mcu_autoaim_data_local;
@@ -115,8 +120,7 @@ void Robot::Task()
 
 
         // 遥控器累加绝对精准yaw轴角度
-        // remote_yaw_angle_ += (mcu_chassis_data_local.rotation * K + C) * 1;
-        remote_yaw_angle_ += (M_PI / 180.f * (remote_.output_.rotation * K + C)) * 0.5;
+        remote_yaw_angle_ += (M_PI / 180.f * (K * mcu_chassis_data_local.rotation + C)) * 0.5;
 
         if(remote_yaw_angle_ >= M_PI){
             remote_yaw_angle_ -= 2 * M_PI;
@@ -130,7 +134,7 @@ void Robot::Task()
             remote_yaw_angle_ +=  mcu_autoaim_data_local.autoaim_yaw.f;
             gimbal_.SetRemoetYawAngle(remote_yaw_angle_);
         }
-        gimbal_.SetImuYawAngle(mcu_comm_data_local.imu_yaw.f);
+        gimbal_.SetImuYawAngle(normalize_angle_pm_pi(mcu_comm_data_local.imu_yaw.f));
 
 
         /****************************   底盘   ****************************/
@@ -139,19 +143,15 @@ void Robot::Task()
         // 设置当前角度差
         chassis_.SetNowYawAngleDiff(normalize_pi(gimbal_.GetNowYawAngle()));
         // 设置目标映射速度
-        // chassis_.SetTargetVxInGimbal((mcu_chassis_data_local.chassis_speed_x * K + C) * MAX_OMEGA_SPEED);
-        // chassis_.SetTargetVyInGimbal((mcu_chassis_data_local.chassis_speed_y * K + C) * MAX_OMEGA_SPEED);
-
-        chassis_.SetTargetVxInGimbal((remote_.output_.chassis_x * K + C) * MAX_OMEGA_SPEED);
-        chassis_.SetTargetVyInGimbal((remote_.output_.chassis_y * K + C) * MAX_OMEGA_SPEED);
+        chassis_.SetTargetVxInGimbal((mcu_chassis_data_local.chassis_speed_x * K + C) * MAX_OMEGA_SPEED);
+        chassis_.SetTargetVyInGimbal((mcu_chassis_data_local.chassis_speed_y * K + C) * MAX_OMEGA_SPEED);
 
 
         /****************************   模式   ****************************/
 
         
         // 左按钮
-        // switch (mcu_chassis_data_local.switch_l) 
-        switch (remote_.output_.switch_l) 
+        switch (mcu_chassis_data_local.switch_l) 
         {
             case CHASSIS_SPIN_CLOCKWISE:
             {
@@ -171,7 +171,7 @@ void Robot::Task()
                 chassis_.chassis_follow_pid_.SetNow(chassis_angle_diff);
                 chassis_.chassis_follow_pid_.CalculatePeriodElapsedCallback();
 
-                // chassis_.SetTargetVelocityRotation(chassis_.chassis_follow_pid_.GetOut());
+                chassis_.SetTargetVelocityRotation(chassis_.chassis_follow_pid_.GetOut());
                 break;
             }
             default:
@@ -183,8 +183,7 @@ void Robot::Task()
         }
         
         // 右按钮
-        // switch (mcu_comm_data_local.switch_r)
-        switch (remote_.output_.switch_r)
+        switch (mcu_comm_data_local.switch_r)
         {
             case Switch_UP:
             {
@@ -221,8 +220,6 @@ void Robot::Task()
 
         /****************************   调试   ****************************/
 
-
-        // printf("%f,%f,%f\n", chassis_.motor_chassis_1_.GetNowPower(), chassis_.motor_chassis_1_.GetNowCurrent(), chassis_.motor_chassis_1_.GetNowOmega());
 
         osDelay(pdMS_TO_TICKS(1));
     }

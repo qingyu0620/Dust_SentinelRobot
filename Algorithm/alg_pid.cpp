@@ -331,6 +331,7 @@ void Pid::CalculatePeriodElapsedCallback()
 
     // 计算输出
     out_ = p_out + i_out + d_out + f_out;
+    // out_ = p_out + d_out + f_out;
 
     // 输出限幅
     if (out_max_ != 0.0f)
