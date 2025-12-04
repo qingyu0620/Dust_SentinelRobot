@@ -11,10 +11,6 @@
 /* Includes ------------------------------------------------------------------*/
 
 #include "Robot.h"
-#include "alg_math.h"
-#include "bsp_uart.h"
-#include "dvc_MCU_comm.h"
-#include "usart.h"
 
 /* Private macros ------------------------------------------------------------*/
 
@@ -82,40 +78,36 @@ void Robot::TaskEntry(void *argument)
  */
 void Robot::Task()
 {
-    McuAutoaimData mcu_auto_data_local;
-    mcu_auto_data_local.autoaim_yaw.f = 0.f;
-    
     for(;;)
     {
-        /****************************   通讯   ****************************/
+        /****************************   MCUcomm   ****************************/
 
-
-        // 用临界区一次性复制，避免撕裂
-        __disable_irq();
-        mcu_auto_data_local = *const_cast<const McuAutoaimData*>(&(mcu_comm_.recv_auto_data_));
-        __enable_irq();
 
         // 若掉线发送空白数据
         if(remote_dr16_.remote_dji_alive_status == REMOTE_DJI_STATUS_DISABLE)
         {
             mcu_comm_.DisconnectData();
         }
-        // 发送下板数据
-        mcu_comm_.CanSendChassis();
-        mcu_comm_.CanSendCommand();
+        mcu_comm_.UpdataAutoaimData(&pc_comm_.recv_autoaim_data);
 
 
+        /****************************   PCcomm   ****************************/
+
+        
+
+        
         /****************************   云台   ****************************/
 
 
-        if(pc_comm_.recv_autoaim_data.fire == 0){
-            gimbal_.SetRemoetPitchAngle(remote_dr16_.output_.pitch);
-        }else if(pc_comm_.recv_autoaim_data.fire == 1){
-            gimbal_.SetRemoetPitchAngle(pc_comm_.recv_autoaim_data.pitch.f);
+        if(pc_comm_.recv_autoaim_data.mode == 0){
+            gimbal_.SetTargetPitchRadian(remote_dr16_.output_.pitch);
+            gimbal_.SetControlPitch(0, 0);
+        }else if(pc_comm_.recv_autoaim_data.mode == 1){
+            gimbal_.SetControlPitch(pc_comm_.recv_autoaim_data.pitch.pitch_vel, pc_comm_.recv_autoaim_data.pitch.pitch_acc);
         }
-        
-        
-        /****************************   模式   ****************************/
+
+
+        /****************************   摩擦轮   ****************************/
 
 
         // 右按钮
@@ -123,7 +115,7 @@ void Robot::Task()
         {
             case SWITCH_UP:
             {
-                shoot_.SetTargetShootSpeed(MAX_SHOOT_SPEED);
+                // shoot_.SetTargetShootSpeed(MAX_SHOOT_SPEED);
                 break;
             }
             case SWITCH_MID:
@@ -141,12 +133,7 @@ void Robot::Task()
 
         /****************************   调试   ****************************/
 
-
-        pc_comm_.send_autoaim_data.armor = 0;
-        pc_comm_.send_autoaim_data.yaw.f = 0.0f;
-        pc_comm_.send_autoaim_data.pitch.f =  gimbal_.GetNowPitchAngle();
-        pc_comm_.Send_Message();
-
+    
         osDelay(pdMS_TO_TICKS(1));
     }
 }

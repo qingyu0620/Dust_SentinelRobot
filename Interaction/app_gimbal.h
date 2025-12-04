@@ -63,11 +63,15 @@ public:
 
     inline float GetNowPitchTorque();
 
+    inline float GetNowPitchRadian();
+
     inline float GetTargetPitchAngle();
 
     inline float GetTargetPitchOmega();
 
     inline float GetTargetPitchTorque();
+
+    inline float GetTargetPitchRadian();
 
     inline void SetTargetPitchAngle(float target_pitch_angle);
 
@@ -75,11 +79,14 @@ public:
 
     inline void SetTargetPitchTorque(float target_pitch_torque);
 
-    inline void SetRemoetPitchAngle(float remote_pitch_angle);
+    inline void SetTargetPitchRadian(float target_pitch_radian);
+
+    inline void SetControlPitch(float pitch_vel, float pitch_acc);
 
 protected:
     // pitch轴最小值
     float min_pitch_angle_ = -0.60f;
+
     // pitch轴最大值
     float max_pitch_angle_ = 0.33f;
 
@@ -96,8 +103,17 @@ protected:
     // pitch轴当前力矩
     float now_pitch_torque_ = 0.0f;
 
-    // 遥控累加yaw角值
-    float remote_pitch_angle_ = 0.0f;
+    // pitch轴当前弧度
+    float now_pitch_radian_ = 0.0f;
+    
+    // pitch轴当前角速度
+    float now_pitch_vel_ = 0.0f;
+
+    // pitch轴目标角速度
+    float target_pitch_vel_ = 0.0f;
+
+    // pitch轴角加速度
+    float pitch_acc_ = 0.0f;
 
     // yaw角角度差，用于角度环
     float pitch_angle_diff_ = 0.0f;
@@ -116,6 +132,9 @@ protected:
 
     // pitch轴目标力矩
     float target_pitch_torque_ = 0.0f;
+
+    // pitch轴目标弧度
+    float target_pitch_radian_ = 0.0f;
 
     void SelfResolution();
 
@@ -161,6 +180,16 @@ inline float Gimbal::GetNowPitchTorque()
 }
 
 /**
+ * @brief 获取pitch轴当前弧度
+ *
+ * @return float pitch轴当前弧度
+ */
+inline float Gimbal::GetNowPitchRadian()
+{
+    return (now_pitch_radian_);
+}
+
+/**
  * @brief 获取pitch轴目标角度
  *
  * @return float pitch轴目标角度
@@ -188,6 +217,16 @@ inline float Gimbal::GetTargetPitchOmega()
 inline float Gimbal::GetTargetPitchTorque()
 {
     return (target_pitch_torque_);
+}
+
+/**
+ * @brief 获取pitch轴目标弧度
+ *
+ * @return float pitch轴目标弧度
+ */
+inline float Gimbal::GetTargetPitchRadian()
+{
+    return (target_pitch_radian_);
 }
 
 /**
@@ -221,13 +260,25 @@ inline void Gimbal::SetTargetPitchTorque(float target_pitch_torque)
 }
 
 /**
- * @brief 设定遥控累加yaw轴角度
- * 
- * @param remote_yaw_angle remote累加yaw轴角度
+ * @brief 设定pitch轴力矩
+ *
+ * @param target_pitch_torque pitch轴力矩
  */
-inline void Gimbal::SetRemoetPitchAngle(float remote_pitch_angle)
+inline void Gimbal::SetTargetPitchRadian(float target_pitch_radian)
 {
-    remote_pitch_angle_ = remote_pitch_angle;
+    target_pitch_radian_ = target_pitch_radian;
+}
+
+/**
+ * @brief 设定pitch轴角速度和角加速度
+ * 
+ * @param pitch_vel pitch轴角速度
+ * @param pitch_acc pitch轴角加速度
+ */
+inline void Gimbal::SetControlPitch(float target_pitch_vel, float pitch_acc)
+{
+    target_pitch_vel_ = target_pitch_vel;
+    pitch_acc_ = pitch_acc;
 }
 
 

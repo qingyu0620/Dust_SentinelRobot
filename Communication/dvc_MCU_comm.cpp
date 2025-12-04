@@ -11,8 +11,10 @@
 /* Includes ------------------------------------------------------------------*/
 
 #include "dvc_MCU_comm.h"
+#include "dvc_PC_comm.h"
 #include "dvc_motor_dm.h"
 #include "ins_task.h"
+#include "projdefs.h"
 
 /* Private macros ------------------------------------------------------------*/
 
@@ -23,7 +25,7 @@
 /* Private function declarations ---------------------------------------------*/
 
 /**
- * @brief MCU通讯函数
+ * @brief McuComm初始化函数
  * 
  * @param hcan can句柄
  * @param can_rx_id 接收id
@@ -49,7 +51,7 @@ void McuComm::Init(CAN_HandleTypeDef* hcan, uint8_t can_rx_id, uint8_t can_tx_id
           .priority = (osPriority_t) osPriorityNormal
      };
      // 启动任务，将 this 传入
-     // osThreadNew(McuComm::TaskEntry, this, &kMcuCommTaskAttr);
+     osThreadNew(McuComm::TaskEntry, this, &kMcuCommTaskAttr);
 }
 
 /**
@@ -57,13 +59,30 @@ void McuComm::Init(CAN_HandleTypeDef* hcan, uint8_t can_rx_id, uint8_t can_tx_id
  * 
  * @param argument 
  */
-void McuComm::TaskEntry(void *argument) {
+void McuComm::TaskEntry(void *argument)
+{
      McuComm *self = static_cast<McuComm *>(argument);  // 还原 this 指针
      self->Task();  // 调用成员函数
 }
 
 /**
- * @brief MCU can发送底盘数据函数
+ * @brief McuComm更新自瞄数据
+ * 
+ * @param pc_recv_autoaim_data 
+ */
+void McuComm::UpdataAutoaimData(PCRecvAutoAimData* pc_recv_autoaim_data)
+{
+     send_autoaim_data_.mode = pc_recv_autoaim_data->mode;
+     send_autoaim_data_.autoaim_yaw_vel.f = pc_recv_autoaim_data->yaw.yaw_vel;
+     send_autoaim_data_.autoaim_yaw_acc.f = pc_recv_autoaim_data->yaw.yaw_acc;
+
+     // send_autoaim_data_.mode = 1;
+     // send_autoaim_data_.autoaim_yaw_vel.f = 10;
+     // send_autoaim_data_.autoaim_yaw_acc.f = 0;
+}
+
+/**
+ * @brief McuComm发送底盘数据函数
  * 
  */
 void McuComm::CanSendChassis()
@@ -81,13 +100,13 @@ void McuComm::CanSendChassis()
      can_tx_frame[5] = send_chassis_data_.rotation >> 8;
      can_tx_frame[6] = send_chassis_data_.rotation;
 
-     can_tx_frame[7] = send_chassis_data_.switch_l;
+     can_tx_frame[7] = 0x00;
 
      can_send_data(can_manage_object_->can_handler, can_tx_id_, can_tx_frame, 8);
 }
 
 /**
- * @brief MCU can发送命令数据函数
+ * @brief McuComm发送命令数据函数
  * 
  */
 void McuComm::CanSendCommand()
@@ -96,11 +115,10 @@ void McuComm::CanSendCommand()
      union { float f; uint8_t b[4]; } conv;
      conv.f = INS.Yaw;
 
-     // 第二帧发送通用数据
      can_tx_frame[0] = 0xAB;
-     can_tx_frame[1] = send_comm_data_.armor;
-     can_tx_frame[2] = send_comm_data_.supercap;
-     can_tx_frame[3] = send_comm_data_.switch_r;
+     can_tx_frame[1] = send_comm_data_.switch_l;
+     can_tx_frame[2] = send_comm_data_.switch_r;
+     can_tx_frame[3] = send_comm_data_.supercap;
 
      memcpy(&can_tx_frame[4], conv.b, 4);
 
@@ -108,47 +126,45 @@ void McuComm::CanSendCommand()
 }
 
 /**
- * @brief MCU can发送自瞄数据函数
+ * @brief McuComm发送自瞄数据函数
  * 
  */
-void McuComm::CanSendAutoaim()
+void McuComm::CanSendAutoaimframe1()
 {
      static uint8_t can_tx_frame[8];
 
      // 第一帧发送yaw包
      can_tx_frame[0] = 0xAC;
+     can_tx_frame[1] = send_autoaim_data_.mode;
 
-     memcpy(&can_tx_frame[1], send_autoaim_data_.autoaim_yaw.b, 4);
+     memcpy(&can_tx_frame[2], &send_autoaim_data_.autoaim_yaw_vel, 4);
 
-     // can_tx_frame[1] = send_autoaim_data_.autoaim_yaw.b[0];
-     // can_tx_frame[2] = send_autoaim_data_.autoaim_yaw.b[1];
-     // can_tx_frame[3] = send_autoaim_data_.autoaim_yaw.b[2];
-     // can_tx_frame[4] = send_autoaim_data_.autoaim_yaw.b[3];
+     can_tx_frame[6] = 0x00;
+     can_tx_frame[7] = 0x00;
+
+     can_send_data(can_manage_object_->can_handler, can_tx_id_, can_tx_frame, 8);
+}
+
+/**
+ * @brief McuComm发送自瞄数据函数
+ * 
+ */
+void McuComm::CanSendAutoaimframe2()
+{
+     static uint8_t can_tx_frame[8];
+
+     can_tx_frame[0] = 0xAD;
+     memcpy(&can_tx_frame[1], &send_autoaim_data_.autoaim_yaw_acc, 4);
 
      can_tx_frame[5] = 0x00;
      can_tx_frame[6] = 0x00;
      can_tx_frame[7] = 0x00;
 
      can_send_data(can_manage_object_->can_handler, can_tx_id_, can_tx_frame, 8);
-
-     // 第二帧发送pitch包（哨兵pitch角在上板，用不到）
-     // can_tx_frame[0] = send_autoaim_data_.start_of_pitch_frame;
-
-     // memcpy(&can_tx_frame[1], send_autoaim_data_.autoaim_pitch.b, 4);
-     
-     // can_tx_frame[1] = send_autoaim_data_.autoaim_pitch[0];
-     // can_tx_frame[2] = send_autoaim_data_.autoaim_pitch[1];
-     // can_tx_frame[3] = send_autoaim_data_.autoaim_pitch[2];
-     // can_tx_frame[4] = send_autoaim_data_.autoaim_pitch[3];
-     
-     // can_tx_frame[5] = 0x00;
-     // can_tx_frame[6] = 0x00;
-     // can_tx_frame[7] = 0x00;
-     // can_send_data(can_manage_object_->can_handler, can_tx_id_, can_tx_frame, 8);
 }
 
 /**
- * @brief MCU can掉线数据函数
+ * @brief McuComm掉线数据函数
  * 
  */
 void McuComm::DisconnectData()
@@ -156,34 +172,34 @@ void McuComm::DisconnectData()
      send_chassis_data_.chassis_speed_x = 1024;
      send_chassis_data_.chassis_speed_y = 1024;
      send_chassis_data_.rotation = 1024;
-     send_chassis_data_.switch_l = 3;
 
-     send_comm_data_.switch_r = 3;
-     send_comm_data_.armor = 0;
+     send_comm_data_.switch_r = Switch_MID;
+     send_comm_data_.switch_l = Switch_MID;
      send_comm_data_.supercap = 0;
 }
 
 /**
- * @brief MCU任务函数
+ * @brief McuComm任务函数
  * 
  */
 void McuComm::Task()
 {
-     McuCommData send_comm_data_local;
-     for (;;)
-     {    // 用临界区一次性复制，避免撕裂
-          // __disable_irq();
-          // send_comm_data__Local = *const_cast<const struct McuCommData*>(&(send_comm_data_));
-          // __enable_irq();
-          
-          // 将遥控器数据发给下板
-          // CanSendCommand();
-          // osDelay(pdMS_TO_TICKS(10));
+     for(;;)
+     {    
+          CanSendChassis();
+          CanSendCommand();
+          if(send_autoaim_data_.mode == 1)
+          {
+               CanSendAutoaimframe1();
+               osDelay(pdMS_TO_TICKS(1));
+               CanSendAutoaimframe2();
+          }
+          osDelay(pdMS_TO_TICKS(4));
      }
 }
 
 /**
- * @brief MCU can回调函数
+ * @brief McuComm回调函数
  * 
  * @param rx_data 
  */
@@ -194,11 +210,6 @@ void McuComm::CanRxCpltCallback(uint8_t* rx_data)
      // 处理数据 , 解包
      switch (rx_data[0])
      {
-         case (0xAC):
-         {
-               memcpy(&recv_auto_data_.autoaim_yaw.b, &rx_data[1], 4);
-               
-               break;
-         }
+         
      }
 }

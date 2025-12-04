@@ -11,6 +11,7 @@
 /* Includes ------------------------------------------------------------------*/
 
 #include "dvc_remote_dji.h"
+#include "alg_math.h"
 #include "bsp_uart.h"
 #include "stdio.h"
 
@@ -73,7 +74,7 @@ void RemoteDjiDR16::DataProcess(uint8_t* buffer)
 
     // 上板数据
     output_.pitch = k_pitch * data_.ch3 + c_pitch;
-    
+
     // 下板数据
     output_.chassis_x  = data_.ch0;
     output_.chassis_y  = data_.ch1;
@@ -137,7 +138,7 @@ void RemoteDjiDR16::Task()
     for(;;)
     {
         AlivePeriodElapsedCallback();
-        osDelay(pdMS_TO_TICKS(50));
+        osDelay(pdMS_TO_TICKS(50));     // 请勿修改频率
     }
 }
 

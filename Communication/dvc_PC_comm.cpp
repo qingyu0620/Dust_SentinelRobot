@@ -11,6 +11,9 @@
 /* Includes ------------------------------------------------------------------*/
 
 #include "dvc_PC_comm.h"
+#include "cmsis_os2.h"
+#include "ins_task.h"
+#include "projdefs.h"
 
 /* Private macros ------------------------------------------------------------*/
 
@@ -27,7 +30,45 @@
 void PcComm::Init()
 {
     dwt_init(168);
+
+    static const osThreadAttr_t KPcCommTaskAttr = 
+    {
+        .name = "pccomm_task",
+        .stack_size = 256,
+        .priority = (osPriority_t) osPriorityNormal
+    };
+    // 启动任务，将 this 传入
+    osThreadNew(PcComm::TaskEntry, this, &KPcCommTaskAttr);
 }
+
+/**
+ * @brief 任务入口（静态函数）—— osThreadNew 需要这个原型
+ * 
+ * @param argument 
+ */
+void PcComm::TaskEntry(void *argument)
+{
+    PcComm *self = static_cast<PcComm *>(argument);
+    self->Task();
+}
+
+/**
+ * @brief PcComm更新自瞄数据函数
+ * 
+ */
+void PcComm::UpdataAutoaimData()
+{
+    memcpy(&send_autoaim_data.q, INS.q, 16);
+
+    send_autoaim_data.mode                   = 0;
+    send_autoaim_data.yaw.yaw_ang            = INS.Yaw;
+    send_autoaim_data.yaw.yaw_vel            = INS.Gyro[Z];
+    send_autoaim_data.pitch.pitch_ang        = INS.Roll;
+    send_autoaim_data.pitch.pitch_vel        = INS.Gyro[X]; 
+    send_autoaim_data.bullet.bullet_speed    = 16;
+    send_autoaim_data.bullet.bullet_count    = 20;
+}
+
 
 /**
  * @brief PcComm发送信息函数
@@ -35,18 +76,29 @@ void PcComm::Init()
  */
 void PcComm::Send_Message()
 {
-    uint8_t buffer[16];  // 明确的16字节
-    
-    buffer[0] = send_autoaim_data.start_of_frame;
-    buffer[1] = send_autoaim_data.armor;
-    
-    memcpy(&buffer[2], send_autoaim_data.end_of_frame, 6);
+    uint16_t lenth = sizeof(send_autoaim_data);
+    uint8_t buffer[lenth];  // 明确的43字节
 
-    memcpy(&buffer[8], &send_autoaim_data.yaw.b, 4);
+    send_autoaim_data.crc16 = 0;
 
-    memcpy(&buffer[12], &send_autoaim_data.pitch.b, 4);
+    memcpy(buffer, &send_autoaim_data, lenth);
+    append_crc16_check_sum(buffer, lenth);
     
-    usb_transmit(buffer, 16);
+    usb_transmit(buffer, lenth);
+}
+
+/**
+ * @brief PcComm任务函数
+ * 
+ */
+void PcComm::Task()
+{
+    for(;;)
+    {
+        UpdataAutoaimData();
+        Send_Message();
+        osDelay(pdMS_TO_TICKS(1));
+    }
 }
 
 /**
@@ -55,16 +107,14 @@ void PcComm::Send_Message()
  */
 void PcComm::RxCpltCallback()
 {
-    if (bsp_usb_rx_buffer[0] == recv_autoaim_data.start_of_frame)
+    if(bsp_usb_rx_buffer[0] == 'S' && bsp_usb_rx_buffer[1] == 'P')
     {
-        memcpy(recv_autoaim_data.yaw.b,   &bsp_usb_rx_buffer[1], 4);
-        memcpy(recv_autoaim_data.pitch.b, &bsp_usb_rx_buffer[5], 4);
-
-        recv_autoaim_data.fire      = bsp_usb_rx_buffer[9];
-        recv_autoaim_data.crc16[0]  = bsp_usb_rx_buffer[10];
-        recv_autoaim_data.crc16[1]  = bsp_usb_rx_buffer[11];
+        uint16_t lenth = sizeof(bsp_usb_rx_buffer);
+        if(verify_crc16_check_sum(bsp_usb_rx_buffer, lenth))
+        {
+            memcpy(&recv_autoaim_data, bsp_usb_rx_buffer, lenth);
+        }
     }
-
     else if(bsp_usb_rx_buffer[0] == recv_navigation_data.start_of_frame)
     {
         memcpy(recv_navigation_data.linear_x, &bsp_usb_rx_buffer[1], 4);

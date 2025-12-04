@@ -13,9 +13,12 @@
 
 /* Includes ------------------------------------------------------------------*/
 
+#include "FreeRTOS.h"
+#include "cmsis_os2.h"
+#include "ins_task.h"
 #include "bsp_dwt.h"
 #include "bsp_usb.h"
-#include "cmsis_os2.h"
+#include "crc.h"
 
 /* Exported macros -----------------------------------------------------------*/
 
@@ -31,86 +34,128 @@ union PcConv
     float f;
 };
 
+#pragma pack(1)
 /**
  * @brief 自瞄发送结构体
  * 
  */
-struct Send_AutoAim_Data
+struct PCSendAutoAimData
 {
-    uint8_t start_of_frame = 0x5A;
-    uint8_t armor = 0x00;
-    uint8_t end_of_frame[6] = {0xCD, 0xCC, 0x00, 0x00, 0x00, 0x00};
-    PcConv yaw;
-    PcConv pitch;
+    uint8_t head[2] = {'S','P'};
+
+    uint8_t mode = 0;               // 0-空闲 1-自瞄 2-小能量机关  3-大能量机关
+
+    float q[4];                     // 四元数姿态[w,x,y,z]
+
+    struct
+    {
+        float yaw_ang;              // yaw轴角度
+        float yaw_vel;              // yaw轴角速度
+    } yaw;
+    
+    struct
+    {
+        float pitch_ang;            // pitch轴角度
+        float pitch_vel;            // pitch轴角速度
+    } pitch;
+    
+    struct
+    {
+        float bullet_speed;         // 子弹速度
+        uint16_t bullet_count;      // 子弹累计发送次数
+    } bullet;
+    
+    uint16_t crc16;                 // 校验位
 };
 
 /**
  * @brief 自瞄接收结构体
  * 
  */
-struct Recv_AutoAim_Data
+struct PCRecvAutoAimData
 {
-    uint8_t start_of_frame = 0xA5;
-    PcConv yaw;
-    PcConv pitch;
-    uint8_t fire = 0;
-    uint8_t crc16[2] = {0,0};
+    uint8_t head[2] = {'S','P'};
+    uint8_t mode = 0;           // 0-空闲 1-自瞄 2-小能量机关  3-大能量机关
+
+    struct
+    {
+        float yaw_ang;          // yaw轴角度
+        float yaw_vel;          // yaw轴角速度
+        float yaw_acc;          // yaw轴角加速度
+    } yaw;
+    
+    struct
+    {
+        float pitch_ang;        // pitch轴角度
+        float pitch_vel;        // pitch轴角速度
+        float pitch_acc;        // pitch轴角加速度
+    } pitch;
+    
+    uint16_t crc16;             // 校验位
 };
 
 /**
  * @brief 导航接收结构体
  * 
  */
-struct Recv_Navigation_Data
+struct PCRecvNavigationData
 {
     uint8_t start_of_frame = 0x6A;
     PcConv linear_x[4] = {0, 0, 0, 0};
     PcConv linear_y[4] = {0, 0, 0, 0};
     uint8_t crc16[2] = {0};
 };
+#pragma pack()
 
 /**
- * @brief Pc命令类
+ * @brief PcComm类
  * 
  */
 class PcComm
 {
 public:
     // 发送自瞄数据
-    Send_AutoAim_Data send_autoaim_data = 
+    PCSendAutoAimData send_autoaim_data = 
     {
-        0x5A,
-        0x00,
-        {0xCD, 0xCC, 0x00, 0x00, 0x00, 0x00},
-         {0,0,0,0},
-        {0,0,0,0}
+        {'S','P'},
+        0,
+        {1,0,0,0},
+        {0,0},
+        {0,0},
+        {0,0},
+        0,
     };
     // 接收自瞄数据
-    Recv_AutoAim_Data recv_autoaim_data = 
+    PCRecvAutoAimData recv_autoaim_data = 
     {
-        0xA5,
-        {0, 0, 0, 0},
-        {0, 0, 0, 0},
+        {'S','P'},
         0,
-        {0},
+        {0,0,0},
+        {0,0,0},
+        0,
     };
     // 接收导航数据
-    Recv_Navigation_Data recv_navigation_data = 
+    PCRecvNavigationData recv_navigation_data = 
     {
         0x6A,
-        {0},
-        {0},
-        {0},
+        {0,0,0,0},
+        {0,0,0,0},
+        {0,0},
     };
 
     void Init();
+
+    void Task();
 
     void Send_Message();
 
     void RxCpltCallback();
 
-private:
+    void UpdataAutoaimData();
 
+private:
+    // FreeRTOS 入口，静态函数
+    static void TaskEntry(void *param);
 };
 
 /* Exported variables --------------------------------------------------------*/

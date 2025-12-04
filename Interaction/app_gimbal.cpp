@@ -31,8 +31,7 @@
 void Gimbal::Init()
 {
     // pitch轴角度环
-    pitch_angle_pid_.Init
-    (
+    pitch_angle_pid_.Init(
         9.0f,
         0.01f,
         0.0075f,
@@ -46,8 +45,7 @@ void Gimbal::Init()
         0.0f
     );
     // pitch轴角度环
-    pitch_omega_pid_.Init
-    (
+    pitch_omega_pid_.Init(
         0.7f,
         0.008f,
         0.0f,
@@ -58,7 +56,7 @@ void Gimbal::Init()
         0.0f,
         0.0f,
         0.0f,
-        0.0f  
+        0.0f
     );
     // pitch轴角度环滤波器
     pitch_omega_filter_.Init(15.f, 0.001f);
@@ -106,12 +104,35 @@ void Gimbal::TaskEntry(void *argument)
  */
 void Gimbal::SelfResolution()
 {
-    // 获取当前数据
-    now_pitch_omega_ = motor_pitch_.GetNowOmega();
-    now_pitch_angle_ = normalize_angle_pm_pi(K_MOTOR_ANGLE * motor_pitch_.GetNowAngle() + C_MOTOR_ANGLE);
+    static float total_theta = 0.0f;
+    static float final_radian = 0.0f;
 
+    // 获取当前数据
+    now_pitch_omega_ = motor_pitch_.GetNowOmega();                                          // 角速度
+    now_pitch_angle_ = K_MOTOR_ANGLE * motor_pitch_.GetNowAngle() + C_MOTOR_ANGLE;          // 角度
+    now_pitch_radian_ = normalize_angle_pm_pi(now_pitch_angle_);                     // 弧度
+
+    // 计算pitch角
+    now_pitch_vel_ += pitch_acc_ * 0.001f;
+    
+    if(now_pitch_vel_ >= target_pitch_vel_){
+        now_pitch_vel_ = target_pitch_vel_;
+    }else if(now_pitch_vel_ <= target_pitch_vel_){
+        now_pitch_vel_ = target_pitch_vel_;
+    }
+
+    total_theta +=  (target_pitch_vel_ * 0.001f);
+    final_radian = target_pitch_radian_ + normalize_angle_pm_pi(total_theta);
+
+    // 限位
+    if(final_radian >= 0.65f){
+        final_radian = 0.65f;
+    }else if(final_radian <= -0.35f){
+        final_radian = -0.35f;
+    }
+        
     // 计算pitch轴偏差
-    pitch_angle_diff_ = now_pitch_angle_ - remote_pitch_angle_;
+    pitch_angle_diff_ = now_pitch_radian_ - final_radian;
 
     // 角度环
     pitch_angle_pid_.SetTarget(0);
@@ -126,7 +147,6 @@ void Gimbal::SelfResolution()
 
     // 设定目标力矩
     SetTargetPitchTorque(pitch_omega_pid_.GetOut());
-    // printf("%f,%f,%f\n", pitch_angle_diff_, normalize_angle_pm_pi(now_pitch_angle_), pitch_omega_pid_.GetOut());
 }
 
 /**

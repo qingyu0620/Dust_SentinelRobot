@@ -49,10 +49,6 @@ void can2_callback_function(CanRxBuffer* CAN_RxMessage)
 {
     switch (CAN_RxMessage->header.StdId) 
     {
-        case (0x00):
-        {
-            robot_.mcu_comm_.CanRxCpltCallback(CAN_RxMessage->data);
-        }
         case (0x04):
         {
             robot_.gimbal_.motor_pitch_.CanRxCpltCallback(CAN_RxMessage->data);
@@ -96,12 +92,11 @@ void uart3_callback_function(uint8_t* buffer, uint16_t length)
     robot_.mcu_comm_.send_chassis_data_.chassis_speed_x  = robot_.remote_dr16_.output_.chassis_x;
     robot_.mcu_comm_.send_chassis_data_.chassis_speed_y  = robot_.remote_dr16_.output_.chassis_y;
     robot_.mcu_comm_.send_chassis_data_.rotation         = robot_.remote_dr16_.output_.rotation;
-    robot_.mcu_comm_.send_chassis_data_.switch_l         = robot_.remote_dr16_.output_.switch_l;
 
     robot_.mcu_comm_.send_comm_data_.start_of_frame      = 0xAB;
-    robot_.mcu_comm_.send_comm_data_.armor               = 0x00;
-    robot_.mcu_comm_.send_comm_data_.supercap            = 0;
+    robot_.mcu_comm_.send_comm_data_.switch_l            = robot_.remote_dr16_.output_.switch_l;
     robot_.mcu_comm_.send_comm_data_.switch_r            = robot_.remote_dr16_.output_.switch_r;
+    robot_.mcu_comm_.send_comm_data_.supercap            = 0;
 }
 
 /**
