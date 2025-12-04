@@ -48,7 +48,7 @@ void McuComm::Init(CAN_HandleTypeDef* hcan, uint8_t can_rx_id, uint8_t can_tx_id
           .priority = (osPriority_t) osPriorityNormal
      };
      // 启动任务，将 this 传入
-     // osThreadNew(McuComm::TaskEntry, this, &kMcuCommTaskAttr);
+     osThreadNew(McuComm::TaskEntry, this, &kMcuCommTaskAttr);
 }
 
 /**
@@ -82,7 +82,7 @@ void McuComm::Task()
  */
 void McuComm::CanSendCommand()
 {
-     static uint8_t can_tx_frame[8];
+     
 }
 
 /**
@@ -93,9 +93,9 @@ void McuComm::CanSendAutoaim()
 {
      static uint8_t can_tx_frame[8];
 
-     can_tx_frame[0] = send_autoaim_data_.start_of_yaw_frame;
+     can_tx_frame[0] = 0xAC;
 
-     memcpy(&can_tx_frame[1], send_autoaim_data_.autoaim_yaw.b, 4);
+     memcpy(&can_tx_frame[1], send_autoaim_data_.autoaim_yaw_ang.b, 4);
 
      can_tx_frame[5] = 0x00;
      can_tx_frame[6] = 0x00;
@@ -122,42 +122,47 @@ void McuComm::CanRxCpltCallback(uint8_t* rx_data)
                recv_chassis_data_.chassis_speed_y      = rx_data[3] << 8 | rx_data[4];
                recv_chassis_data_.rotation             = rx_data[5] << 8 | rx_data[6];
 
-               switch(rx_data[7])
-               {
-                    case 1:
-                    recv_chassis_data_.switch_l = CHASSIS_SPIN_CLOCKWISE;
-                    break;
-                    case 3:
-                    recv_chassis_data_.switch_l = CHASSIS_SPIN_DISABLE;
-                    break;
-                    case 2:
-                    recv_chassis_data_.switch_l = CHASSIS_SPIN_COUNTER_CLOCK_WISE;
-                    break;
-                    default:
-                    recv_chassis_data_.switch_l = CHASSIS_SPIN_DISABLE;
-                    break;
-               }
-               
                break;
           }
           case (0xAB): // 拨弹盘，yaw角包
           {
-               recv_comm_data_.armor                = rx_data[1];
-               recv_comm_data_.supercap             = rx_data[2];
-
-               switch(rx_data[3])
+               switch(rx_data[1])
                {
-                    case (1):
+                    case (Switch_UP):
+                    {
+                         recv_comm_data_.switch_l = Switch_UP;
+                         break;
+                    }
+                    case (Switch_MID):
+                    {
+                         recv_comm_data_.switch_l = Switch_MID;
+                         break;
+                    }
+                    case (Switch_DOWN):
+                    {
+                         recv_comm_data_.switch_l = Switch_DOWN;
+                         break;
+                    }
+                    default:
+                    {
+                         recv_comm_data_.switch_l = Switch_MID;
+                         break;
+                    }
+               }
+
+               switch(rx_data[2])
+               {
+                    case (Switch_UP):
                     {
                          recv_comm_data_.switch_r = Switch_UP;
                          break;
                     }
-                    case (3):
+                    case (Switch_MID):
                     {
                          recv_comm_data_.switch_r = Switch_MID;
                          break;
                     }
-                    case (2):
+                    case (Switch_DOWN):
                     {
                          recv_comm_data_.switch_r = Switch_DOWN;
                          break;
@@ -169,19 +174,26 @@ void McuComm::CanRxCpltCallback(uint8_t* rx_data)
                     }
                }
 
-               recv_comm_data_.imu_yaw.b[0]      = rx_data[4];
-               recv_comm_data_.imu_yaw.b[1]      = rx_data[5];
-               recv_comm_data_.imu_yaw.b[2]      = rx_data[6];
-               recv_comm_data_.imu_yaw.b[3]      = rx_data[7];
+               recv_comm_data_.supercap = rx_data[3];
+
+               memcpy(&recv_comm_data_.imu_yaw.b, &rx_data[4], 4);
 
                break;
           }
           case (0xAC): // 自瞄yaw包
           {
-               recv_autoaim_data_.autoaim_yaw.b[0]     = rx_data[1];
-               recv_autoaim_data_.autoaim_yaw.b[1]     = rx_data[2];
-               recv_autoaim_data_.autoaim_yaw.b[2]     = rx_data[3];
-               recv_autoaim_data_.autoaim_yaw.b[3]     = rx_data[4];
+               recv_autoaim_data_.mode = rx_data[1];
+               memcpy(&recv_autoaim_data_.autoaim_yaw_vel, &rx_data[2], 4);
+
+               break;
+          }
+          case (0xAD): // 自瞄yaw包
+          {
+               memcpy(&recv_autoaim_data_.autoaim_yaw_acc, &rx_data[1], 4);
+               break;
+          }
+          default:
+          {
 
                break;
           }

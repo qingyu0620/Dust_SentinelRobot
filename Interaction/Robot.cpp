@@ -11,6 +11,7 @@
 /* Includes ------------------------------------------------------------------*/
 
 #include "Robot.h"
+#include "alg_math.h"
 
 /* Private macros ------------------------------------------------------------*/
 
@@ -87,18 +88,18 @@ void Robot::Task()
     mcu_chassis_data_local.chassis_speed_x     = 1024;
     mcu_chassis_data_local.chassis_speed_y     = 1024;
     mcu_chassis_data_local.rotation            = 1024;
-    mcu_chassis_data_local.switch_l            = CHASSIS_SPIN_DISABLE;
 
     // Mcu命令数据
     McuCommData mcu_comm_data_local;
-    mcu_comm_data_local.armor                  = 0;
-    mcu_comm_data_local.supercap               = 0;
+    mcu_comm_data_local.switch_l               = Switch_MID;
     mcu_comm_data_local.switch_r               = Switch_MID;
+    mcu_comm_data_local.supercap               = 0;
     mcu_comm_data_local.imu_yaw.f              = 0;
 
     // Mcu自瞄数据
-    McuAutoaimData mcu_autoaim_data_local;
-    mcu_autoaim_data_local.autoaim_yaw.f       = 0;
+    McuRecvAutoaimData mcu_autoaim_data_local;
+    mcu_autoaim_data_local.autoaim_yaw_vel.f   = 0;
+    mcu_autoaim_data_local.autoaim_yaw_acc.f   = 0;
 
     // 底盘yaw角角度差，用于底盘跟随
     float chassis_angle_diff = 0.0f;
@@ -110,9 +111,9 @@ void Robot::Task()
 
         // 用临界区一次性复制，避免撕裂
         __disable_irq();
-        mcu_chassis_data_local = *const_cast<const McuChassisData*>(&(mcu_comm_.recv_chassis_data_));
-        mcu_autoaim_data_local = *const_cast<const McuAutoaimData*>(&(mcu_comm_.recv_autoaim_data_));
-        mcu_comm_data_local = *const_cast<const McuCommData*>(&(mcu_comm_.recv_comm_data_));
+        mcu_chassis_data_local = *(static_cast<const McuChassisData*>(&(mcu_comm_.recv_chassis_data_)));
+        mcu_autoaim_data_local = *(static_cast<const McuRecvAutoaimData*>(&(mcu_comm_.recv_autoaim_data_)));
+        mcu_comm_data_local = *(static_cast<const McuCommData*>(&(mcu_comm_.recv_comm_data_)));
         __enable_irq();
 
 
@@ -121,18 +122,16 @@ void Robot::Task()
 
         // 遥控器累加绝对精准yaw轴角度
         remote_yaw_angle_ += (M_PI / 180.f * (K * mcu_chassis_data_local.rotation + C)) * 0.5;
+        remote_yaw_angle_ = normalize_pi(remote_yaw_angle_);
 
-        if(remote_yaw_angle_ >= M_PI){
-            remote_yaw_angle_ -= 2 * M_PI;
-        }else if(remote_yaw_angle_ <= -M_PI){
-            remote_yaw_angle_ += 2 * M_PI;
+        if(mcu_autoaim_data_local.mode == 0)
+        {
+            gimbal_.SetTargetYawRadian(remote_yaw_angle_);
+            gimbal_.SetControlYaw(0, 0);
         }
-        
-        if(mcu_comm_data_local.armor == 0){
-            gimbal_.SetRemoetYawAngle(remote_yaw_angle_);
-        }else if(mcu_comm_data_local.armor == 1){
-            remote_yaw_angle_ +=  mcu_autoaim_data_local.autoaim_yaw.f;
-            gimbal_.SetRemoetYawAngle(remote_yaw_angle_);
+        else if(mcu_autoaim_data_local.mode == 1)
+        {
+            gimbal_.SetControlYaw(mcu_autoaim_data_local.autoaim_yaw_vel.f, mcu_autoaim_data_local.autoaim_yaw_acc.f);
         }
         gimbal_.SetImuYawAngle(normalize_angle_pm_pi(mcu_comm_data_local.imu_yaw.f));
 
@@ -141,7 +140,7 @@ void Robot::Task()
 
 
         // 设置当前角度差
-        chassis_.SetNowYawAngleDiff(normalize_pi(gimbal_.GetNowYawAngle()));
+        chassis_.SetNowYawAngleDiff(gimbal_.GetNowYawRadian());
         // 设置目标映射速度
         chassis_.SetTargetVxInGimbal((mcu_chassis_data_local.chassis_speed_x * K + C) * MAX_OMEGA_SPEED);
         chassis_.SetTargetVyInGimbal((mcu_chassis_data_local.chassis_speed_y * K + C) * MAX_OMEGA_SPEED);
@@ -151,19 +150,19 @@ void Robot::Task()
 
         
         // 左按钮
-        switch (mcu_chassis_data_local.switch_l) 
+        switch (mcu_comm_data_local.switch_l) 
         {
-            case CHASSIS_SPIN_CLOCKWISE:
+            case Switch_UP:
             {
                 chassis_.SetTargetVelocityRotation(MAX_GYROSCOPE_SPEED);
                 break;
             }
-            case CHASSIS_SPIN_DISABLE:
+            case Switch_MID:
             {
                 chassis_.SetTargetVelocityRotation(0);
                 break;
             }
-            case CHASSIS_SPIN_COUNTER_CLOCK_WISE:
+            case Switch_DOWN:
             {
                 chassis_angle_diff = CalcYawErrorAngle(remote_yaw_angle_ ,imu_.GetYawAngle());
 
@@ -211,11 +210,11 @@ void Robot::Task()
         /****************************   超电   ****************************/
 
 
-        // if(){
-        //     supercap_.SetSupercapCharge(SUPERCAP_STATUS_SWITCH_ENABLE);
-        // }else if(){
-        //     supercap_.SetSupercapCharge(SUPERCAP_STATUS_SWITCH_DISABLE);
-        // }
+        if(mcu_comm_data_local.supercap){
+            supercap_.SetSupercapCharge(SUPERCAP_STATUS_SWITCH_ENABLE);
+        }else if(mcu_comm_data_local.supercap){
+            supercap_.SetSupercapCharge(SUPERCAP_STATUS_SWITCH_DISABLE);
+        }
 
 
         /****************************   调试   ****************************/

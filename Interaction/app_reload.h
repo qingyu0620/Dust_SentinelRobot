@@ -28,6 +28,7 @@ public:
     MotorDjiC610 motor_reload_1_;
 
     void Init();
+    
     void Task();
 
     inline void SetTargetReloadRotation(float target_reload_rotation);

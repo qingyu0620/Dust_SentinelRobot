@@ -61,6 +61,7 @@ protected:
 
     // 机器人等级
     int32_t robot_level_ = 1;
+
     static void TaskEntry(void *param);  // FreeRTOS 入口，静态函数
 };
 

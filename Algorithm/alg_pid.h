@@ -47,41 +47,26 @@ public:
               float i_variable_apeed_A = 0.0f, 
               float i_variable_speed_B = 0.0f, 
               float i_separate_threshold = 0.0f, 
-              DFirst d_first = PID_D_First_DISABLE,
-              float d_lpf_tau = 0.0f
+              DFirst d_first = PID_D_First_DISABLE
             );
 
-    void SetKp(float k_p);
-
-    void SetKi(float k_i);
-
-    void SetKd(float k_d);
-
-    void SetKf(float k_f);
-
-    void SetIOutMax(float i_out_max);
-
-    void SetOutMax(float out_max);
-
-    void SetIVariableSpeedA(float variable_speed_I_A);
-
-    void SetIVariableSpeedB(float variable_speed_I_B);
-
-    void SetISeparateThreshold(float i_separate_threshold);
-
-    void SetTarget(float target);
-
-    void SetNow(float now);
-
-    void SetIntegralError(float integral_error);
-
+    float GetIntegralError();
     float GetOut();
 
-    float GetIntegralError();
+    void SetKp(float k_p);
+    void SetKi(float k_i);
+    void SetKd(float k_d);
+    void SetKf(float k_f);
+    void SetIOutMax(float i_out_max);
+    void SetOutMax(float out_max);
+    void SetIVariableSpeedA(float variable_speed_I_A);
+    void SetIVariableSpeedB(float variable_speed_I_B);
+    void SetISeparateThreshold(float i_separate_threshold);
+    void SetTarget(float target);
+    void SetNow(float now);
+    void SetIntegralError(float integral_error);
 
     void CalculatePeriodElapsedCallback();
-
-    void CalculateAnglePid();
 
 protected:
     //初始化相关常量
@@ -92,9 +77,6 @@ protected:
     float dead_zone_;
     //微分先行
     DFirst d_first_;
-    // d的低通滤波系数
-    float d_lpf_tau_;
-    float d_lpf_output_;
 
     //常量
 

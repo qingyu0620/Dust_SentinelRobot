@@ -29,9 +29,9 @@ void Gimbal::Init()
 {
     // yaw轴角度环pid
     yaw_angle_pid_.Init(
-        9.3f,
-        0.02f,
-        0.27f,
+        12.0f,
+        0.01f,
+        0.26f,
         0.0f,
         0.f,
         44.0f,
@@ -40,30 +40,28 @@ void Gimbal::Init()
         0.0f,
         0.0f,
         0.0f,
-        PID_D_First_DISABLE,
-        0.01
+        PID_D_First_DISABLE
     );
     // yaw轴速度环pid
     yaw_omega_pid_.Init(
-        0.95f,
-        0.01f,
-        0.0014f,
+        0.75f,
         0.0f,
-        3.0f,
+        0.0f,
+        0.0f,
+        0.0f,
         6.0f,
         0.001f,
         0.0f,
         0.0f,
         0.0f,
         0.0f,
-        PID_D_First_DISABLE,
-        0.01
+        PID_D_First_DISABLE
     );
     // yaw轴速度环滤波器
     yaw_omega_filter_.Init(15.0f, 0.001f);
 
     // 4310电机初始化
-    motor_yaw_.Init(&hcan2, 0x06, 0x06);
+    motor_yaw_.Init(&hcan2, 0x07, 0x06);
 
     // 发送清除错误指令
     motor_yaw_.CanSendClearError();
@@ -123,12 +121,20 @@ void Gimbal::TaskEntry(void *argument)
  */
 void Gimbal::SelfResolution()
 {
+    static float total_theta = 0.0f;
+    static float final_radian = 0.0f;
+
     // 获取当前数据
     now_yaw_omega_ = motor_yaw_.GetNowOmega();
-    now_yaw_angle_ = normalize_angle_pm_pi(motor_yaw_.GetNowAngle() * 14.4);
+    now_yaw_angle_ = motor_yaw_.GetNowAngle() * 14.4;
+    now_yaw_radian_ = normalize_angle_pm_pi(now_yaw_angle_);
+
+    // 计算yaw轴角度
+    total_theta += (yaw_vel_ * 0.001f) + (0.5f * yaw_acc_ * 0.001f * 0.001f);
+    final_radian = target_yaw_radian_ + normalize_angle_pm_pi(total_theta);
 
     // 计算yaw轴偏差
-    yaw_angle_diff_ = CalcYawError(imu_yaw_angle_, remote_yaw_angle_);
+    yaw_angle_diff_ = CalcYawError(imu_yaw_angle_, final_radian);
 
     // 角度环
     yaw_angle_pid_.SetTarget(0);
@@ -144,9 +150,7 @@ void Gimbal::SelfResolution()
     // 设定目标力矩
     SetTargetYawTorque(yaw_omega_pid_.GetOut());
 
-    // printf("%f,%f\n", yaw_angle_diff_, yaw_omega_pid_.GetOut());
-    // printf("%f,%f,%f\n", remote_yaw_angle_, filtered_omega, yaw_omega_pid_.GetOut());
-    // printf("%f,%f\n", yaw_angle_pid_.GetOut(), yaw_omega_pid_.GetOut()); 
+    // printf("%f,%f\n", yaw_omega_pid_.GetOut(), yaw_angle_diff_);
 }
 
 /**

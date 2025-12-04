@@ -16,6 +16,7 @@
 #include "alg_pid.h"
 #include "bsp_can.h"
 #include "alg_math.h"
+#include "stdio.h"
 
 /* Exported macros -----------------------------------------------------------*/
 

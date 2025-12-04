@@ -71,7 +71,7 @@ void Supercap::Init(CAN_HandleTypeDef *hcan, uint16_t can_rx_id, uint16_t can_tx
         .priority = (osPriority_t) osPriorityNormal
     };
     // 启动任务，将 this 传入
-    osThreadNew(Supercap::TaskEntry, this, &kSupercapTaskAttr);
+    // osThreadNew(Supercap::TaskEntry, this, &kSupercapTaskAttr);
 }
 
 // 任务入口（静态函数）—— osThreadNew 需要这个原型

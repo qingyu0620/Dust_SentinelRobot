@@ -67,11 +67,15 @@ public:
 
     inline float GetNowYawTorque();
 
+    inline float GetNowYawRadian();
+    
     inline float GetTargetYawAngle();
 
     inline float GetTargetYawOmega();
 
     inline float GetTargetYawTorque();
+
+    inline float GetTargetYawRadian();
 
     inline void SetTargetYawAngle(float target_yaw_angle);
 
@@ -79,9 +83,11 @@ public:
 
     inline void SetTargetYawTorque(float target_yaw_torque);
 
+    inline void SetTargetYawRadian(float target_yaw_radian);
+
     inline void SetImuYawAngle(float imu_yaw_angle);
 
-    inline void SetRemoetYawAngle(float remote_yaw_angle);
+    inline void SetControlYaw(float yaw_vel, float yaw_acc);
 
 protected:
     // 内部变量
@@ -97,8 +103,15 @@ protected:
     // yaw轴当前力矩
     float now_yaw_torque_ = 0.0f;
 
-    // 遥控累加yaw角值
-    float remote_yaw_angle_ = 0.0f;
+    // yaw轴当前弧度
+    float now_yaw_radian_ = 0.0f;
+
+    
+    // yaw轴角速度
+    float yaw_vel_ = 0.0f;
+
+    // yaw轴角加速度
+    float yaw_acc_ = 0.0f;
 
     // 陀螺仪yaw轴角度
     float imu_yaw_angle_ = 0.0f;
@@ -120,6 +133,9 @@ protected:
 
     // yaw轴目标力矩
     float target_yaw_torque_ = 0.0f;
+
+    // yaw轴目标弧度
+    float target_yaw_radian_ = 0.0f;
 
     void SelfResolution();
     
@@ -165,6 +181,16 @@ inline float Gimbal::GetNowYawTorque()
 }
 
 /**
+ * @brief 获取pitch轴当前弧度
+ *
+ * @return float pitch轴当前弧度
+ */
+inline float Gimbal::GetNowYawRadian()
+{
+    return (now_yaw_radian_);
+}
+
+/**
  * @brief 获取yaw轴目标角度
  *
  * @return float yaw轴目标角度
@@ -195,6 +221,16 @@ inline float Gimbal::GetTargetYawTorque()
 }
 
 /**
+ * @brief 获取yaw轴目标力矩
+ *
+ * @return float yaw轴目标力矩
+ */
+inline float Gimbal::GetTargetYawRadian()
+{
+    return (target_yaw_radian_);
+}
+
+/**
  * @brief 设定yaw轴角度
  *
  * @param target_yaw_angle yaw轴角度
@@ -215,9 +251,9 @@ inline void Gimbal::SetTargetYawOmega(float target_yaw_omega)
 }
 
 /**
- * @brief 设定yaw轴角速度
+ * @brief 设定yaw轴力矩
  *
- * @param target_yaw_torque yaw轴角速度
+ * @param target_yaw_torque yaw轴力矩
  */
 inline void Gimbal::SetTargetYawTorque(float target_yaw_torque)
 {
@@ -225,13 +261,25 @@ inline void Gimbal::SetTargetYawTorque(float target_yaw_torque)
 }
 
 /**
- * @brief 设定遥控累加yaw轴角度
+ * @brief 设定yaw轴弧度
  * 
- * @param remote_yaw_angle remote累加yaw轴角度
+ * @param target_yaw_radian yaw轴弧度
  */
-inline void Gimbal::SetRemoetYawAngle(float remote_yaw_angle)
+inline void Gimbal::SetTargetYawRadian(float target_yaw_radian)
 {
-    remote_yaw_angle_ = remote_yaw_angle;
+    target_yaw_radian_ = target_yaw_radian;
+}
+
+/**
+ * @brief 设定yaw轴角速度和角加速度
+ * 
+ * @param yaw_vel yaw轴角速度
+ * @param yaw_acc yaw轴角加速度
+ */
+inline void Gimbal::SetControlYaw(float yaw_vel, float yaw_acc)
+{
+    yaw_vel_ = yaw_vel;
+    yaw_acc_ = yaw_acc;
 }
 
 /**
