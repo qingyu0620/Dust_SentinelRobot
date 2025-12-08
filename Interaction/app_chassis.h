@@ -102,7 +102,7 @@ protected:
 
     float last_target_vy_ = 0.0f;
 
-    float last_target_r_ = 0.0f;
+    float last_target_rotation_ = 0.0f;
 
     // 底盘频率
 

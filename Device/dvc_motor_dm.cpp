@@ -315,6 +315,7 @@ void MotorDmNormal::AlivePeriodElapsedCallback()
 
     if(motor_dm_status_ == MOTOR_DM_STATUS_DISABLE)
     {
+        CanSendClearError();
         CanSendEnter();
     }
 }

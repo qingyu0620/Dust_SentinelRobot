@@ -97,7 +97,7 @@ void Chassis::SlopePlanning()
 {
     now_accel_x_ = (target_vx_in_chassis_ - last_target_vx_) / dt;
     now_accel_y_ = (target_vy_in_chassis_ - last_target_vy_) / dt;
-    now_accel_r_ = (target_velocity_rotation_ - last_target_r_) / dt;
+    now_accel_r_ = (target_velocity_rotation_ - last_target_rotation_) / dt;
 
     if(fabs(now_accel_x_) > max_accel_xy_)
     {
@@ -129,21 +129,21 @@ void Chassis::SlopePlanning()
 
     if(fabs(now_accel_r_) > max_accel_r_)
     {
-        if(target_velocity_rotation_ > last_target_r_) 
+        if(target_velocity_rotation_ > last_target_rotation_) 
         {
-            target_velocity_rotation_ = (last_target_r_ + max_accel_r_ * dt) < target_velocity_rotation_ ? 
-                                        (last_target_r_ + max_accel_r_ * dt) : target_velocity_rotation_;
+            target_velocity_rotation_ = (last_target_rotation_ + max_accel_r_ * dt) < target_velocity_rotation_ ? 
+                                        (last_target_rotation_ + max_accel_r_ * dt) : target_velocity_rotation_;
         } 
         else
         {
-            target_velocity_rotation_ = (last_target_r_ - max_accel_r_ * dt) > target_velocity_rotation_ ? 
-                                        (last_target_r_ - max_accel_r_ * dt) : target_velocity_rotation_;
+            target_velocity_rotation_ = (last_target_rotation_ - max_accel_r_ * dt) > target_velocity_rotation_ ? 
+                                        (last_target_rotation_ - max_accel_r_ * dt) : target_velocity_rotation_;
         }
     }
 
     last_target_vx_ = target_vx_in_chassis_;
     last_target_vy_ = target_vy_in_chassis_;
-    last_target_r_  = target_velocity_rotation_;
+    last_target_rotation_  = target_velocity_rotation_;
 }
 
 /**

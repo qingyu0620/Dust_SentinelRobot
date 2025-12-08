@@ -11,7 +11,6 @@
 /* Includes ------------------------------------------------------------------*/
 
 #include "Robot.h"
-#include "alg_math.h"
 
 /* Private macros ------------------------------------------------------------*/
 
@@ -98,8 +97,7 @@ void Robot::Task()
 
     // Mcu自瞄数据
     McuRecvAutoaimData mcu_autoaim_data_local;
-    mcu_autoaim_data_local.autoaim_yaw_vel.f   = 0;
-    mcu_autoaim_data_local.autoaim_yaw_acc.f   = 0;
+    mcu_autoaim_data_local.autoaim_yaw_ang.f   = 0;
 
     // 底盘yaw角角度差，用于底盘跟随
     float chassis_angle_diff = 0.0f;
@@ -127,12 +125,13 @@ void Robot::Task()
         if(mcu_autoaim_data_local.mode == 0)
         {
             gimbal_.SetTargetYawRadian(remote_yaw_angle_);
-            gimbal_.SetControlYaw(0, 0);
         }
-        else if(mcu_autoaim_data_local.mode == 1)
+        else if(mcu_autoaim_data_local.mode)
         {
-            gimbal_.SetControlYaw(mcu_autoaim_data_local.autoaim_yaw_vel.f, mcu_autoaim_data_local.autoaim_yaw_acc.f);
+            gimbal_.SetTargetYawRadian(mcu_autoaim_data_local.autoaim_yaw_ang.f);
+            // gimbal_.SetTargetYawRadian(remote_yaw_angle_);
         }
+
         gimbal_.SetImuYawAngle(normalize_angle_pm_pi(mcu_comm_data_local.imu_yaw.f));
 
 
@@ -219,6 +218,7 @@ void Robot::Task()
 
         /****************************   调试   ****************************/
 
+        // printf("%f\n", mcu_comm_.recv_comm_data_.imu_yaw.f);
 
         osDelay(pdMS_TO_TICKS(1));
     }

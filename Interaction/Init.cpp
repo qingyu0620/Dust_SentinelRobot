@@ -94,8 +94,8 @@ void can2_callback_function(CanRxBuffer* CAN_RxMessage)
  * @param length 
  */
 void uart3_callback_function(uint8_t* buffer, uint16_t length) 
-{	
-	robot_.remote_.UartRxCpltCallback(buffer);
+{
+	
 }
 
 /**

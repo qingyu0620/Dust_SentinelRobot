@@ -18,8 +18,8 @@
 // bsp
 #include "stdio.h"
 #include "bsp_dwt.h"
+#include "bsp_uart.h"
 // dvc
-#include "dvc_remote_dji.h"
 #include "dvc_MCU_comm.h"
 #include "imu.hpp"
 // app
@@ -47,8 +47,6 @@ public:
     Imu imu_;
     // 超级电容
     Supercap supercap_;
-    // 临时遥控
-    RemoteDjiDR16 remote_;
 
     void Init();
 

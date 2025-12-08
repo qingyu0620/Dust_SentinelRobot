@@ -61,12 +61,11 @@ void MX_FREERTOS_Init(void);
 /* USER CODE END PFP */
 
 /* Private user code ---------------------------------------------------------*/
-
 /* USER CODE BEGIN 0 */
 
 /* USER CODE END 0 */
 
-/** 
+/**
   * @brief  The application entry point.
   * @retval int
   */

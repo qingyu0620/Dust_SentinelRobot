@@ -107,10 +107,13 @@ protected:
     float now_yaw_radian_ = 0.0f;
 
     
-    // yaw轴角速度
-    float yaw_vel_ = 0.0f;
+    // yaw轴当前角速度
+    float now_yaw_vel_ = 0.0f;
 
-    // yaw轴角加速度
+    // yaw轴目标角速度
+    float target_yaw_vel_ = 0.0f;
+
+    // yaw轴当前角加速度
     float yaw_acc_ = 0.0f;
 
     // 陀螺仪yaw轴角度
@@ -276,9 +279,9 @@ inline void Gimbal::SetTargetYawRadian(float target_yaw_radian)
  * @param yaw_vel yaw轴角速度
  * @param yaw_acc yaw轴角加速度
  */
-inline void Gimbal::SetControlYaw(float yaw_vel, float yaw_acc)
+inline void Gimbal::SetControlYaw(float target_yaw_vel, float yaw_acc)
 {
-    yaw_vel_ = yaw_vel;
+    target_yaw_vel_ = target_yaw_vel;
     yaw_acc_ = yaw_acc;
 }
 

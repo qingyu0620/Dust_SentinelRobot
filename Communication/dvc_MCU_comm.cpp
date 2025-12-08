@@ -48,7 +48,7 @@ void McuComm::Init(CAN_HandleTypeDef* hcan, uint8_t can_rx_id, uint8_t can_tx_id
           .priority = (osPriority_t) osPriorityNormal
      };
      // 启动任务，将 this 传入
-     osThreadNew(McuComm::TaskEntry, this, &kMcuCommTaskAttr);
+     // osThreadNew(McuComm::TaskEntry, this, &kMcuCommTaskAttr);
 }
 
 /**
@@ -183,13 +183,13 @@ void McuComm::CanRxCpltCallback(uint8_t* rx_data)
           case (0xAC): // 自瞄yaw包
           {
                recv_autoaim_data_.mode = rx_data[1];
-               memcpy(&recv_autoaim_data_.autoaim_yaw_vel, &rx_data[2], 4);
+               memcpy(&recv_autoaim_data_.autoaim_yaw_ang, &rx_data[2], 4);
 
                break;
           }
           case (0xAD): // 自瞄yaw包
           {
-               memcpy(&recv_autoaim_data_.autoaim_yaw_acc, &rx_data[1], 4);
+               // memcpy(&recv_autoaim_data_.autoaim_yaw_acc, &rx_data[1], 4);
                break;
           }
           default:

@@ -11,7 +11,6 @@
 /* Includes ------------------------------------------------------------------*/
 
 #include "app_gimbal.h"
-#include "alg_math.h"
 
 /* Private macros ------------------------------------------------------------*/
 
@@ -30,11 +29,11 @@ void Gimbal::Init()
     // yaw轴角度环pid
     yaw_angle_pid_.Init(
         12.0f,
-        0.01f,
-        0.26f,
-        0.0f,
+        0.05f,
+        0.2f,
+        0.1f,
         0.f,
-        44.0f,
+        10.0f,
         0.001f,
         0.0f,
         0.0f,
@@ -44,12 +43,12 @@ void Gimbal::Init()
     );
     // yaw轴速度环pid
     yaw_omega_pid_.Init(
-        0.75f,
+        0.69f,
+        0.02f,
+        0.00025f,
         0.0f,
         0.0f,
-        0.0f,
-        0.0f,
-        6.0f,
+        4.5f,
         0.001f,
         0.0f,
         0.0f,
@@ -129,13 +128,10 @@ void Gimbal::SelfResolution()
     now_yaw_angle_ = motor_yaw_.GetNowAngle() * 14.4;
     now_yaw_radian_ = normalize_angle_pm_pi(now_yaw_angle_);
 
-    // 计算yaw轴角度
-    total_theta += (yaw_vel_ * 0.001f) + (0.5f * yaw_acc_ * 0.001f * 0.001f);
-    final_radian = target_yaw_radian_ + normalize_angle_pm_pi(total_theta);
-
     // 计算yaw轴偏差
-    yaw_angle_diff_ = CalcYawError(imu_yaw_angle_, final_radian);
-
+    yaw_angle_diff_ = CalcYawError(imu_yaw_angle_, target_yaw_radian_);
+    // yaw_angle_diff_ = CalcYawError(now_yaw_radian_, target_yaw_radian_);
+        
     // 角度环
     yaw_angle_pid_.SetTarget(0);
     yaw_angle_pid_.SetNow(yaw_angle_diff_);
@@ -149,8 +145,6 @@ void Gimbal::SelfResolution()
 
     // 设定目标力矩
     SetTargetYawTorque(yaw_omega_pid_.GetOut());
-
-    // printf("%f,%f\n", yaw_omega_pid_.GetOut(), yaw_angle_diff_);
 }
 
 /**
@@ -160,6 +154,7 @@ void Gimbal::SelfResolution()
 void Gimbal::Output()
 {
     motor_yaw_.SetControlTorque(target_yaw_torque_);
+    // motor_yaw_.SetControlTorque(0);
     motor_yaw_.Output();
 }
 

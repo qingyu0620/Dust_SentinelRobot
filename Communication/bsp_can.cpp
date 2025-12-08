@@ -65,7 +65,7 @@ void can_init(CAN_HandleTypeDef *hcan, CanCallback callback_function)
 
     HAL_CAN_Start(hcan);
 
-    HAL_CAN_ActivateNotification(hcan, CAN_IT_RX_FIFO0_MSG_PENDING);
+    HAL_CAN_ActivateNotification(hcan, CAN_IT_RX_FIFO0_MSG_PENDING );
     HAL_CAN_ActivateNotification(hcan, CAN_IT_RX_FIFO1_MSG_PENDING);
 }
 

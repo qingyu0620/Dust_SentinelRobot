@@ -79,8 +79,7 @@ struct McuRecvAutoaimData
 
     uint8_t         mode;
 
-    McuConv         autoaim_yaw_vel;            // 自瞄yaw轴角速度
-    McuConv         autoaim_yaw_acc;            // 自瞄yaw轴角加速度
+    McuConv         autoaim_yaw_ang;            // 自瞄yaw轴角度
 };
 
 /**
@@ -124,7 +123,6 @@ public:
     {   0xAC,
         0xAD,
         0,
-        {0, 0, 0, 0},
         {0, 0, 0, 0},
     };
 
