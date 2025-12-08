@@ -49,7 +49,7 @@ void can2_callback_function(CanRxBuffer* CAN_RxMessage)
 {
     switch (CAN_RxMessage->header.StdId) 
     {
-        case (0x04):
+        case (0x05):
         {
             robot_.gimbal_.motor_pitch_.CanRxCpltCallback(CAN_RxMessage->data);
             break;

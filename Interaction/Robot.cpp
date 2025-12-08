@@ -11,6 +11,7 @@
 /* Includes ------------------------------------------------------------------*/
 
 #include "Robot.h"
+#include "alg_math.h"
 
 /* Private macros ------------------------------------------------------------*/
 
@@ -88,8 +89,14 @@ void Robot::Task()
         {
             mcu_comm_.DisconnectData();
         }
+        
+        if(mcu_comm_.send_autoaim_data_.mode)
+        {
+            mcu_comm_.CanSendAutoaimframe1();
+        }
+        
         mcu_comm_.UpdataAutoaimData(&pc_comm_.recv_autoaim_data);
-
+        
 
         /****************************   PCcomm   ****************************/
 
@@ -99,12 +106,15 @@ void Robot::Task()
         /****************************   云台   ****************************/
 
 
-        if(pc_comm_.recv_autoaim_data.mode == 0){
+        if(pc_comm_.recv_autoaim_data.mode == 0)
+        {
             gimbal_.SetTargetPitchRadian(remote_dr16_.output_.pitch);
-            gimbal_.SetControlPitch(0, 0);
-        }else if(pc_comm_.recv_autoaim_data.mode == 1){
-            gimbal_.SetControlPitch(pc_comm_.recv_autoaim_data.pitch.pitch_vel, pc_comm_.recv_autoaim_data.pitch.pitch_acc);
         }
+        else if(pc_comm_.recv_autoaim_data.mode)
+        {
+            gimbal_.SetTargetPitchRadian(-pc_comm_.recv_autoaim_data.pitch.pitch_ang);
+        }
+        gimbal_.SetImuPitchAngle(normalize_angle_pm_pi(imu_.GetRollAngle()));
 
 
         /****************************   摩擦轮   ****************************/
@@ -133,7 +143,8 @@ void Robot::Task()
 
         /****************************   调试   ****************************/
 
-    
+        // printf("%f,%f\n", gimbal_.pitch_angle_pid_.GetOut(), gimbal_.pitch_omega_pid_.GetOut());
+
         osDelay(pdMS_TO_TICKS(1));
     }
 }

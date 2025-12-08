@@ -73,12 +73,7 @@ void McuComm::TaskEntry(void *argument)
 void McuComm::UpdataAutoaimData(PCRecvAutoAimData* pc_recv_autoaim_data)
 {
      send_autoaim_data_.mode = pc_recv_autoaim_data->mode;
-     send_autoaim_data_.autoaim_yaw_vel.f = pc_recv_autoaim_data->yaw.yaw_vel;
-     send_autoaim_data_.autoaim_yaw_acc.f = pc_recv_autoaim_data->yaw.yaw_acc;
-
-     // send_autoaim_data_.mode = 1;
-     // send_autoaim_data_.autoaim_yaw_vel.f = 10;
-     // send_autoaim_data_.autoaim_yaw_acc.f = 0;
+     send_autoaim_data_.autoaim_yaw_ang.f = pc_recv_autoaim_data->yaw.yaw_ang;
 }
 
 /**
@@ -137,7 +132,7 @@ void McuComm::CanSendAutoaimframe1()
      can_tx_frame[0] = 0xAC;
      can_tx_frame[1] = send_autoaim_data_.mode;
 
-     memcpy(&can_tx_frame[2], &send_autoaim_data_.autoaim_yaw_vel, 4);
+     memcpy(&can_tx_frame[2], &send_autoaim_data_.autoaim_yaw_ang, 4);
 
      can_tx_frame[6] = 0x00;
      can_tx_frame[7] = 0x00;
@@ -154,7 +149,7 @@ void McuComm::CanSendAutoaimframe2()
      static uint8_t can_tx_frame[8];
 
      can_tx_frame[0] = 0xAD;
-     memcpy(&can_tx_frame[1], &send_autoaim_data_.autoaim_yaw_acc, 4);
+     // memcpy(&can_tx_frame[1], &send_autoaim_data_.autoaim_yaw_acc, 4);
 
      can_tx_frame[5] = 0x00;
      can_tx_frame[6] = 0x00;
@@ -188,13 +183,7 @@ void McuComm::Task()
      {    
           CanSendChassis();
           CanSendCommand();
-          if(send_autoaim_data_.mode == 1)
-          {
-               CanSendAutoaimframe1();
-               osDelay(pdMS_TO_TICKS(1));
-               CanSendAutoaimframe2();
-          }
-          osDelay(pdMS_TO_TICKS(4));
+          osDelay(pdMS_TO_TICKS(1));
      }
 }
 

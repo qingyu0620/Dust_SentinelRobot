@@ -205,10 +205,5 @@ void HAL_UARTEx_RxEventCallback(UART_HandleTypeDef *huart, uint16_t Size)
 	}
 }
 
-void uart6_callback_function(uint8_t* buffer, uint16_t length)
-{	
-	
-}
-
 
 

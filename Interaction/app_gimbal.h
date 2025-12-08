@@ -81,8 +81,11 @@ public:
 
     inline void SetTargetPitchRadian(float target_pitch_radian);
 
+    inline void SetImuPitchAngle(float imu_pitch_angle);
+
     inline void SetControlPitch(float pitch_vel, float pitch_acc);
 
+    float pitch_angle_diff_ = 0.0f;
 protected:
     // pitch轴最小值
     float min_pitch_angle_ = -0.60f;
@@ -106,6 +109,7 @@ protected:
     // pitch轴当前弧度
     float now_pitch_radian_ = 0.0f;
     
+
     // pitch轴当前角速度
     float now_pitch_vel_ = 0.0f;
 
@@ -115,8 +119,11 @@ protected:
     // pitch轴角加速度
     float pitch_acc_ = 0.0f;
 
+    // 陀螺仪pitch轴角度
+    float imu_pitch_angle_ = 0.0f;
+
     // yaw角角度差，用于角度环
-    float pitch_angle_diff_ = 0.0f;
+    
 
     // 写变量
 
@@ -267,6 +274,11 @@ inline void Gimbal::SetTargetPitchTorque(float target_pitch_torque)
 inline void Gimbal::SetTargetPitchRadian(float target_pitch_radian)
 {
     target_pitch_radian_ = target_pitch_radian;
+}
+
+inline void Gimbal::SetImuPitchAngle(float imu_pitch_angle)
+{
+    imu_pitch_angle_ = imu_pitch_angle;
 }
 
 /**

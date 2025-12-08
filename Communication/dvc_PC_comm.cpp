@@ -11,9 +11,7 @@
 /* Includes ------------------------------------------------------------------*/
 
 #include "dvc_PC_comm.h"
-#include "cmsis_os2.h"
-#include "ins_task.h"
-#include "projdefs.h"
+#include "stdio.h"
 
 /* Private macros ------------------------------------------------------------*/
 
@@ -63,8 +61,8 @@ void PcComm::UpdataAutoaimData()
     send_autoaim_data.mode                   = 0;
     send_autoaim_data.yaw.yaw_ang            = INS.Yaw;
     send_autoaim_data.yaw.yaw_vel            = INS.Gyro[Z];
-    send_autoaim_data.pitch.pitch_ang        = INS.Roll;
-    send_autoaim_data.pitch.pitch_vel        = INS.Gyro[X]; 
+    send_autoaim_data.pitch.pitch_ang        = -INS.Roll;
+    send_autoaim_data.pitch.pitch_vel        = -INS.Gyro[X]; 
     send_autoaim_data.bullet.bullet_speed    = 16;
     send_autoaim_data.bullet.bullet_count    = 20;
 }
@@ -109,11 +107,13 @@ void PcComm::RxCpltCallback()
 {
     if(bsp_usb_rx_buffer[0] == 'S' && bsp_usb_rx_buffer[1] == 'P')
     {
-        uint16_t lenth = sizeof(bsp_usb_rx_buffer);
-        if(verify_crc16_check_sum(bsp_usb_rx_buffer, lenth))
-        {
-            memcpy(&recv_autoaim_data, bsp_usb_rx_buffer, lenth);
-        }
+        uint16_t lenth = sizeof(recv_autoaim_data);
+        memcpy(&recv_autoaim_data, bsp_usb_rx_buffer, lenth);
+        
+        // if(verify_crc16_check_sum(bsp_usb_rx_buffer, lenth))
+        // {
+        //     memcpy(&recv_autoaim_data, bsp_usb_rx_buffer, lenth);
+        // }
     }
     else if(bsp_usb_rx_buffer[0] == recv_navigation_data.start_of_frame)
     {
