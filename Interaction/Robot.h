@@ -21,6 +21,7 @@
 #include "bsp_uart.h"
 // dvc
 #include "dvc_MCU_comm.h"
+#include "dvc_PC_comm.h"
 #include "imu.hpp"
 // app
 #include "app_reload.h"

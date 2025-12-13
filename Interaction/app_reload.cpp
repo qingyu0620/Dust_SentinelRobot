@@ -11,7 +11,6 @@
 /* Includes ------------------------------------------------------------------*/
 
 #include "app_reload.h"
-#include "stdio.h"
 
 /* Private macros ------------------------------------------------------------*/
 
@@ -56,6 +55,20 @@ void Reload::TaskEntry(void *argument)
 }
 
 /**
+ * @brief Reload电机输出
+ * 
+ */
+void Reload::OutputToMotor()
+{
+    // 设置拨弹速度
+    motor_reload_1_.SetTargetOmega( target_reload_rotation_);
+
+    motor_reload_1_.CalculatePeriodElapsedCallback();
+
+    can_send_data(&hcan1, 0x1FF, g_can1_0x1ff_tx_data, 2);
+}
+
+/**
  * @brief Reload任务函数
  * 
  */
@@ -63,13 +76,7 @@ void Reload::Task()
 {
     for(;;)
     {
-        // 设置拨弹速度
-        motor_reload_1_.SetTargetOmega( target_reload_rotation_);
-
-        motor_reload_1_.CalculatePeriodElapsedCallback();
-
-        can_send_data(&hcan1, 0x1FF, g_can1_0x1ff_tx_data, 2);
-
+        OutputToMotor();
         osDelay(pdMS_TO_TICKS(10));
     }
 }

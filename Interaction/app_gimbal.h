@@ -54,8 +54,11 @@ public:
     // yaw轴位置环
     Pid yaw_angle_pid_;
 
-    // yaw轴一阶低通滤波
+    // yaw轴角速度滤波
     LowPassFilter yaw_omega_filter_;
+
+    // yaw轴自瞄数据滤波
+    LowPassFilter yaw_autoaim_filter_;
 
     void Init();
 
@@ -87,7 +90,10 @@ public:
 
     inline void SetImuYawAngle(float imu_yaw_angle);
 
-    inline void SetControlYaw(float yaw_vel, float yaw_acc);
+    float yaw_angle_diff_ = 0.0f;
+
+    float imu_yaw_angle_ = 0.0f;
+
 
 protected:
     // 内部变量
@@ -106,21 +112,10 @@ protected:
     // yaw轴当前弧度
     float now_yaw_radian_ = 0.0f;
 
-    
-    // yaw轴当前角速度
-    float now_yaw_vel_ = 0.0f;
-
-    // yaw轴目标角速度
-    float target_yaw_vel_ = 0.0f;
-
-    // yaw轴当前角加速度
-    float yaw_acc_ = 0.0f;
-
     // 陀螺仪yaw轴角度
-    float imu_yaw_angle_ = 0.0f;
-
+    
     // yaw角角度差，用于角度环
-    float yaw_angle_diff_ = 0.0f;
+    
 
     // 写变量
 
@@ -271,18 +266,6 @@ inline void Gimbal::SetTargetYawTorque(float target_yaw_torque)
 inline void Gimbal::SetTargetYawRadian(float target_yaw_radian)
 {
     target_yaw_radian_ = target_yaw_radian;
-}
-
-/**
- * @brief 设定yaw轴角速度和角加速度
- * 
- * @param yaw_vel yaw轴角速度
- * @param yaw_acc yaw轴角加速度
- */
-inline void Gimbal::SetControlYaw(float target_yaw_vel, float yaw_acc)
-{
-    target_yaw_vel_ = target_yaw_vel;
-    yaw_acc_ = yaw_acc;
 }
 
 /**

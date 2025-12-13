@@ -90,8 +90,8 @@ void Robot::Task()
 
     // Mcu命令数据
     McuCommData mcu_comm_data_local;
-    mcu_comm_data_local.switch_l               = Switch_MID;
-    mcu_comm_data_local.switch_r               = Switch_MID;
+    mcu_comm_data_local.switch_l               = SWITCH_MID;
+    mcu_comm_data_local.switch_r               = SWITCH_MID;
     mcu_comm_data_local.supercap               = 0;
     mcu_comm_data_local.imu_yaw.f              = 0;
 
@@ -110,26 +110,63 @@ void Robot::Task()
         // 用临界区一次性复制，避免撕裂
         __disable_irq();
         mcu_chassis_data_local = *(static_cast<const McuChassisData*>(&(mcu_comm_.recv_chassis_data_)));
-        mcu_autoaim_data_local = *(static_cast<const McuRecvAutoaimData*>(&(mcu_comm_.recv_autoaim_data_)));
         mcu_comm_data_local = *(static_cast<const McuCommData*>(&(mcu_comm_.recv_comm_data_)));
+        mcu_autoaim_data_local = *(static_cast<const McuRecvAutoaimData*>(&(mcu_comm_.recv_autoaim_data_)));
         __enable_irq();
 
 
         /****************************   云台   ****************************/
 
 
-        // 遥控器累加绝对精准yaw轴角度
-        remote_yaw_angle_ += (M_PI / 180.f * (K * mcu_chassis_data_local.rotation + C)) * 0.5;
-        remote_yaw_angle_ = normalize_pi(remote_yaw_angle_);
+        if(mcu_comm_data_local.switch_r == SWITCH_MID)
+        {
+            remote_yaw_angle_ += (M_PI / 180.f * (K * mcu_chassis_data_local.rotation + C)) * 0.5;
 
-        if(mcu_autoaim_data_local.mode == 0)
-        {
+            remote_yaw_angle_ = normalize_pi(remote_yaw_angle_);
+
             gimbal_.SetTargetYawRadian(remote_yaw_angle_);
+            
         }
-        else if(mcu_autoaim_data_local.mode)
+        else if(mcu_comm_data_local.switch_r == SWITCH_UP)
         {
-            gimbal_.SetTargetYawRadian(mcu_autoaim_data_local.autoaim_yaw_ang.f);
-            // gimbal_.SetTargetYawRadian(remote_yaw_angle_);
+            switch (mcu_autoaim_data_local.mode) 
+            {
+                case(AUTOAIM_MODE_IDIE):
+                {
+                    remote_yaw_angle_ += (M_PI / 180.f * (K * mcu_chassis_data_local.rotation + C)) * 0.5;
+
+                    remote_yaw_angle_ = normalize_pi(remote_yaw_angle_);
+
+                    gimbal_.SetTargetYawRadian(remote_yaw_angle_);
+
+                    break;
+                }
+                case(AUTOAIM_MODE_FOLLOW):
+                {
+                    float filtered_autoaim = gimbal_.yaw_autoaim_filter_.Update(mcu_autoaim_data_local.autoaim_yaw_ang.f);
+
+                    remote_yaw_angle_ += filtered_autoaim / 120.f;
+
+                    gimbal_.SetTargetYawRadian(remote_yaw_angle_);
+
+                    break;
+                }
+                case(AUTOAIM_MODE_FIRE):
+                {
+                    float filtered_autoaim = gimbal_.yaw_autoaim_filter_.Update(mcu_autoaim_data_local.autoaim_yaw_ang.f);
+
+                    remote_yaw_angle_ += filtered_autoaim / 120.f;
+
+                    gimbal_.SetTargetYawRadian(remote_yaw_angle_);
+                    // reload_.SetTargetReloadRotation(MAX_RELOAD_SPEED);
+
+                    break;
+                }
+            }
+        }
+        else if(mcu_comm_data_local.switch_r == SWITCH_DOWN)
+        {
+            gimbal_.SetTargetYawTorque(0);
         }
 
         gimbal_.SetImuYawAngle(normalize_angle_pm_pi(mcu_comm_data_local.imu_yaw.f));
@@ -151,19 +188,19 @@ void Robot::Task()
         // 左按钮
         switch (mcu_comm_data_local.switch_l) 
         {
-            case Switch_UP:
+            case SWITCH_UP:
             {
                 chassis_.SetTargetVelocityRotation(MAX_GYROSCOPE_SPEED);
                 break;
             }
-            case Switch_MID:
+            case SWITCH_MID:
             {
                 chassis_.SetTargetVelocityRotation(0);
                 break;
             }
-            case Switch_DOWN:
+            case SWITCH_DOWN:
             {
-                chassis_angle_diff = CalcYawErrorAngle(remote_yaw_angle_ ,imu_.GetYawAngle());
+                chassis_angle_diff = CalcYawError(remote_yaw_angle_ ,imu_.GetYawRadian());
 
                 chassis_.chassis_follow_pid_.SetTarget(0);
                 chassis_.chassis_follow_pid_.SetNow(chassis_angle_diff);
@@ -181,29 +218,29 @@ void Robot::Task()
         }
         
         // 右按钮
-        switch (mcu_comm_data_local.switch_r)
-        {
-            case Switch_UP:
-            {
-                reload_.SetTargetReloadRotation(MAX_RELOAD_SPEED);
-                break;
-            }
-            case Switch_MID:
-            {
-                reload_.SetTargetReloadRotation(0);
-                break;
-            }
-            case Switch_DOWN:
-            {
-                reload_.SetTargetReloadRotation(-MAX_RELOAD_SPEED / 2);
-                break;
-            }
-            default:
-            {
-                reload_.SetTargetReloadRotation(0);
-                break;
-            }
-        }
+        // switch (mcu_comm_data_local.switch_r)
+        // {
+        //     case Switch_UP:
+        //     {
+        //         reload_.SetTargetReloadRotation(MAX_RELOAD_SPEED);
+        //         break;
+        //     }
+        //     case Switch_MID:
+        //     {
+        //         reload_.SetTargetReloadRotation(0);
+        //         break;
+        //     }
+        //     case Switch_DOWN:
+        //     {
+        //         reload_.SetTargetReloadRotation(-MAX_RELOAD_SPEED / 2);
+        //         break;
+        //     }
+        //     default:
+        //     {
+        //         reload_.SetTargetReloadRotation(0);
+        //         break;
+        //     }
+        // }
 
 
         /****************************   超电   ****************************/
@@ -218,7 +255,7 @@ void Robot::Task()
 
         /****************************   调试   ****************************/
 
-        // printf("%f\n", mcu_comm_.recv_comm_data_.imu_yaw.f);
+        // printf("%f,%f\n", gimbal_.yaw_angle_diff_, gimbal_.yaw_autoaim_filter_.Update(mcu_autoaim_data_local.autoaim_yaw_ang.f));
 
         osDelay(pdMS_TO_TICKS(1));
     }

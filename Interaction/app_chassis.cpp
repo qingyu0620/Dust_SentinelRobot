@@ -28,10 +28,10 @@ void Chassis::Init()
 {
     // 底盘跟随pid
     chassis_follow_pid_.Init(
+        15.f,
         0.3f,
-        0.01f,
-        0.002f,
-        0.0f,
+        0.005f,
+        2.0f,
         0.0f,
         25.0f,
         0.001f,
@@ -172,7 +172,6 @@ void Chassis::OutputToMotor()
     // 全向轮底盘电机
     can_send_data(&hcan1, 0x200, g_can1_0x200_tx_data, 8);
 }
-
 
 /**
  * @brief Chassis任务函数

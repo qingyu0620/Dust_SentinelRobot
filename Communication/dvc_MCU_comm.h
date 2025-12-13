@@ -16,6 +16,7 @@
 #include "bsp_can.h"
 #include "FreeRTOS.h"
 #include "cmsis_os2.h"
+#include "string.h"
 #include "stdio.h"
 
 /* Exported macros -----------------------------------------------------------*/
@@ -38,9 +39,9 @@ union McuConv
  */
 enum RemoteSwitchStatus
 {
-    Switch_UP    = (uint8_t)1,
-    Switch_MID   = (uint8_t)3,
-    Switch_DOWN  = (uint8_t)2,
+    SWITCH_UP    = (uint8_t)1,
+    SWITCH_MID   = (uint8_t)3,
+    SWITCH_DOWN  = (uint8_t)2,
 };
 
 /**
@@ -74,10 +75,9 @@ struct McuCommData
  */
 struct McuRecvAutoaimData
 {
-    uint8_t         start_of_yaw_frame1 = 0xAC;
-    uint8_t         start_of_yaw_frame2 = 0xAD;
+    uint8_t         start_of_yaw_frame = 0xAC;
 
-    uint8_t         mode;
+    uint8_t         mode;                       // 0-空闲 1-自瞄不开火 2-自瞄开火
 
     McuConv         autoaim_yaw_ang;            // 自瞄yaw轴角度
 };
@@ -88,10 +88,9 @@ struct McuRecvAutoaimData
  */
 struct McuSendAutoaimData
 {
-    uint8_t         start_of_yaw_frame1 = 0xAC;
-    uint8_t         start_of_yaw_frame2 = 0xAD;
+    uint8_t         start_of_yaw_frame = 0xAC;
 
-    McuConv         autoaim_yaw_ang;
+    McuConv         autoaim_yaw_ang;            // 自瞄累加弧度
 };
 
 /**
@@ -113,22 +112,20 @@ public:
     McuCommData recv_comm_data_ = 
     {
         0xAB,
-        Switch_MID,
-        Switch_MID,
+        SWITCH_MID,
+        SWITCH_MID,
         0,
         {0, 0, 0, 0},
     };
 
     McuRecvAutoaimData recv_autoaim_data_ = 
     {   0xAC,
-        0xAD,
         0,
         {0, 0, 0, 0},
     };
 
     McuSendAutoaimData send_autoaim_data_ = 
     {   0xAC,
-        0xAD,
         {0, 0, 0, 0},
     };
 

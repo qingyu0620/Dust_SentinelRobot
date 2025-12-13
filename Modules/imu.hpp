@@ -2,6 +2,7 @@
 #define IMU_H_
 
 #include "BMI088driver.h"
+#include "alg_math.h"
 #include "spi.h"
 #include "ins_task.h"
 #include "cmsis_os2.h"
@@ -50,6 +51,11 @@ public:
     inline float GetYawAngleTotalAngle()
     {
         return INS.YawTotalAngle;
+    }
+
+    inline float GetYawRadian()
+    {
+        return normalize_angle_pm_pi(INS.Yaw);
     }
 
     inline float GetTemperature()

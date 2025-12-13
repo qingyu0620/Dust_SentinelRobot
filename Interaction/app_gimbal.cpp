@@ -28,12 +28,12 @@ void Gimbal::Init()
 {
     // yaw轴角度环pid
     yaw_angle_pid_.Init(
-        12.0f,
-        0.05f,
-        0.2f,
-        0.1f,
+        16.5f,
+        1.0f,
+        0.86f,
+        10.f,
         0.f,
-        10.0f,
+        44.0f,
         0.001f,
         0.0f,
         0.0f,
@@ -43,12 +43,12 @@ void Gimbal::Init()
     );
     // yaw轴速度环pid
     yaw_omega_pid_.Init(
-        0.69f,
-        0.02f,
-        0.00025f,
+        0.765f,
+        0.003f,
+        0.0007f,
+        0.5f,
         0.0f,
-        0.0f,
-        4.5f,
+        9.9f,
         0.001f,
         0.0f,
         0.0f,
@@ -59,6 +59,8 @@ void Gimbal::Init()
     // yaw轴速度环滤波器
     yaw_omega_filter_.Init(15.0f, 0.001f);
 
+    yaw_autoaim_filter_.Init(20.0f, 0.001f);
+
     // 4310电机初始化
     motor_yaw_.Init(&hcan2, 0x07, 0x06);
 
@@ -67,8 +69,8 @@ void Gimbal::Init()
     osDelay(pdMS_TO_TICKS(1000));
     
     // 保存零点（当云台与底盘上电有偏差时需重新设置零点）
-    // motor_yaw_.CanSendSaveZero();
-    // osDelay(pdMS_TO_TICKS(1000));
+    motor_yaw_.CanSendSaveZero();
+    osDelay(pdMS_TO_TICKS(1000));
     
     // 发送使能命令
     motor_yaw_.CanSendEnter();
@@ -125,13 +127,12 @@ void Gimbal::SelfResolution()
 
     // 获取当前数据
     now_yaw_omega_ = motor_yaw_.GetNowOmega();
-    now_yaw_angle_ = motor_yaw_.GetNowAngle() * 14.4;
+    now_yaw_angle_ = motor_yaw_.GetNowAngle() * 14.4f;
     now_yaw_radian_ = normalize_angle_pm_pi(now_yaw_angle_);
 
     // 计算yaw轴偏差
     yaw_angle_diff_ = CalcYawError(imu_yaw_angle_, target_yaw_radian_);
-    // yaw_angle_diff_ = CalcYawError(now_yaw_radian_, target_yaw_radian_);
-        
+    
     // 角度环
     yaw_angle_pid_.SetTarget(0);
     yaw_angle_pid_.SetNow(yaw_angle_diff_);
@@ -154,7 +155,6 @@ void Gimbal::SelfResolution()
 void Gimbal::Output()
 {
     motor_yaw_.SetControlTorque(target_yaw_torque_);
-    // motor_yaw_.SetControlTorque(0);
     motor_yaw_.Output();
 }
 

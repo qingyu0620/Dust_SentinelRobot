@@ -11,7 +11,6 @@
 /* Includes ------------------------------------------------------------------*/
 
 #include "dvc_MCU_comm.h"
-#include "dvc_motor_dm.h"
 
 /* Private macros ------------------------------------------------------------*/
 
@@ -128,48 +127,48 @@ void McuComm::CanRxCpltCallback(uint8_t* rx_data)
           {
                switch(rx_data[1])
                {
-                    case (Switch_UP):
+                    case (SWITCH_UP):
                     {
-                         recv_comm_data_.switch_l = Switch_UP;
+                         recv_comm_data_.switch_l = SWITCH_UP;
                          break;
                     }
-                    case (Switch_MID):
+                    case (SWITCH_MID):
                     {
-                         recv_comm_data_.switch_l = Switch_MID;
+                         recv_comm_data_.switch_l = SWITCH_MID;
                          break;
                     }
-                    case (Switch_DOWN):
+                    case (SWITCH_DOWN):
                     {
-                         recv_comm_data_.switch_l = Switch_DOWN;
+                         recv_comm_data_.switch_l = SWITCH_DOWN;
                          break;
                     }
                     default:
                     {
-                         recv_comm_data_.switch_l = Switch_MID;
+                         recv_comm_data_.switch_l = SWITCH_MID;
                          break;
                     }
                }
 
                switch(rx_data[2])
                {
-                    case (Switch_UP):
+                    case (SWITCH_UP):
                     {
-                         recv_comm_data_.switch_r = Switch_UP;
+                         recv_comm_data_.switch_r = SWITCH_UP;
                          break;
                     }
-                    case (Switch_MID):
+                    case (SWITCH_MID):
                     {
-                         recv_comm_data_.switch_r = Switch_MID;
+                         recv_comm_data_.switch_r = SWITCH_MID;
                          break;
                     }
-                    case (Switch_DOWN):
+                    case (SWITCH_DOWN):
                     {
-                         recv_comm_data_.switch_r = Switch_DOWN;
+                         recv_comm_data_.switch_r = SWITCH_DOWN;
                          break;
                     }
                     default:
                     {
-                         recv_comm_data_.switch_r = Switch_MID;
+                         recv_comm_data_.switch_r = SWITCH_MID;
                          break;
                     }
                }
@@ -184,16 +183,6 @@ void McuComm::CanRxCpltCallback(uint8_t* rx_data)
           {
                recv_autoaim_data_.mode = rx_data[1];
                memcpy(&recv_autoaim_data_.autoaim_yaw_ang, &rx_data[2], 4);
-
-               break;
-          }
-          case (0xAD): // 自瞄yaw包
-          {
-               // memcpy(&recv_autoaim_data_.autoaim_yaw_acc, &rx_data[1], 4);
-               break;
-          }
-          default:
-          {
 
                break;
           }

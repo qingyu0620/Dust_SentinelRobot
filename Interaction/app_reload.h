@@ -16,6 +16,7 @@
 #include "dvc_motor_dji.h"
 #include "FreeRTOS.h"
 #include "cmsis_os2.h"
+#include "stdio.h"
 
 /* Exported macros -----------------------------------------------------------*/
 
@@ -34,8 +35,11 @@ public:
     inline void SetTargetReloadRotation(float target_reload_rotation);
 
 protected:
+
     // 目标装载速度 旋转
     float target_reload_rotation_ = 0.0f;
+
+    void OutputToMotor();
 
     static void TaskEntry(void *param);  // FreeRTOS 入口，静态函数
 };
