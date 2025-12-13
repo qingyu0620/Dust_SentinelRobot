@@ -11,10 +11,6 @@
 /* Includes ------------------------------------------------------------------*/
 
 #include "dvc_MCU_comm.h"
-#include "dvc_PC_comm.h"
-#include "dvc_motor_dm.h"
-#include "ins_task.h"
-#include "projdefs.h"
 
 /* Private macros ------------------------------------------------------------*/
 
@@ -73,7 +69,7 @@ void McuComm::TaskEntry(void *argument)
 void McuComm::UpdataAutoaimData(PCRecvAutoAimData* pc_recv_autoaim_data)
 {
      send_autoaim_data_.mode = pc_recv_autoaim_data->mode;
-     send_autoaim_data_.autoaim_yaw_ang.f = pc_recv_autoaim_data->yaw.yaw_ang;
+     send_autoaim_data_.autoaim_yaw_angle.f = pc_recv_autoaim_data->yaw.yaw_ang;
 }
 
 /**
@@ -107,15 +103,15 @@ void McuComm::CanSendChassis()
 void McuComm::CanSendCommand()
 {
      static uint8_t can_tx_frame[8];
-     union { float f; uint8_t b[4]; } conv;
-     conv.f = INS.Yaw;
+     McuConv yaw_conv;
+     yaw_conv.f = INS.Yaw;
 
      can_tx_frame[0] = 0xAB;
      can_tx_frame[1] = send_comm_data_.switch_l;
      can_tx_frame[2] = send_comm_data_.switch_r;
      can_tx_frame[3] = send_comm_data_.supercap;
 
-     memcpy(&can_tx_frame[4], conv.b, 4);
+     memcpy(&can_tx_frame[4], yaw_conv.b, 4);
 
      can_send_data(can_manage_object_->can_handler, can_tx_id_, can_tx_frame, 8);
 }
@@ -124,7 +120,7 @@ void McuComm::CanSendCommand()
  * @brief McuComm发送自瞄数据函数
  * 
  */
-void McuComm::CanSendAutoaimframe1()
+void McuComm::CanSendAutoaimData()
 {
      static uint8_t can_tx_frame[8];
 
@@ -132,26 +128,8 @@ void McuComm::CanSendAutoaimframe1()
      can_tx_frame[0] = 0xAC;
      can_tx_frame[1] = send_autoaim_data_.mode;
 
-     memcpy(&can_tx_frame[2], &send_autoaim_data_.autoaim_yaw_ang, 4);
+     memcpy(&can_tx_frame[2], &send_autoaim_data_.autoaim_yaw_angle, 4);
 
-     can_tx_frame[6] = 0x00;
-     can_tx_frame[7] = 0x00;
-
-     can_send_data(can_manage_object_->can_handler, can_tx_id_, can_tx_frame, 8);
-}
-
-/**
- * @brief McuComm发送自瞄数据函数
- * 
- */
-void McuComm::CanSendAutoaimframe2()
-{
-     static uint8_t can_tx_frame[8];
-
-     can_tx_frame[0] = 0xAD;
-     // memcpy(&can_tx_frame[1], &send_autoaim_data_.autoaim_yaw_acc, 4);
-
-     can_tx_frame[5] = 0x00;
      can_tx_frame[6] = 0x00;
      can_tx_frame[7] = 0x00;
 
@@ -162,14 +140,14 @@ void McuComm::CanSendAutoaimframe2()
  * @brief McuComm掉线数据函数
  * 
  */
-void McuComm::DisconnectData()
+void McuComm::DisConnectData()
 {
      send_chassis_data_.chassis_speed_x = 1024;
      send_chassis_data_.chassis_speed_y = 1024;
      send_chassis_data_.rotation = 1024;
 
-     send_comm_data_.switch_r = Switch_MID;
-     send_comm_data_.switch_l = Switch_MID;
+     send_comm_data_.switch_r = SWITCH_MID;
+     send_comm_data_.switch_l = SWITCH_MID;
      send_comm_data_.supercap = 0;
 }
 

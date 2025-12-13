@@ -12,10 +12,23 @@
 
 #include "Robot.h"
 #include "alg_math.h"
+#include "dvc_MCU_comm.h"
+#include "dvc_remote_dji.h"
 
 /* Private macros ------------------------------------------------------------*/
 
+#define INTERVAL_LIMIT(data, max, min)      \
+    do{                                     \
+         if((data) >= (max)){               \
+            (data) = (max);                 \
+        } else if((data) <= (min)){         \
+            (data) = (min);                 \
+        }}while(0)
+
 #define MAX_SHOOT_SPEED             50.f
+#define MAX_PITCH_RADIAN            0.45f
+#define MIN_PITCH_RADIAN           -0.35f
+
 
 /* Private types -------------------------------------------------------------*/
 
@@ -87,16 +100,13 @@ void Robot::Task()
         // 若掉线发送空白数据
         if(remote_dr16_.remote_dji_alive_status == REMOTE_DJI_STATUS_DISABLE)
         {
-            mcu_comm_.DisconnectData();
+            mcu_comm_.DisConnectData();
         }
-        
-        if(mcu_comm_.send_autoaim_data_.mode)
-        {
-            mcu_comm_.CanSendAutoaimframe1();
-        }
-        
+
         mcu_comm_.UpdataAutoaimData(&pc_comm_.recv_autoaim_data);
-        
+
+        mcu_comm_.CanSendAutoaimData();
+
 
         /****************************   PCcomm   ****************************/
 
@@ -106,14 +116,48 @@ void Robot::Task()
         /****************************   云台   ****************************/
 
 
-        if(pc_comm_.recv_autoaim_data.mode == 0)
+        if(remote_dr16_.output_.switch_r == SWITCH_MID)
         {
-            gimbal_.SetTargetPitchRadian(remote_dr16_.output_.pitch);
+            remote_angle = remote_dr16_.output_.pitch;
+            gimbal_.SetTargetPitchRadian(remote_angle);
         }
-        else if(pc_comm_.recv_autoaim_data.mode)
+        else if(remote_dr16_.output_.switch_r == SWITCH_UP)
         {
-            gimbal_.SetTargetPitchRadian(-pc_comm_.recv_autoaim_data.pitch.pitch_ang);
+            switch (pc_comm_.recv_autoaim_data.mode)
+            {
+                case(AUTOAIM_MODE_IDIE):
+                {
+                    remote_angle = remote_dr16_.output_.pitch;
+                    gimbal_.SetTargetPitchRadian(remote_angle);
+                    break;
+                }
+                case(AUTOAIM_MODE_FOLLOW):
+                {
+                    float filtered_autoaim =  gimbal_.pitch_autoaim_filter_.Update(pc_comm_.recv_autoaim_data.pitch.pitch_ang);
+
+                    remote_angle -= filtered_autoaim / 300.f;
+
+                    INTERVAL_LIMIT(remote_angle, MAX_PITCH_RADIAN, MIN_PITCH_RADIAN);
+
+                    gimbal_.SetTargetPitchRadian(remote_angle);
+
+                    break;
+                }
+                case(AUTOAIM_MODE_FIRE):
+                {
+                    float filtered_autoaim =  gimbal_.pitch_autoaim_filter_.Update(pc_comm_.recv_autoaim_data.pitch.pitch_ang);
+
+                    remote_angle -= filtered_autoaim / 300.f;
+
+                    INTERVAL_LIMIT(remote_angle, MAX_PITCH_RADIAN, MIN_PITCH_RADIAN);
+
+                    gimbal_.SetTargetPitchRadian(remote_angle);
+                    // shoot_.SetTargetShootSpeed(MAX_SHOOT_SPEED);
+                    break;
+                }
+            }
         }
+
         gimbal_.SetImuPitchAngle(normalize_angle_pm_pi(imu_.GetRollAngle()));
 
 
@@ -121,29 +165,28 @@ void Robot::Task()
 
 
         // 右按钮
-        switch (remote_dr16_.output_.switch_r)
-        {
-            case SWITCH_UP:
-            {
-                // shoot_.SetTargetShootSpeed(MAX_SHOOT_SPEED);
-                break;
-            }
-            case SWITCH_MID:
-            {
-                shoot_.SetTargetShootSpeed(0);
-                break;
-            }
-            default:
-            {
-                shoot_.SetTargetShootSpeed(0);
-                break;
-            }
-        }
+        // switch (remote_dr16_.output_.switch_r)
+        // {
+        //     case SWITCH_UP:
+        //     {
+        //         shoot_.SetTargetShootSpeed(MAX_SHOOT_SPEED);
+        //         break;
+        //     }
+        //     case SWITCH_MID:
+        //     {
+        //         shoot_.SetTargetShootSpeed(0);
+        //         break;
+        //     }
+        //     default:
+        //     {
+        //         shoot_.SetTargetShootSpeed(0);
+        //         break;
+        //     }
+        // }
 
 
         /****************************   调试   ****************************/
 
-        // printf("%f,%f\n", gimbal_.pitch_angle_pid_.GetOut(), gimbal_.pitch_omega_pid_.GetOut());
 
         osDelay(pdMS_TO_TICKS(1));
     }

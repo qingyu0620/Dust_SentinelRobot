@@ -57,6 +57,22 @@ void Shoot::TaskEntry(void *argument)
 }
 
 /**
+ * @brief Shoot电机输出
+ * 
+ */
+void Shoot::MotorToOutput()
+{
+    // 摩擦轮对称旋转
+    motor_shoot_1_.SetTargetOmega(-target_shoot_speed_);
+    motor_shoot_2_.SetTargetOmega( target_shoot_speed_);
+        
+    motor_shoot_1_.CalculatePeriodElapsedCallback();
+    motor_shoot_2_.CalculatePeriodElapsedCallback();
+        
+    can_send_data(&hcan2, 0x200, g_can2_0x200_tx_data, 4);
+}
+
+/**
  * @brief Shoot任务函数
  * 
  */
@@ -64,14 +80,7 @@ void Shoot::Task()
 {
     for(;;)
     {
-        // 摩擦轮对称旋转
-        motor_shoot_1_.SetTargetOmega(-target_shoot_speed_);
-        motor_shoot_2_.SetTargetOmega( target_shoot_speed_);
-        
-        motor_shoot_1_.CalculatePeriodElapsedCallback();
-        motor_shoot_2_.CalculatePeriodElapsedCallback();
-        
-        can_send_data(&hcan2, 0x200, g_can2_0x200_tx_data, 4);
+        MotorToOutput();
         osDelay(pdMS_TO_TICKS(10));
     }
 }

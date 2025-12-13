@@ -11,7 +11,6 @@
 /* Includes ------------------------------------------------------------------*/
 
 #include "dvc_PC_comm.h"
-#include "stdio.h"
 
 /* Private macros ------------------------------------------------------------*/
 
@@ -58,13 +57,13 @@ void PcComm::UpdataAutoaimData()
 {
     memcpy(&send_autoaim_data.q, INS.q, 16);
 
-    send_autoaim_data.mode                   = 0;
-    send_autoaim_data.yaw.yaw_ang            = INS.Yaw;
-    send_autoaim_data.yaw.yaw_vel            = INS.Gyro[Z];
-    send_autoaim_data.pitch.pitch_ang        = -INS.Roll;
-    send_autoaim_data.pitch.pitch_vel        = -INS.Gyro[X]; 
-    send_autoaim_data.bullet.bullet_speed    = 16;
-    send_autoaim_data.bullet.bullet_count    = 20;
+    send_autoaim_data.mode                  = 0;
+    send_autoaim_data.yaw.ang               = INS.Yaw;
+    send_autoaim_data.yaw.vel               = INS.Gyro[Z];
+    send_autoaim_data.pitch.ang             = -INS.Roll;
+    send_autoaim_data.pitch.vel             = -INS.Gyro[X]; 
+    send_autoaim_data.bullet.speed   = 16;
+    send_autoaim_data.bullet.count   = 20;
 }
 
 

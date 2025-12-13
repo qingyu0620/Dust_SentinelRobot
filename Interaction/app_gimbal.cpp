@@ -33,10 +33,10 @@ void Gimbal::Init()
 {
     // pitch轴角度环
     pitch_angle_pid_.Init(
-        8.8f,
-        0.5f,
-        0.068f,
-        0.1f,
+        7.8f,
+        0.0f,
+        0.203f,
+        3.f,
         0.f,
         44.0f,
         0.001f,
@@ -47,10 +47,10 @@ void Gimbal::Init()
     );
     // pitch轴角度环
     pitch_omega_pid_.Init(
-        0.20f,
-        0.005f,
-        0.00008f,
-        0.01f,
+        0.5f,
+        0.003f,
+        0.00005f,
+        0.1f,
         0.0f,
         9.9f,
         0.001f,
@@ -61,6 +61,8 @@ void Gimbal::Init()
     );
     // pitch轴角度环滤波器
     pitch_omega_filter_.Init(15.f, 0.001f);
+
+    pitch_autoaim_filter_.Init(20.f, 0.001f);
 
     // 4310电机初始化
     motor_pitch_.Init(&hcan2, 0x05, 0x04);

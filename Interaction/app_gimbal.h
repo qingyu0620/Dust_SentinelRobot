@@ -50,8 +50,11 @@ public:
     // pitch角位置环
     Pid pitch_angle_pid_;
 
-    // 一阶低通滤波
+    // pitch轴角速度滤波
     LowPassFilter pitch_omega_filter_;
+
+    // pitch轴自瞄数据滤波
+    LowPassFilter pitch_autoaim_filter_;
 
     void Init();
 

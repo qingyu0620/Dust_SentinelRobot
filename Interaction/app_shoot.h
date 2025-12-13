@@ -31,12 +31,16 @@ public:
                  motor_shoot_2_;
 
     void Init();
+
     void Task();
+
     inline void SetTargetShootSpeed(float target_shoot_speed);
 
 protected:
     // 目标发射速度
     float target_shoot_speed_ = 0.0f;
+
+    void MotorToOutput();
 
     static void TaskEntry(void *param);   // FreeRTOS 入口，静态函数
 };

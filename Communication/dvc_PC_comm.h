@@ -25,7 +25,7 @@
 /* Exported types ------------------------------------------------------------*/
 
 /**
- * @brief 转换联合体
+ * @brief PcComm转换联合体
  * 
  */
 union PcConv
@@ -34,48 +34,59 @@ union PcConv
     float f;
 };
 
+/**
+ * @brief PcComm自瞄模式
+ * 
+ */
+enum PcAutoAimMode
+{
+    AUTOAIM_MODE_IDIE = 0,
+    AUTOAIM_MODE_FOLLOW,
+    AUTOAIM_MODE_FIRE,
+};
+
 #pragma pack(1)
 /**
- * @brief 自瞄发送结构体
+ * @brief PcComm自瞄发送结构体
  * 
  */
 struct PCSendAutoAimData
 {
     uint8_t head[2] = {'S','P'};
 
-    uint8_t mode = 0;               // 0-空闲 1-自瞄 2-小能量机关  3-大能量机关
+    uint8_t mode = 0;               // 0-空闲 1-自瞄不开火 2-自瞄开火
 
     float q[4];                     // 四元数姿态[w,x,y,z]
 
     struct
     {
-        float yaw_ang;              // yaw轴角度
-        float yaw_vel;              // yaw轴角速度
+        float ang;                  // yaw轴角度
+        float vel;                  // yaw轴角速度
     } yaw;
     
     struct
     {
-        float pitch_ang;            // pitch轴角度
-        float pitch_vel;            // pitch轴角速度
+        float ang;                  // pitch轴角度
+        float vel;                  // pitch轴角速度
     } pitch;
     
     struct
     {
-        float bullet_speed;         // 子弹速度
-        uint16_t bullet_count;      // 子弹累计发送次数
+        float speed;                // 子弹速度
+        uint16_t count;             // 子弹累计发送次数
     } bullet;
     
     uint16_t crc16;                 // 校验位
 };
 
 /**
- * @brief 自瞄接收结构体
+ * @brief PcComm自瞄接收结构体
  * 
  */
 struct PCRecvAutoAimData
 {
     uint8_t head[2] = {'S','P'};
-    uint8_t mode = 0;           // 0-空闲 1-自瞄 2-小能量机关  3-大能量机关
+    uint8_t mode = 0;           // 0-空闲 1-自瞄不开火 2-自瞄开火
 
     struct
     {
@@ -95,7 +106,7 @@ struct PCRecvAutoAimData
 };
 
 /**
- * @brief 导航接收结构体
+ * @brief PcComm导航接收结构体
  * 
  */
 struct PCRecvNavigationData

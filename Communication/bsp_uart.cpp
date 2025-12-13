@@ -11,9 +11,6 @@
 /* Includes ------------------------------------------------------------------*/
 
 #include "bsp_uart.h"
-#include "stdio.h"
-#include "string.h"
-#include <stdint.h>
 
 /* Private variables ---------------------------------------------------------*/
 

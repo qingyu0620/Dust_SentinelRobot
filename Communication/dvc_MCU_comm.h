@@ -15,6 +15,7 @@
 
 #include "bsp_can.h"
 #include "dvc_PC_comm.h"
+#include "dvc_remote_dji.h"
 #include "FreeRTOS.h"
 #include "cmsis_os2.h"
 
@@ -30,17 +31,6 @@ union McuConv
 {
     uint8_t b[4];
     float f;
-};
-
-/**
- * @brief 遥控状态枚举
- * 
- */
-enum RemoteSwitchStatus
-{
-    Switch_UP    = (uint8_t)1,
-    Switch_MID   = (uint8_t)3,
-    Switch_DOWN  = (uint8_t)2,
 };
 
 /**
@@ -74,12 +64,11 @@ struct McuCommData
  */
 struct McuSendAutoaimData
 {
-    uint8_t         start_of_yaw_frame1 = 0xAC;
-    uint8_t         start_of_yaw_frame2 = 0xAD;
+    uint8_t         start_of_yaw_frame = 0xAC;
 
     uint8_t         mode;
 
-    McuConv         autoaim_yaw_ang;            // 自瞄yaw轴角速度
+    McuConv         autoaim_yaw_angle;            // 自瞄yaw轴角度
 };
 
 /**
@@ -88,10 +77,9 @@ struct McuSendAutoaimData
  */
 struct McuRecvAutoaimData
 {
-    uint8_t         start_of_yaw_frame1 = 0xAC;
-    uint8_t         start_of_yaw_frame2 = 0xAD;
+    uint8_t         start_of_yaw_frame = 0xAC;
 
-    McuConv         autoaim_yaw_ang;
+    McuConv         autoaim_yaw_angle;
 };
 
 /**
@@ -113,15 +101,14 @@ public:
     McuCommData send_comm_data_ = 
     {
         0xAB,
-        Switch_MID,
-        Switch_MID,
+        SWITCH_MID,
+        SWITCH_MID,
         0,
         {0,0,0,0},
     };
 
     McuSendAutoaimData send_autoaim_data_ = 
     {   0xAC,
-        0xAD,
         0,
         {0,0,0,0},
     };
@@ -129,25 +116,20 @@ public:
     McuRecvAutoaimData recv_autoaim_data_ = 
     {
         0xAC,
-        0xAD,
         {0,0,0,0},
     };
 
-    void Init(CAN_HandleTypeDef *hcan,
-              uint8_t can_rx_id,
-              uint8_t can_tx_id);
+    void Init(CAN_HandleTypeDef *hcan, uint8_t can_rx_id, uint8_t can_tx_id);
 
     void Task();
 
-    void DisconnectData();
+    void DisConnectData();
 
     void CanSendChassis();
 
     void CanSendCommand();
     
-    void CanSendAutoaimframe1();
-
-    void CanSendAutoaimframe2();
+    void CanSendAutoaimData();
 
     void UpdataAutoaimData(PCRecvAutoAimData* pc_recv_autoaim_data);
 

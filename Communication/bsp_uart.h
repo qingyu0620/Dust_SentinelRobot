@@ -15,6 +15,8 @@
 
 #include "main.h"
 #include "usart.h"
+#include "stdio.h"
+#include "string.h"
 
 /* Exported macros -----------------------------------------------------------*/
 
