@@ -12,6 +12,7 @@
 
 #include "Init.h"
 #include "Robot.h"
+#include "dvc_MCU_comm.h"
 
 /* Private macros ------------------------------------------------------------*/
 
@@ -89,8 +90,13 @@ void uart3_callback_function(uint8_t* buffer, uint16_t length)
 	robot_.remote_dr16_.UartRxCpltCallback(buffer);
 
     robot_.mcu_comm_.send_chassis_data_.start_of_frame   = 0xAA;
-    robot_.mcu_comm_.send_chassis_data_.chassis_speed_x  = robot_.remote_dr16_.output_.chassis_x;
-    robot_.mcu_comm_.send_chassis_data_.chassis_speed_y  = robot_.remote_dr16_.output_.chassis_y;
+    
+    if(robot_.robot_navigation_state_ == ROBOT_NAVIGATION_CLOSE)
+    {
+        robot_.mcu_comm_.send_chassis_data_.chassis_speed_x  = robot_.remote_dr16_.output_.chassis_x;
+        robot_.mcu_comm_.send_chassis_data_.chassis_speed_y  = robot_.remote_dr16_.output_.chassis_y;
+    }
+
     robot_.mcu_comm_.send_chassis_data_.rotation         = robot_.remote_dr16_.output_.rotation;
 
     robot_.mcu_comm_.send_comm_data_.start_of_frame      = 0xAB;
@@ -107,6 +113,12 @@ void uart3_callback_function(uint8_t* buffer, uint16_t length)
 void usb_rx_callback(uint16_t len)
 {
     robot_.pc_comm_.RxCpltCallback();
+
+    if(robot_.robot_navigation_state_ == ROBOT_NAVIGATION_OPEN)
+    {
+        robot_.mcu_comm_.send_chassis_data_.chassis_speed_x  = robot_.pc_comm_.pc_chassis_x_;
+        robot_.mcu_comm_.send_chassis_data_.chassis_speed_y  = robot_.pc_comm_.pc_chassis_y_;
+    }
 }
 
 /**

@@ -70,6 +70,7 @@ void McuComm::UpdataAutoaimData(PCRecvAutoAimData* pc_recv_autoaim_data)
 {
      send_autoaim_data_.mode = pc_recv_autoaim_data->mode;
      send_autoaim_data_.autoaim_yaw_angle.f = pc_recv_autoaim_data->yaw.yaw_ang;
+     send_autoaim_data_.flag = pc_recv_autoaim_data->flag;
 }
 
 /**
@@ -130,7 +131,7 @@ void McuComm::CanSendAutoaimData()
 
      memcpy(&can_tx_frame[2], &send_autoaim_data_.autoaim_yaw_angle, 4);
 
-     can_tx_frame[6] = 0x00;
+     can_tx_frame[6] = send_autoaim_data_.flag;
      can_tx_frame[7] = 0x00;
 
      can_send_data(can_manage_object_->can_handler, can_tx_id_, can_tx_frame, 8);

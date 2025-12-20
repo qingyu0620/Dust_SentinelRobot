@@ -14,6 +14,9 @@
 
 /* Private macros ------------------------------------------------------------*/
 
+#define K_PC    660.f
+#define C_PC    256.f / 165.f
+
 /* Private types -------------------------------------------------------------*/
 
 /* Private variables ---------------------------------------------------------*/
@@ -57,11 +60,11 @@ void PcComm::UpdataAutoaimData()
 {
     memcpy(&send_autoaim_data.q, INS.q, 16);
 
-    send_autoaim_data.mode                  = 0;
-    send_autoaim_data.yaw.ang               = INS.Yaw;
-    send_autoaim_data.yaw.vel               = INS.Gyro[Z];
-    send_autoaim_data.pitch.ang             = -INS.Roll;
-    send_autoaim_data.pitch.vel             = -INS.Gyro[X]; 
+    send_autoaim_data.mode           = 0;
+    send_autoaim_data.yaw.ang        = INS.Yaw;
+    send_autoaim_data.yaw.vel        = INS.Gyro[Z];
+    send_autoaim_data.pitch.ang      = -INS.Roll;
+    send_autoaim_data.pitch.vel      = -INS.Gyro[X]; 
     send_autoaim_data.bullet.speed   = 16;
     send_autoaim_data.bullet.count   = 20;
 }
@@ -116,8 +119,11 @@ void PcComm::RxCpltCallback()
     }
     else if(bsp_usb_rx_buffer[0] == recv_navigation_data.start_of_frame)
     {
-        memcpy(recv_navigation_data.linear_x, &bsp_usb_rx_buffer[1], 4);
-        memcpy(recv_navigation_data.linear_y, &bsp_usb_rx_buffer[5], 4);
+        memcpy(&recv_navigation_data.linear_x.b, &bsp_usb_rx_buffer[1], 4);
+        memcpy(&recv_navigation_data.linear_y.b, &bsp_usb_rx_buffer[5], 4);
+
+        pc_chassis_x_ = (uint16_t)(K_PC * (recv_navigation_data.linear_x.f / 2.1f + C_PC));
+        pc_chassis_y_ = (uint16_t)(K_PC * (-recv_navigation_data.linear_y.f / 2.1f + C_PC));
 
         recv_navigation_data.crc16[0] = bsp_usb_rx_buffer[9];
         recv_navigation_data.crc16[1] = bsp_usb_rx_buffer[10];

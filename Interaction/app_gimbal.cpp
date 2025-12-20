@@ -140,6 +140,7 @@ void Gimbal::SelfResolution()
 void Gimbal::Output()
 {
     motor_pitch_.SetControlTorque(target_pitch_torque_);
+
     motor_pitch_.Output();
 }
 

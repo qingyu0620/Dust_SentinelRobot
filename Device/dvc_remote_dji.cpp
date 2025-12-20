@@ -76,8 +76,8 @@ void RemoteDjiDR16::DataProcess(uint8_t* buffer)
     output_.pitch = k_pitch * data_.ch3 + c_pitch;
 
     // 下板数据
-    output_.chassis_x  = data_.ch0;
-    output_.chassis_y  = data_.ch1;
+    output_.chassis_x  = data_.ch1;
+    output_.chassis_y  = data_.ch0;
     output_.rotation   = data_.ch2;
 
     // 通用数据

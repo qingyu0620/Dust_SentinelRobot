@@ -87,6 +87,16 @@ void Robot::TaskEntry(void *argument)
 }
 
 /**
+ * @brief Robot设定导航状态函数
+ * 
+ * @param robot_navigation_state 
+ */
+void Robot::SetNavigationState(RobotNavigationState robot_navigation_state)
+{
+    robot_navigation_state_ = robot_navigation_state;
+}
+
+/**
  * @brief Robot任务函数
  * 
  */
@@ -94,6 +104,18 @@ void Robot::Task()
 {
     for(;;)
     {
+        /****************************   Robot    ****************************/
+
+        if(remote_dr16_.output_.switch_r == SWITCH_MID)
+        {
+            SetNavigationState(ROBOT_NAVIGATION_CLOSE);
+        }
+        else if(remote_dr16_.output_.switch_r == SWITCH_DOWN)
+        {
+            SetNavigationState(ROBOT_NAVIGATION_OPEN);
+        }
+
+
         /****************************   MCUcomm   ****************************/
 
 
@@ -115,6 +137,9 @@ void Robot::Task()
         
         /****************************   云台   ****************************/
 
+        // remote_angle = remote_dr16_.output_.pitch;
+
+        // gimbal_.SetTargetPitchRadian(remote_angle);
 
         if(remote_dr16_.output_.switch_r == SWITCH_MID)
         {
@@ -186,7 +211,7 @@ void Robot::Task()
 
 
         /****************************   调试   ****************************/
-
+        
 
         osDelay(pdMS_TO_TICKS(1));
     }

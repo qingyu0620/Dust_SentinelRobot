@@ -65,10 +65,9 @@ struct McuCommData
 struct McuSendAutoaimData
 {
     uint8_t         start_of_yaw_frame = 0xAC;
-
     uint8_t         mode;
-
     McuConv         autoaim_yaw_angle;            // 自瞄yaw轴角度
+    uint8_t         flag;
 };
 
 /**
@@ -78,7 +77,6 @@ struct McuSendAutoaimData
 struct McuRecvAutoaimData
 {
     uint8_t         start_of_yaw_frame = 0xAC;
-
     McuConv         autoaim_yaw_angle;
 };
 
@@ -89,7 +87,6 @@ struct McuRecvAutoaimData
 class McuComm
 {
 public:
-
     McuChassisData send_chassis_data_ = 
     {
         0xAA,

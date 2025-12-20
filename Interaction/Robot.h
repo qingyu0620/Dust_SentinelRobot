@@ -28,34 +28,60 @@
 
 /* Exported macros -----------------------------------------------------------*/
 
+/**
+ * @brief Robot导航开启状态
+ * 
+ */
+enum RobotNavigationState
+{
+    ROBOT_NAVIGATION_CLOSE = 0,
+    ROBOT_NAVIGATION_OPEN,
+};
+
 /* Exported types ------------------------------------------------------------*/
 
+/**
+ * @brief Robot类
+ * 
+ */
 class Robot
 {
 public:
     // 遥控
     RemoteDjiDR16 remote_dr16_;
-    
+
     VT03 remote_vt03_;
+
     // 上下板通讯
     McuComm mcu_comm_;
+
     // pitch角云台
     Gimbal gimbal_;
+
     // 摩擦轮
     Shoot shoot_;
+
     // 上位机通讯
     PcComm pc_comm_;
+
     // 云台陀螺仪
     Imu imu_;
 
     void Init();
+
     void Task();
+
+    RobotNavigationState robot_navigation_state_;
+
+    void SetNavigationState(RobotNavigationState robot_navigation_state);
+
 protected:
 
     float remote_angle = 0.0f;
 
     // 机器人等级
     int32_t robot_level_ = 1;
+
     static void TaskEntry(void *param);  // FreeRTOS 入口，静态函数
 };
 
