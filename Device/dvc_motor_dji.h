@@ -207,7 +207,7 @@ protected:
     uint8_t *tx_data_;
 
     // 减速比, 默认带减速箱
-    float gearbox_rate_;
+    float gearbox_rate_ = 3591.0f / 187.0f;
 
     // 是否开启功率控制
     MotorDjiPowerLimitStatus power_limit_status_;

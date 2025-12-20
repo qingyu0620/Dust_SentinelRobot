@@ -183,7 +183,7 @@ void McuComm::CanRxCpltCallback(uint8_t* rx_data)
           {
                recv_autoaim_data_.mode = rx_data[1];
                memcpy(&recv_autoaim_data_.autoaim_yaw_ang, &rx_data[2], 4);
-
+               recv_autoaim_data_.flag = rx_data[6];
                break;
           }
      }

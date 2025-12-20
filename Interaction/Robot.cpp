@@ -97,6 +97,8 @@ void Robot::Task()
 
     // Mcu自瞄数据
     McuRecvAutoaimData mcu_autoaim_data_local;
+    mcu_autoaim_data_local.mode = 0;
+    mcu_autoaim_data_local.flag = 0;
     mcu_autoaim_data_local.autoaim_yaw_ang.f   = 0;
 
     // 底盘yaw角角度差，用于底盘跟随
@@ -117,6 +119,11 @@ void Robot::Task()
 
         /****************************   云台   ****************************/
 
+        // remote_yaw_angle_ += (M_PI / 180.f * (K * mcu_chassis_data_local.rotation + C)) * 0.5;
+
+        // remote_yaw_angle_ = normalize_pi(remote_yaw_angle_);
+
+        // gimbal_.SetTargetYawRadian(remote_yaw_angle_);
 
         if(mcu_comm_data_local.switch_r == SWITCH_MID)
         {
@@ -145,8 +152,12 @@ void Robot::Task()
                 {
                     float filtered_autoaim = gimbal_.yaw_autoaim_filter_.Update(mcu_autoaim_data_local.autoaim_yaw_ang.f);
 
-                    remote_yaw_angle_ += filtered_autoaim / 120.f;
-
+                    if(mcu_autoaim_data_local.flag == 1){
+                        remote_yaw_angle_ += (filtered_autoaim / 120.f);
+                    } else if(mcu_autoaim_data_local.flag == 2){
+                        remote_yaw_angle_ -= (filtered_autoaim / 480.f);
+                    }
+                        
                     gimbal_.SetTargetYawRadian(remote_yaw_angle_);
 
                     break;
@@ -155,7 +166,11 @@ void Robot::Task()
                 {
                     float filtered_autoaim = gimbal_.yaw_autoaim_filter_.Update(mcu_autoaim_data_local.autoaim_yaw_ang.f);
 
-                    remote_yaw_angle_ += filtered_autoaim / 120.f;
+                    if(mcu_autoaim_data_local.flag == 1){
+                        remote_yaw_angle_ += (filtered_autoaim / 120.f);
+                    } else if(mcu_autoaim_data_local.flag == 2){
+                        remote_yaw_angle_ -= (filtered_autoaim / 480.f);
+                    }
 
                     gimbal_.SetTargetYawRadian(remote_yaw_angle_);
                     // reload_.SetTargetReloadRotation(MAX_RELOAD_SPEED);
@@ -176,7 +191,9 @@ void Robot::Task()
 
 
         // 设置当前角度差
-        chassis_.SetNowYawAngleDiff(gimbal_.GetNowYawRadian());
+        chassis_.SetNowYawAngleDiff(-gimbal_.GetNowYawRadian());
+        // chassis_.SetNowYawAngleDiff(0);
+
         // 设置目标映射速度
         chassis_.SetTargetVxInGimbal((mcu_chassis_data_local.chassis_speed_x * K + C) * MAX_OMEGA_SPEED);
         chassis_.SetTargetVyInGimbal((mcu_chassis_data_local.chassis_speed_y * K + C) * MAX_OMEGA_SPEED);
@@ -212,7 +229,6 @@ void Robot::Task()
             default:
             {
                 chassis_.SetTargetVelocityRotation(0);
-                gimbal_.SetTargetYawOmega(0);
                 break;
             }
         }
@@ -255,7 +271,7 @@ void Robot::Task()
 
         /****************************   调试   ****************************/
 
-        // printf("%f,%f\n", gimbal_.yaw_angle_diff_, gimbal_.yaw_autoaim_filter_.Update(mcu_autoaim_data_local.autoaim_yaw_ang.f));
+        // printf("%f,%f\n",);
 
         osDelay(pdMS_TO_TICKS(1));
     }

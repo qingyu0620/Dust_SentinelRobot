@@ -152,9 +152,9 @@ void Chassis::SlopePlanning()
  */
 void Chassis::KinematicsInverseResolution()
 {
-    motor_chassis_1_.SetTargetOmega( target_vx_in_chassis_ - target_vy_in_chassis_ + target_velocity_rotation_);
+    motor_chassis_1_.SetTargetOmega(-target_vx_in_chassis_ + target_vy_in_chassis_ + target_velocity_rotation_);
     motor_chassis_2_.SetTargetOmega(-target_vx_in_chassis_ - target_vy_in_chassis_ + target_velocity_rotation_);
-    motor_chassis_3_.SetTargetOmega(-target_vx_in_chassis_ + target_vy_in_chassis_ + target_velocity_rotation_);
+    motor_chassis_3_.SetTargetOmega( target_vx_in_chassis_ - target_vy_in_chassis_ + target_velocity_rotation_);
     motor_chassis_4_.SetTargetOmega( target_vx_in_chassis_ + target_vy_in_chassis_ + target_velocity_rotation_);
 }
 
