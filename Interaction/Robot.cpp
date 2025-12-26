@@ -17,7 +17,6 @@
 #define K                       1.f / 660.f
 #define C                       -256.f / 165.f
 #define MAX_OMEGA_SPEED         15.f
-#define MAX_RELOAD_SPEED        -10.f
 #define MAX_GYROSCOPE_SPEED     25.f
 
 /* Private types -------------------------------------------------------------*/
@@ -97,8 +96,8 @@ void Robot::Task()
 
     // Mcu自瞄数据
     McuRecvAutoaimData mcu_autoaim_data_local;
-    mcu_autoaim_data_local.mode = 0;
-    mcu_autoaim_data_local.flag = 0;
+    mcu_autoaim_data_local.mode                = 0;
+    mcu_autoaim_data_local.flag                = 0;
     mcu_autoaim_data_local.autoaim_yaw_ang.f   = 0;
 
     // 底盘yaw角角度差，用于底盘跟随
@@ -118,12 +117,6 @@ void Robot::Task()
 
 
         /****************************   云台   ****************************/
-
-        // remote_yaw_angle_ += (M_PI / 180.f * (K * mcu_chassis_data_local.rotation + C)) * 0.5;
-
-        // remote_yaw_angle_ = normalize_pi(remote_yaw_angle_);
-
-        // gimbal_.SetTargetYawRadian(remote_yaw_angle_);
 
         if(mcu_comm_data_local.switch_r == SWITCH_MID)
         {
@@ -192,7 +185,6 @@ void Robot::Task()
 
         // 设置当前角度差
         chassis_.SetNowYawAngleDiff(-gimbal_.GetNowYawRadian());
-        // chassis_.SetNowYawAngleDiff(0);
 
         // 设置目标映射速度
         chassis_.SetTargetVxInGimbal((mcu_chassis_data_local.chassis_speed_x * K + C) * MAX_OMEGA_SPEED);
@@ -213,17 +205,20 @@ void Robot::Task()
             case SWITCH_MID:
             {
                 chassis_.SetTargetVelocityRotation(0);
+                reload_.SetTargetReloadRotation(0);
                 break;
             }
             case SWITCH_DOWN:
             {
-                chassis_angle_diff = CalcYawError(remote_yaw_angle_ ,imu_.GetYawRadian());
+                // chassis_angle_diff = CalcYawError(remote_yaw_angle_ ,imu_.GetYawRadian());
 
-                chassis_.chassis_follow_pid_.SetTarget(0);
-                chassis_.chassis_follow_pid_.SetNow(chassis_angle_diff);
-                chassis_.chassis_follow_pid_.CalculatePeriodElapsedCallback();
+                // chassis_.chassis_follow_pid_.SetTarget(0);
+                // chassis_.chassis_follow_pid_.SetNow(chassis_angle_diff);
+                // chassis_.chassis_follow_pid_.CalculatePeriodElapsedCallback();
 
-                chassis_.SetTargetVelocityRotation(chassis_.chassis_follow_pid_.GetOut());
+                // chassis_.SetTargetVelocityRotation(chassis_.chassis_follow_pid_.GetOut());
+                reload_.SetTargetReloadRotation(MAX_RELOAD_SPEED);
+
                 break;
             }
             default:
@@ -233,31 +228,6 @@ void Robot::Task()
             }
         }
         
-        // 右按钮
-        // switch (mcu_comm_data_local.switch_r)
-        // {
-        //     case Switch_UP:
-        //     {
-        //         reload_.SetTargetReloadRotation(MAX_RELOAD_SPEED);
-        //         break;
-        //     }
-        //     case Switch_MID:
-        //     {
-        //         reload_.SetTargetReloadRotation(0);
-        //         break;
-        //     }
-        //     case Switch_DOWN:
-        //     {
-        //         reload_.SetTargetReloadRotation(-MAX_RELOAD_SPEED / 2);
-        //         break;
-        //     }
-        //     default:
-        //     {
-        //         reload_.SetTargetReloadRotation(0);
-        //         break;
-        //     }
-        // }
-
 
         /****************************   超电   ****************************/
 
@@ -271,7 +241,6 @@ void Robot::Task()
 
         /****************************   调试   ****************************/
 
-        // printf("%f,%f\n",);
 
         osDelay(pdMS_TO_TICKS(1));
     }

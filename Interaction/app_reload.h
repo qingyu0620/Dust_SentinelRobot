@@ -20,6 +20,8 @@
 
 /* Exported macros -----------------------------------------------------------*/
 
+#define MAX_RELOAD_SPEED        -10.f
+
 /* Exported types ------------------------------------------------------------*/
 
 class Reload
@@ -32,9 +34,15 @@ public:
     
     void Task();
 
+    void MisfirePeriodElapsedCallback();
+
     inline void SetTargetReloadRotation(float target_reload_rotation);
 
 protected:
+
+    float pre_reload_angle_ = 0.0f;
+
+    float now_reload_angle_ = 0.0f;
 
     // 目标装载速度 旋转
     float target_reload_rotation_ = 0.0f;

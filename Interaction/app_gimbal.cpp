@@ -30,7 +30,7 @@ void Gimbal::Init()
     yaw_angle_pid_.Init(
         16.5f,
         1.0f,
-        0.86f,
+        0.97f,
         10.f,
         0.f,
         44.0f,
@@ -45,7 +45,7 @@ void Gimbal::Init()
     yaw_omega_pid_.Init(
         0.765f,
         0.003f,
-        0.0007f,
+        0.001f,
         0.5f,
         0.0f,
         9.9f,
@@ -76,18 +76,19 @@ void Gimbal::Init()
     motor_yaw_.CanSendEnter();
     osDelay(pdMS_TO_TICKS(1000));
 
-    // 小Kp粗调
-    motor_yaw_.SetKp(0.8);    // MIT模式kp
-    motor_yaw_.SetKd(0.3);    // MIT模式kd
-    motor_yaw_.SetControlAngle(0);
-    motor_yaw_.Output();
-    osDelay(pdMS_TO_TICKS(1300));
-    // 大Kp细调
-    motor_yaw_.SetKp(10.0);    // MIT模式kp
-    motor_yaw_.SetKd(1.0);    // MIT模式kd
-    motor_yaw_.SetControlAngle(0);
-    motor_yaw_.Output();
-    osDelay(pdMS_TO_TICKS(500));
+    // // 小Kp粗调
+    // motor_yaw_.SetKp(0.8);    // MIT模式kp
+    // motor_yaw_.SetKd(0.3);    // MIT模式kd
+    // motor_yaw_.SetControlAngle(0);
+    // motor_yaw_.Output();
+    // osDelay(pdMS_TO_TICKS(1300));
+
+    // // 大Kp细调
+    // motor_yaw_.SetKp(10.0);    // MIT模式kp
+    // motor_yaw_.SetKd(1.0);    // MIT模式kd
+    // motor_yaw_.SetControlAngle(0);
+    // motor_yaw_.Output();
+    // osDelay(pdMS_TO_TICKS(500));
 
     // 力矩控制
     motor_yaw_.SetKp(0);  // MIT模式kp

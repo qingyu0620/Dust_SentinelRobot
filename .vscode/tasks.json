@@ -1,12 +1,15 @@
 {
 	"version": "2.0.0",
 	"tasks": [
-		{
-			"type": "cmake",
-			"label": "CMake: install",
-			"command": "install",
-			"problemMatcher": [],
-			"detail": "CMake template install task"
-		}
+        {
+            "label": "Flash STM32",
+            "type": "shell",
+            "command": "openocd",
+            "args": [
+				"-f", "${workspaceRoot}/Core/config/openocd_dap.cfg",
+                "-c", "program build/Dust_SentinelRobot_L.bin verify reset exit 0x08000000"
+            ],
+            "problemMatcher": []
+        },
 	]
 }
