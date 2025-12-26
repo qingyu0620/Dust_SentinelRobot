@@ -77,7 +77,7 @@ void PcComm::UpdataAutoaimData()
 void PcComm::Send_Message()
 {
     uint16_t lenth = sizeof(send_autoaim_data);
-    uint8_t buffer[lenth];  // 明确的43字节
+    uint8_t buffer[lenth];
 
     send_autoaim_data.crc16 = 0;
 

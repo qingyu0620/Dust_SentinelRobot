@@ -25,7 +25,7 @@
             (data) = (min);                 \
         }}while(0)
 
-#define MAX_SHOOT_SPEED             50.f
+#define MAX_SHOOT_OMEGA             10.f
 #define MAX_PITCH_RADIAN            0.45f
 #define MIN_PITCH_RADIAN           -0.35f
 
@@ -133,6 +133,7 @@ void Robot::Task()
         /****************************   PCcomm   ****************************/
 
         
+        
 
         
         /****************************   云台   ****************************/
@@ -144,7 +145,10 @@ void Robot::Task()
         if(remote_dr16_.output_.switch_r == SWITCH_MID)
         {
             remote_angle = remote_dr16_.output_.pitch;
+
             gimbal_.SetTargetPitchRadian(remote_angle);
+
+            shoot_.SetTargetShootSpeed(0);
         }
         else if(remote_dr16_.output_.switch_r == SWITCH_UP)
         {
@@ -153,18 +157,24 @@ void Robot::Task()
                 case(AUTOAIM_MODE_IDIE):
                 {
                     remote_angle = remote_dr16_.output_.pitch;
+
                     gimbal_.SetTargetPitchRadian(remote_angle);
+
+                    shoot_.SetTargetShootSpeed(0);
+
                     break;
                 }
                 case(AUTOAIM_MODE_FOLLOW):
                 {
                     float filtered_autoaim =  gimbal_.pitch_autoaim_filter_.Update(pc_comm_.recv_autoaim_data.pitch.pitch_ang);
 
-                    remote_angle -= filtered_autoaim / 300.f;
+                    remote_angle -= filtered_autoaim / 500.f;
 
                     INTERVAL_LIMIT(remote_angle, MAX_PITCH_RADIAN, MIN_PITCH_RADIAN);
 
                     gimbal_.SetTargetPitchRadian(remote_angle);
+
+                    shoot_.SetTargetShootSpeed(0);
 
                     break;
                 }
@@ -172,12 +182,14 @@ void Robot::Task()
                 {
                     float filtered_autoaim =  gimbal_.pitch_autoaim_filter_.Update(pc_comm_.recv_autoaim_data.pitch.pitch_ang);
 
-                    remote_angle -= filtered_autoaim / 300.f;
+                    remote_angle -= filtered_autoaim / 500.f;
 
                     INTERVAL_LIMIT(remote_angle, MAX_PITCH_RADIAN, MIN_PITCH_RADIAN);
 
                     gimbal_.SetTargetPitchRadian(remote_angle);
-                    // shoot_.SetTargetShootSpeed(MAX_SHOOT_SPEED);
+
+                    shoot_.SetTargetShootSpeed(MAX_SHOOT_OMEGA);
+
                     break;
                 }
             }
@@ -189,26 +201,8 @@ void Robot::Task()
         /****************************   摩擦轮   ****************************/
 
 
-        // 右按钮
-        // switch (remote_dr16_.output_.switch_r)
-        // {
-        //     case SWITCH_UP:
-        //     {
-        //         shoot_.SetTargetShootSpeed(MAX_SHOOT_SPEED);
-        //         break;
-        //     }
-        //     case SWITCH_MID:
-        //     {
-        //         shoot_.SetTargetShootSpeed(0);
-        //         break;
-        //     }
-        //     default:
-        //     {
-        //         shoot_.SetTargetShootSpeed(0);
-        //         break;
-        //     }
-        // }
 
+        
 
         /****************************   调试   ****************************/
         

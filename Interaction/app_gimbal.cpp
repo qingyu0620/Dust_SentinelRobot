@@ -33,10 +33,10 @@ void Gimbal::Init()
 {
     // pitch轴角度环
     pitch_angle_pid_.Init(
-        7.8f,
+        13.8f,
         0.0f,
-        0.203f,
-        3.f,
+        0.153f,
+        0.0f,
         0.f,
         44.0f,
         0.001f,
@@ -47,10 +47,10 @@ void Gimbal::Init()
     );
     // pitch轴角度环
     pitch_omega_pid_.Init(
-        0.5f,
+        0.7f,
         0.003f,
         0.00005f,
-        0.1f,
+        0.0f,
         0.0f,
         9.9f,
         0.001f,
@@ -140,7 +140,6 @@ void Gimbal::SelfResolution()
 void Gimbal::Output()
 {
     motor_pitch_.SetControlTorque(target_pitch_torque_);
-
     motor_pitch_.Output();
 }
 
