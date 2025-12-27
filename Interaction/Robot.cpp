@@ -11,9 +11,6 @@
 /* Includes ------------------------------------------------------------------*/
 
 #include "Robot.h"
-#include "alg_math.h"
-#include "dvc_MCU_comm.h"
-#include "dvc_remote_dji.h"
 
 /* Private macros ------------------------------------------------------------*/
 
@@ -138,9 +135,6 @@ void Robot::Task()
         
         /****************************   云台   ****************************/
 
-        // remote_angle = remote_dr16_.output_.pitch;
-
-        // gimbal_.SetTargetPitchRadian(remote_angle);
 
         if(remote_dr16_.output_.switch_r == SWITCH_MID)
         {

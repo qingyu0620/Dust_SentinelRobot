@@ -202,5 +202,82 @@ void HAL_UARTEx_RxEventCallback(UART_HandleTypeDef *huart, uint16_t Size)
 	}
 }
 
+/**
+ * @brief UART错误帧回调函数
+ * 
+ * @param huart 
+ */
+void HAL_UART_ErrorCallback(UART_HandleTypeDef *huart)
+{
+	if(huart->Instance == USART1)
+	{
+		uint32_t error_code = huart->ErrorCode;
 
+		HAL_UART_DMAStop(uart1_manage_object.uart_handle);
+
+        if (error_code & HAL_UART_ERROR_ORE) 
+		{
+            uart1_manage_object.error_code.check.overrun_error = 1;
+			__HAL_UART_CLEAR_OREFLAG(huart);
+        }
+        if (error_code & HAL_UART_ERROR_FE)
+		{
+            uart1_manage_object.error_code.check.frame_error = 1;
+			__HAL_UART_CLEAR_FEFLAG(huart);
+        }
+        if (error_code & HAL_UART_ERROR_NE)
+		{
+            uart1_manage_object.error_code.check.noise_error = 1;
+			__HAL_UART_CLEAR_NEFLAG(huart);
+        }
+        if (error_code & HAL_UART_ERROR_PE)
+		{
+            uart1_manage_object.error_code.check.parity_error = 1;
+			__HAL_UART_CLEAR_PEFLAG(huart);
+        }
+        if (error_code & HAL_UART_ERROR_DMA)
+		{
+            uart1_manage_object.error_code.check.dma_error = 1;
+		}
+
+		memset(uart1_manage_object.rx_buffer, 0, UART_BUFFER_LENGTH);
+
+		HAL_UARTEx_ReceiveToIdle_DMA(uart1_manage_object.uart_handle, uart1_manage_object.rx_buffer, uart1_manage_object.rx_buffer_length);
+	}
+	else if(huart->Instance == USART3)
+	{
+        uint32_t error_code = huart->ErrorCode;
+
+		HAL_UART_DMAStop(uart3_manage_object.uart_handle);
+
+        if (error_code & HAL_UART_ERROR_ORE) 
+		{
+            uart3_manage_object.error_code.check.overrun_error = 1;
+			__HAL_UART_CLEAR_OREFLAG(huart);
+        }
+        if (error_code & HAL_UART_ERROR_FE)
+		{
+            uart3_manage_object.error_code.check.frame_error = 1;
+			__HAL_UART_CLEAR_FEFLAG(huart);
+        }
+        if (error_code & HAL_UART_ERROR_NE)
+		{
+            uart3_manage_object.error_code.check.noise_error = 1;
+			__HAL_UART_CLEAR_NEFLAG(huart);
+        }
+        if (error_code & HAL_UART_ERROR_PE)
+		{
+            uart3_manage_object.error_code.check.parity_error = 1;
+			__HAL_UART_CLEAR_PEFLAG(huart);
+        }
+        if (error_code & HAL_UART_ERROR_DMA)
+		{
+            uart3_manage_object.error_code.check.dma_error = 1;
+		}
+
+		memset(uart3_manage_object.rx_buffer, 0, UART_BUFFER_LENGTH);
+
+		HAL_UARTEx_ReceiveToIdle_DMA(uart3_manage_object.uart_handle, uart3_manage_object.rx_buffer, uart3_manage_object.rx_buffer_length);
+	}
+}
 

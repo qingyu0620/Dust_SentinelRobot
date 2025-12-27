@@ -2,19 +2,29 @@
     "version": "0.2.0",
     "configurations": [
         {
+            "name": "DAP-link",
             "cwd": "${workspaceRoot}",
-            "executable": "${workspaceFolder}/build/Dust_SentinelRobotChassis_H.elf",
-            "name": "Debug with OpenOCD",
+            "executable": "${workspaceFolder}/build/Dust_SentinelRobot_H.elf",
             "request": "launch",
             "type": "cortex-debug",
+            "device": "STM32F407IGHX",
             "servertype": "openocd",
             "configFiles": [
-                "interface/cmsis-dap.cfg", 
-                "target/stm32f4x.cfg"
+                "${workspaceRoot}/Core/config/openocd_dap.cfg",
             ],
-            "searchDir": [],
             "runToEntryPoint": "main",
-            "showDevDebugOutput": "none"
+        },
+        {
+            "name": "DAP-Attach",
+            "cwd": "${workspaceRoot}",
+            "executable": "${workspaceFolder}/build/Dust_SentinelRobot_H.elf",
+            "request": "attach",
+            "type": "cortex-debug",
+            "device": "STM32F407IGHX",
+            "servertype": "openocd",
+            "configFiles": [
+                "${workspaceRoot}/Core/config/openocd_dap.cfg",
+            ],
         },
     ]
 }

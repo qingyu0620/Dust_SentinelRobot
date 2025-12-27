@@ -26,19 +26,38 @@
 /* Exported types ------------------------------------------------------------*/
 
 /**
- * @brief ：UART回调函数定义
+ * @brief UART回调函数定义
  * 
  */
 typedef void (* Uart_Callback)(uint8_t* buffer, uint16_t length);
 
+/**
+ * @brief UART错误码
+ * 
+ * @note 设计成联合体是为了方便清0
+ */
+union UartErrorCode
+{
+    uint8_t all;
+    struct 
+    {
+        uint8_t overrun_error : 1;      // 缓冲区溢出
+        uint8_t frame_error : 1;        // 帧错误
+        uint8_t noise_error : 1;        // 噪声错误
+        uint8_t parity_error : 1;       // 奇偶校验位错误
+        uint8_t dma_error : 1;          // DMA传输错误
+        uint8_t reseverd : 3;           // 保留位
+    } check;
+};
 
 /**
- * @brief ：UART管理模块结构体
+ * @brief UART管理模块结构体
  * 
  */
 struct UartManageObject
 {
     UART_HandleTypeDef* uart_handle;
+    UartErrorCode error_code = {0};
     uint8_t tx_buffer[UART_BUFFER_LENGTH];
     uint8_t rx_buffer[UART_BUFFER_LENGTH];
     uint16_t rx_buffer_length;
