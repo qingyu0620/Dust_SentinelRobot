@@ -14,6 +14,8 @@
 
 /* Private macros ------------------------------------------------------------*/
 
+#define MAX_MCU_DISALIVE_PERIOD   5          // 50ms
+
 /* Private types -------------------------------------------------------------*/
 
 /* Private variables ---------------------------------------------------------*/
@@ -47,7 +49,7 @@ void McuComm::Init(CAN_HandleTypeDef* hcan, uint8_t can_rx_id, uint8_t can_tx_id
           .priority = (osPriority_t) osPriorityNormal
      };
      // 启动任务，将 this 传入
-     // osThreadNew(McuComm::TaskEntry, this, &kMcuCommTaskAttr);
+     osThreadNew(McuComm::TaskEntry, this, &kMcuCommTaskAttr);
 }
 
 /**
@@ -55,9 +57,49 @@ void McuComm::Init(CAN_HandleTypeDef* hcan, uint8_t can_rx_id, uint8_t can_tx_id
  * 
  * @param argument 
  */
-void McuComm::TaskEntry(void *argument) {
+void McuComm::TaskEntry(void *argument)
+{
      McuComm *self = static_cast<McuComm *>(argument);  // 还原 this 指针
      self->Task();  // 调用成员函数
+}
+
+/**
+ * @brief McuComm清理数据函数
+ * 
+ */
+void McuComm::ClearData()
+{
+     recv_chassis_data_.chassis_speed_x = 1024;
+     recv_chassis_data_.chassis_speed_y = 1024;
+     recv_chassis_data_.rotation = 1024;
+
+     recv_comm_data_.switch_r = SWITCH_MID;
+     recv_comm_data_.switch_l = SWITCH_MID;
+     recv_comm_data_.supercap = 0;
+}
+
+/**
+ * @brief McuComm存活周期检测回调函数
+ * 
+ */
+void McuComm::AlivePeriodElapsedCallback()
+{
+     if(++alive_count_ >= MAX_MCU_DISALIVE_PERIOD)
+     {
+          if(pre_flag_ == flag_)
+          {
+               mcu_alive_state_ = MCU_ALIVE_STATE_DISABLE;
+               ClearData();
+          }
+          else
+          {
+               mcu_alive_state_ = MCU_ALIVE_STATE_ENABLE;
+          }
+
+          pre_flag_ = flag_;
+
+          alive_count_ = 0;
+     }
 }
 
 /**
@@ -67,40 +109,10 @@ void McuComm::TaskEntry(void *argument) {
 void McuComm::Task()
 {
      for (;;)
-     {    // 用临界区一次性复制，避免撕裂
-          // __disable_irq();
-          // mcu_comm_data_local = *const_cast<const struct McuCommData*>(&(mcu_comm_data_));
-          // __enable_irq();
-          // osDelay(pdMS_TO_TICKS(10));
+     {    
+          AlivePeriodElapsedCallback();
+          osDelay(pdMS_TO_TICKS(10));
      }
-}
-
-/**
- * @brief McuComm发送命令函数
- * 
- */
-void McuComm::CanSendCommand()
-{
-     
-}
-
-/**
- * @brief McuComm发送自瞄函数
- * 
- */
-void McuComm::CanSendAutoaim()
-{
-     static uint8_t can_tx_frame[8];
-
-     can_tx_frame[0] = 0xAC;
-
-     memcpy(&can_tx_frame[1], send_autoaim_data_.autoaim_yaw_ang.b, 4);
-
-     can_tx_frame[5] = 0x00;
-     can_tx_frame[6] = 0x00;
-     can_tx_frame[7] = 0x00;
-
-     can_send_data(can_manage_object_->can_handler, can_tx_id_, can_tx_frame, 8);
 }
 
 /**
@@ -110,9 +122,18 @@ void McuComm::CanSendAutoaim()
  */
 void McuComm::CanRxCpltCallback(uint8_t* rx_data)
 {
-     // 判断在线
+     flag_ += 1;
+     
+     DataProcess(rx_data);
+}
 
-     // 处理数据 , 解包
+/**
+ * @brief McuComm数据处理函数
+ * 
+ * @param rx_data 
+ */
+void McuComm::DataProcess(uint8_t* rx_data)
+{
      switch (rx_data[0])
      {
           case (0xAA): // 底盘包
@@ -182,10 +203,12 @@ void McuComm::CanRxCpltCallback(uint8_t* rx_data)
           case (0xAC): // 自瞄yaw包
           {
                recv_autoaim_data_.mode = rx_data[1];
+
                memcpy(&recv_autoaim_data_.autoaim_yaw_ang, &rx_data[2], 4);
+
                recv_autoaim_data_.flag = rx_data[6];
+
                break;
           }
      }
-
 }

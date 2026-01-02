@@ -11,6 +11,7 @@
 /* Includes ------------------------------------------------------------------*/
 
 #include "Robot.h"
+#include "dvc_MCU_comm.h"
 
 /* Private macros ------------------------------------------------------------*/
 
@@ -120,7 +121,7 @@ void Robot::Task()
 
         if(mcu_comm_data_local.switch_r == SWITCH_MID)
         {
-            remote_yaw_angle_ += (M_PI / 180.f * (K * mcu_chassis_data_local.rotation + C)) * 0.5;
+            remote_yaw_angle_ += (M_PI / 180.f * (K * mcu_chassis_data_local.rotation + C)) * 0.;
 
             remote_yaw_angle_ = normalize_pi(remote_yaw_angle_);
 
@@ -133,7 +134,7 @@ void Robot::Task()
             {
                 case(AUTOAIM_MODE_IDIE):
                 {
-                    remote_yaw_angle_ += (M_PI / 180.f * (K * mcu_chassis_data_local.rotation + C)) * 0.5;
+                    remote_yaw_angle_ += (M_PI / 180.f * (K * mcu_chassis_data_local.rotation + C)) * 0.005;
 
                     remote_yaw_angle_ = normalize_pi(remote_yaw_angle_);
 
@@ -171,10 +172,6 @@ void Robot::Task()
                     break;
                 }
             }
-        }
-        else if(mcu_comm_data_local.switch_r == SWITCH_DOWN)
-        {
-            gimbal_.SetTargetYawTorque(0);
         }
 
         gimbal_.SetImuYawAngle(normalize_angle_pm_pi(mcu_comm_data_local.imu_yaw.f));

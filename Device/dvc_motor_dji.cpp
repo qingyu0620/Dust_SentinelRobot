@@ -38,7 +38,7 @@
  */
 float power_calculate(float k0, float k1, float k2, float k3, float k4, float k5,  float I, float W)
 {
-    return (k0 + k1*I + k2*W + k3*I*W + k4*I*I + k5*W*W);
+    return (k0 + k1 * I + k2 * W + k3 * I * W + k4 * I * I + k5 * W * W);
 }
 
 /**

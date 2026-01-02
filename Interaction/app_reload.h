@@ -20,7 +20,7 @@
 
 /* Exported macros -----------------------------------------------------------*/
 
-#define MAX_RELOAD_SPEED        -10.f
+#define MAX_RELOAD_SPEED        -15.f
 
 /* Exported types ------------------------------------------------------------*/
 
@@ -33,8 +33,6 @@ public:
     void Init();
     
     void Task();
-
-    void MisfirePeriodElapsedCallback();
 
     inline void SetTargetReloadRotation(float target_reload_rotation);
 

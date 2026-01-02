@@ -55,24 +55,6 @@ void Reload::TaskEntry(void *argument)
 }
 
 /**
- * @brief Reload卡弹处理函数
- * 
- */
-void Reload::MisfirePeriodElapsedCallback()
-{
-    now_reload_angle_ = motor_reload_1_.GetNowAngle();
-
-    float reload_diff = fabsf(now_reload_angle_ - pre_reload_angle_);
-
-    if(target_reload_rotation_ == MAX_RELOAD_SPEED && reload_diff < 5.f)
-    {
-        target_reload_rotation_ = -MAX_RELOAD_SPEED;
-    }
-
-    pre_reload_angle_ = now_reload_angle_;
-}
-
-/**
  * @brief Reload电机输出
  * 
  */

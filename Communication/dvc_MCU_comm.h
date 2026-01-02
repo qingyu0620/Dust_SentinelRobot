@@ -8,8 +8,8 @@
  * @copyright Copyright (c) 2025
  * 
  */
-#ifndef MODULES_COMM_DVC_MCU_COMM_H
-#define MODULES_COMM_DVC_MCU_COMM_H
+#ifndef DVC_MCU_COMM_H
+#define DVC_MCU_COMM_H
 
 /* Includes ------------------------------------------------------------------*/
 
@@ -18,6 +18,7 @@
 #include "cmsis_os2.h"
 #include "string.h"
 #include "stdio.h"
+#include "dvc_remote_dji.h"
 
 /* Exported macros -----------------------------------------------------------*/
 
@@ -34,14 +35,13 @@ union McuConv
 };
 
 /**
- * @brief 遥控状态枚举
+ * @brief Mcu存活状态枚举
  * 
  */
-enum RemoteSwitchStatus
+enum McuAliveState
 {
-    SWITCH_UP    = (uint8_t)1,
-    SWITCH_MID   = (uint8_t)3,
-    SWITCH_DOWN  = (uint8_t)2,
+    MCU_ALIVE_STATE_ENABLE = 0,
+    MCU_ALIVE_STATE_DISABLE,
 };
 
 /**
@@ -82,17 +82,6 @@ struct McuRecvAutoaimData
 };
 
 /**
- * @brief Mcu发送自瞄数据结构体
- * 
- */
-struct McuSendAutoaimData
-{
-    uint8_t         start_of_yaw_frame = 0xAC;
-
-    McuConv         autoaim_yaw_ang;            // 自瞄累加弧度
-};
-
-/**
  * @brief Mcu通讯类
  * 
  */
@@ -123,23 +112,15 @@ public:
         0,
     };
 
-    McuSendAutoaimData send_autoaim_data_ = 
-    {   0xAC,
-        {0, 0, 0, 0},
-    };
-
     void Init(CAN_HandleTypeDef *hcan, uint8_t can_rx_id, uint8_t can_tx_id);
-
-    void CanRxCpltCallback(uint8_t *rx_data);
-
-    void CanSendCommand();
-
-    void CanSendAutoaim();
 
     void Task();
 
+    void ClearData();
 
-protected:
+    void CanRxCpltCallback(uint8_t *rx_data);
+
+private:
 
     CanManageObject *can_manage_object_;
 
@@ -149,8 +130,18 @@ protected:
 
     uint8_t tx_data_[8];
 
-    void DataProcess();
+    uint32_t flag_ = 0;
 
+    uint32_t pre_flag_ = 0;
+
+    uint32_t alive_count_ = 0;
+
+    McuAliveState mcu_alive_state_ = MCU_ALIVE_STATE_DISABLE;
+
+    void DataProcess(uint8_t* rx_data);
+
+    void AlivePeriodElapsedCallback();
+    
     // FreeRTOS 入口，静态函数
     static void TaskEntry(void *param);
 };
