@@ -76,7 +76,7 @@ void can2_callback_function(CanRxBuffer* CAN_RxMessage)
  */
 void uart1_callback_function(uint8_t* buffer, uint16_t length)
 {	
-	robot_.remote_vt03_.UART_RxCpltCallback(buffer, length);
+	
 }
 
 /**
@@ -91,17 +91,17 @@ void uart3_callback_function(uint8_t* buffer, uint16_t length)
 
     robot_.mcu_comm_.send_chassis_data_.start_of_frame   = 0xAA;
     
-    if(robot_.robot_navigation_state_ == ROBOT_NAVIGATION_CLOSE)
+    if(robot_.robot_control_method_ == ROBOT_CONTROL_METHOD_REMOTE)
     {
-        robot_.mcu_comm_.send_chassis_data_.chassis_speed_x  = robot_.remote_dr16_.output_.chassis_x;
-        robot_.mcu_comm_.send_chassis_data_.chassis_speed_y  = robot_.remote_dr16_.output_.chassis_y;
+        robot_.mcu_comm_.send_chassis_data_.chassis_speed_x  = robot_.remote_dr16_.output_.remote.chassis_x;
+        robot_.mcu_comm_.send_chassis_data_.chassis_speed_y  = robot_.remote_dr16_.output_.remote.chassis_y;
     }
 
-    robot_.mcu_comm_.send_chassis_data_.rotation         = robot_.remote_dr16_.output_.rotation;
+    robot_.mcu_comm_.send_chassis_data_.rotation         = robot_.remote_dr16_.output_.remote.rotation;
 
     robot_.mcu_comm_.send_comm_data_.start_of_frame      = 0xAB;
-    robot_.mcu_comm_.send_comm_data_.switch_l            = robot_.remote_dr16_.output_.switch_l;
-    robot_.mcu_comm_.send_comm_data_.switch_r            = robot_.remote_dr16_.output_.switch_r;
+    robot_.mcu_comm_.send_comm_data_.switch_l            = robot_.remote_dr16_.output_.remote.switch_l;
+    robot_.mcu_comm_.send_comm_data_.switch_r            = robot_.remote_dr16_.output_.remote.switch_r;
     robot_.mcu_comm_.send_comm_data_.supercap            = 0;
 }
 
@@ -114,7 +114,7 @@ void usb_rx_callback(uint16_t len)
 {
     robot_.pc_comm_.RxCpltCallback();
 
-    if(robot_.robot_navigation_state_ == ROBOT_NAVIGATION_OPEN)
+    if(robot_.robot_control_method_ == ROBOT_CONTROL_METHOD_NAVIGATION)
     {
         robot_.mcu_comm_.send_chassis_data_.chassis_speed_x  = robot_.pc_comm_.pc_chassis_x_;
         robot_.mcu_comm_.send_chassis_data_.chassis_speed_y  = robot_.pc_comm_.pc_chassis_y_;

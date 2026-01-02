@@ -32,10 +32,10 @@
  * @brief Robot导航开启状态
  * 
  */
-enum RobotNavigationState
+enum RobotControlMethod
 {
-    ROBOT_NAVIGATION_CLOSE = 0,
-    ROBOT_NAVIGATION_OPEN,
+    ROBOT_CONTROL_METHOD_REMOTE = 0,
+    ROBOT_CONTROL_METHOD_NAVIGATION,
 };
 
 /* Exported types ------------------------------------------------------------*/
@@ -49,8 +49,6 @@ class Robot
 public:
     // 遥控
     RemoteDjiDR16 remote_dr16_;
-
-    VT03 remote_vt03_;
 
     // 上下板通讯
     McuComm mcu_comm_;
@@ -71,9 +69,9 @@ public:
 
     void Task();
 
-    RobotNavigationState robot_navigation_state_;
+    RobotControlMethod robot_control_method_;
 
-    void SetNavigationState(RobotNavigationState robot_navigation_state);
+    void SetControlMethod(RobotControlMethod robot_control_method);
 
 protected:
 

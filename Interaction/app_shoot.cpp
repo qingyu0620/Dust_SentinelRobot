@@ -63,8 +63,8 @@ void Shoot::TaskEntry(void *argument)
 void Shoot::MotorToOutput()
 {
     // 摩擦轮对称旋转
-    motor_shoot_1_.SetTargetOmega(-target_shoot_speed_);
-    motor_shoot_2_.SetTargetOmega( target_shoot_speed_);
+    motor_shoot_1_.SetTargetOmega(-target_shoot_omega_);
+    motor_shoot_2_.SetTargetOmega( target_shoot_omega_);
         
     motor_shoot_1_.CalculatePeriodElapsedCallback();
     motor_shoot_2_.CalculatePeriodElapsedCallback();

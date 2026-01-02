@@ -17,6 +17,8 @@
 #define K_PC    660.f
 #define C_PC    256.f / 165.f
 
+#define MAX_PC_DISALIVE_PERIOD  200     // 200ms
+
 /* Private types -------------------------------------------------------------*/
 
 /* Private variables ---------------------------------------------------------*/
@@ -61,14 +63,16 @@ void PcComm::UpdataAutoaimData()
     memcpy(&send_autoaim_data.q, INS.q, 16);
 
     send_autoaim_data.mode           = 0;
+    
     send_autoaim_data.yaw.ang        = INS.Yaw;
     send_autoaim_data.yaw.vel        = INS.Gyro[Z];
+
     send_autoaim_data.pitch.ang      = -INS.Roll;
     send_autoaim_data.pitch.vel      = -INS.Gyro[X]; 
+
     send_autoaim_data.bullet.speed   = 16;
     send_autoaim_data.bullet.count   = 20;
 }
-
 
 /**
  * @brief PcComm发送信息函数
@@ -88,6 +92,49 @@ void PcComm::Send_Message()
 }
 
 /**
+ * @brief PcComm清理数据函数
+ * 
+ */
+void PcComm::ClearData()
+{
+    recv_autoaim_data.mode = 0;
+
+    recv_autoaim_data.yaw.yaw_ang = 0;
+    recv_autoaim_data.yaw.yaw_vel = 0;
+    recv_autoaim_data.yaw.yaw_acc = 0;
+
+    recv_autoaim_data.pitch.pitch_ang = 0;
+    recv_autoaim_data.pitch.pitch_acc = 0;
+    recv_autoaim_data.pitch.pitch_vel = 0;
+
+    recv_autoaim_data.flag = 1;
+}
+
+/**
+ * @brief PcComm存活周期检测回调函数
+ * 
+ */
+void PcComm::AlivePeriodElapsedCallback()
+{
+    if(++alive_count_ >= MAX_PC_DISALIVE_PERIOD)
+    {
+        if(pre_flag_ == flag_)
+        {
+            pc_alive_state = PC_ALIVE_STATE_DISABLE;
+            ClearData();
+        }
+        else
+        {
+            pc_alive_state = PC_ALIVE_STATE_ENABLE;
+        }
+
+        pre_flag_ = flag_;
+
+        alive_count_ = 0;
+    }
+}
+
+/**
  * @brief PcComm任务函数
  * 
  */
@@ -95,6 +142,7 @@ void PcComm::Task()
 {
     for(;;)
     {
+        AlivePeriodElapsedCallback();
         UpdataAutoaimData();
         Send_Message();
         osDelay(pdMS_TO_TICKS(1));
@@ -106,6 +154,18 @@ void PcComm::Task()
  * 
  */
 void PcComm::RxCpltCallback()
+{
+    // 滑动窗口, 判断是否在线
+    flag_ += 1;
+
+    DataProcess();
+}
+
+/**
+ * @brief PcComm数据处理函数
+ * 
+ */
+void PcComm::DataProcess()
 {
     if(bsp_usb_rx_buffer[0] == 'S' && bsp_usb_rx_buffer[1] == 'P')
     {
@@ -123,7 +183,7 @@ void PcComm::RxCpltCallback()
         memcpy(&recv_navigation_data.linear_y.b, &bsp_usb_rx_buffer[5], 4);
 
         pc_chassis_x_ = (uint16_t)(K_PC * (recv_navigation_data.linear_x.f / 2.1f + C_PC));
-        pc_chassis_y_ = (uint16_t)(K_PC * (-recv_navigation_data.linear_y.f / 2.1f + C_PC));
+        pc_chassis_y_ = (uint16_t)(K_PC * (recv_navigation_data.linear_y.f / 2.1f + C_PC));
 
         recv_navigation_data.crc16[0] = bsp_usb_rx_buffer[9];
         recv_navigation_data.crc16[1] = bsp_usb_rx_buffer[10];

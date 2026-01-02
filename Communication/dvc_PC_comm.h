@@ -35,7 +35,7 @@ union PcConv
 };
 
 /**
- * @brief PcComm自瞄模式
+ * @brief PcComm自瞄模式枚举
  * 
  */
 enum PcAutoAimMode
@@ -43,6 +43,16 @@ enum PcAutoAimMode
     AUTOAIM_MODE_IDIE = 0,
     AUTOAIM_MODE_FOLLOW,
     AUTOAIM_MODE_FIRE,
+};
+
+/**
+ * @brief PcComm存活状态枚举
+ * 
+ */
+enum PcAliveState
+{
+    PC_ALIVE_STATE_ENABLE = 0,
+    PC_ALIVE_STATE_DISABLE,
 };
 
 #pragma pack(1)
@@ -119,7 +129,7 @@ struct PCRecvNavigationData
     PcConv linear_x;
     PcConv linear_y;
 
-    uint8_t crc16[2] = {0};
+    uint8_t crc16[2] = {0, 0};
 };
 
 #pragma pack()
@@ -176,6 +186,20 @@ public:
     void UpdataAutoaimData();
 
 private:
+
+    uint32_t flag_ = 0;
+
+    uint32_t pre_flag_ = 0;
+
+    uint32_t alive_count_ = 0;
+
+    PcAliveState pc_alive_state = PC_ALIVE_STATE_DISABLE;
+
+    void ClearData();
+
+    void DataProcess();
+
+    void AlivePeriodElapsedCallback();
 
     // FreeRTOS 入口，静态函数
     static void TaskEntry(void *param);

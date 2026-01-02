@@ -24,13 +24,23 @@
 /* Exported types ------------------------------------------------------------*/
 
 /**
- * @brief 转换联合体
+ * @brief Mcu转换联合体
  * 
  */
 union McuConv
 {
     uint8_t b[4];
     float f;
+};
+
+/**
+ * @brief Mcu存活状态枚举
+ * 
+ */
+enum McuAliveState
+{
+    MCU_ALIVE_STATE_ENABLE = 0,
+    MCU_ALIVE_STATE_DISABLE,
 };
 
 /**
@@ -110,21 +120,15 @@ public:
         {0,0,0,0},
     };
 
-    McuRecvAutoaimData recv_autoaim_data_ = 
-    {
-        0xAC,
-        {0,0,0,0},
-    };
-
     void Init(CAN_HandleTypeDef *hcan, uint8_t can_rx_id, uint8_t can_tx_id);
 
     void Task();
 
-    void DisConnectData();
+    void ClearData();
 
-    void CanSendChassis();
+    void CanSendChassisData();
 
-    void CanSendCommand();
+    void CanSendCommandData();
     
     void CanSendAutoaimData();
 
@@ -142,7 +146,17 @@ protected:
 
     uint8_t tx_data_[8];
 
-    void DataProcess();
+    uint32_t flag_ = 0;
+
+    uint32_t pre_flag_ = 0;
+
+    uint32_t alive_count_ = 0;
+
+    McuAliveState mcu_alive_state_ = MCU_ALIVE_STATE_DISABLE;
+
+    void DataProcess(uint8_t* rx_data);
+
+    void AlivePeriodElapsedCallback();
     
     // FreeRTOS 入口，静态函数
     static void TaskEntry(void *param);

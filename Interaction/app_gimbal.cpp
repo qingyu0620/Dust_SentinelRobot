@@ -107,9 +107,6 @@ void Gimbal::TaskEntry(void *argument)
  */
 void Gimbal::SelfResolution()
 {
-    static float total_theta = 0.0f;
-    static float final_radian = 0.0f;
-
     // 获取当前数据
     now_pitch_omega_ = motor_pitch_.GetNowOmega();                                          // 角速度
     now_pitch_angle_ = K_MOTOR_ANGLE * motor_pitch_.GetNowAngle() + C_MOTOR_ANGLE;          // 角度

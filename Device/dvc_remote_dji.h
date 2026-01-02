@@ -28,7 +28,7 @@ enum RemoteDjiAliveStatus
 };
 
 /**
- * @brief 遥控按键状态
+ * @brief DjiDR16按键状态
  * 
  */
 enum RemoteDjiSwitchStatus
@@ -39,25 +39,66 @@ enum RemoteDjiSwitchStatus
 };
 
 /**
- * @brief 遥控原始数据
+ * @brief DjiDR16原始数据
  * 
  */
 struct RemoteDjiData
 {
-    uint16_t ch0, ch1, ch2, ch3;
-    uint8_t s1, s2;
+    struct 
+    {
+        uint16_t ch0, ch1, ch2, ch3;
+        uint8_t s1, s2;
+    } rc;
+
+    struct
+    {
+        int16_t x, y, z;
+        uint8_t pl, pr;
+    } mouse;
+
+    struct 
+    {
+        uint16_t key;
+    } keyboard;
 };
 
 /**
- * @brief 遥控输出
+ * @brief DjiDR16输出
  * 
  */
 struct RemoteDjiOutput
 {
-    uint8_t switch_l, switch_r;
-    float chassis_x, chassis_y;      // x, y, r 采用右手系
-    float rotation;
-    float pitch;       
+    struct 
+    {
+        uint8_t switch_l, switch_r;
+        float chassis_x, chassis_y;      // x, y, r 采用右手系
+        float rotation;
+        float pitch;
+    } remote;
+
+    struct
+    {
+        float mouse_x, mouse_y, mouse_z;
+        uint8_t press_l, press_r;
+    } mouse;
+
+    union
+    {
+        uint16_t all;
+        struct
+        {
+            uint16_t w : 1, 
+                     s : 1,
+                     a : 1,
+                     d : 1,
+                     q : 1, 
+                     e : 1;
+            uint16_t shift : 1, 
+                     ctrl : 1;
+            uint16_t reserved : 8;
+        } key;
+    } keyboard;
+    
 };
 
 /**
@@ -77,18 +118,6 @@ public:
 
     void Task();
 
-    inline float GetLeftX();
-
-    inline float GetLeftY();
-
-    inline float GetRightX();
-
-    inline float GetRightY();
-
-    inline uint8_t GetSwitchL();
-
-    inline uint8_t GetSwitchR();
-
     void AlivePeriodElapsedCallback();
 
     void UartRxCpltCallback(uint8_t* buffer);
@@ -100,7 +129,7 @@ protected:
     UartManageObject* uart_manage_object_;
 
     // 原始数据
-    RemoteDjiData data_;
+    RemoteDjiData raw_data_;
 
     // 当前时刻flag
     uint32_t flag_ = 0;
@@ -132,40 +161,5 @@ protected:
 /* Exported variables --------------------------------------------------------*/
 
 /* Exported function declarations --------------------------------------------*/
-
-/**
- * @brief 获取左摇杆X值
- * 
- * @return float 
- */
-inline float RemoteDjiDR16::GetLeftX()
-{
-    return output_.rotation;
-}
-
-inline float RemoteDjiDR16::GetLeftY()
-{
-    return output_.pitch;
-}
-
-inline float RemoteDjiDR16::GetRightX()
-{
-    return output_.chassis_x;
-}
-
-inline float RemoteDjiDR16::GetRightY()
-{
-    return output_.chassis_y;
-}
-
-inline uint8_t RemoteDjiDR16::GetSwitchL()
-{
-    return output_.switch_l;
-}
-
-inline uint8_t RemoteDjiDR16::GetSwitchR()
-{
-    return output_.switch_r;
-}
 
 #endif

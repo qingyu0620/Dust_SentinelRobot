@@ -11,9 +11,6 @@
 /* Includes ------------------------------------------------------------------*/
 
 #include "dvc_remote_dji.h"
-#include "alg_math.h"
-#include "bsp_uart.h"
-#include "stdio.h"
 
 /* Private macros ------------------------------------------------------------*/
 
@@ -64,25 +61,54 @@ void RemoteDjiDR16::TaskEntry(void *argument)
  */
 void RemoteDjiDR16::DataProcess(uint8_t* buffer)
 {
-    data_.ch0 =  ((int16_t)buffer[0]        | ((int16_t)buffer[1] << 8)) & 0x07FF;
-    data_.ch1 = (((int16_t)buffer[1] >> 3)  | ((int16_t)buffer[2] << 5)) & 0x07FF;
-    data_.ch2 = (((int16_t)buffer[2] >> 6)  | ((int16_t)buffer[3] << 2)  | ((int16_t)buffer[4] << 10)) &  0x07FF;
-    data_.ch3 = (((int16_t)buffer[4] >> 1)  | ((int16_t)buffer[5] << 7)) & 0x07FF;
+    /****************************   原始数据    ****************************/
 
-    data_.s1 = ((buffer[5] >> 4) & 0x000C) >> 2;
-    data_.s2 = ((buffer[5] >> 4) & 0x0003);
+
+    raw_data_.rc.ch0 =  ((int16_t)buffer[0]        | ((int16_t)buffer[1] << 8)) & 0x07FF;
+    raw_data_.rc.ch1 = (((int16_t)buffer[1] >> 3)  | ((int16_t)buffer[2] << 5)) & 0x07FF;
+    raw_data_.rc.ch2 = (((int16_t)buffer[2] >> 6)  | ((int16_t)buffer[3] << 2)  | ((int16_t)buffer[4] << 10)) &  0x07FF;
+    raw_data_.rc.ch3 = (((int16_t)buffer[4] >> 1)  | ((int16_t)buffer[5] << 7)) & 0x07FF;
+
+    raw_data_.rc.s1 = ((buffer[5] >> 4) & 0x000C) >> 2;
+    raw_data_.rc.s2 = ((buffer[5] >> 4) & 0x0003);
+
+    raw_data_.mouse.x = ((int16_t)buffer[6]) | ((int16_t)buffer[7] << 8);
+    raw_data_.mouse.y = ((int16_t)buffer[8]) | ((int16_t)buffer[9] << 8);
+    raw_data_.mouse.z = ((int16_t)buffer[10]) | ((int16_t)buffer[11] << 8);
+
+    raw_data_.mouse.pl = buffer[12];
+    raw_data_.mouse.pr = buffer[13];
+
+    raw_data_.keyboard.key = (int16_t)buffer[14];
+
+
+    /****************************   遥控数据    ****************************/
 
     // 上板数据
-    output_.pitch = k_pitch * data_.ch3 + c_pitch;
+    output_.remote.pitch = k_pitch * raw_data_.rc.ch3 + c_pitch;
 
     // 下板数据
-    output_.chassis_x  = data_.ch1;
-    output_.chassis_y  = data_.ch0;
-    output_.rotation   = data_.ch2;
+    output_.remote.chassis_x  = raw_data_.rc.ch1;
+    output_.remote.chassis_y  = raw_data_.rc.ch0;
+    output_.remote.rotation   = raw_data_.rc.ch2;
 
     // 通用数据
-    output_.switch_l = data_.s1;
-    output_.switch_r = data_.s2;
+    output_.remote.switch_l = raw_data_.rc.s1;
+    output_.remote.switch_r = raw_data_.rc.s2;
+
+
+    /****************************   键鼠数据    ****************************/
+
+    // 鼠标数据
+    output_.mouse.mouse_x = raw_data_.mouse.x;
+    output_.mouse.mouse_y = raw_data_.mouse.y;
+    output_.mouse.mouse_z = raw_data_.mouse.z;
+
+    output_.mouse.press_l = raw_data_.mouse.pl;
+    output_.mouse.press_r = raw_data_.mouse.pr;
+
+    // 键盘数据
+    output_.keyboard.all = raw_data_.keyboard.key;
 }
 
 /**
@@ -94,7 +120,7 @@ void RemoteDjiDR16::UartRxCpltCallback(uint8_t* buffer)
 {
     // 滑动窗口, 判断是否在线
     flag_ += 1;
-    // 读取数据值
+    
     DataProcess(buffer);
 }
 
@@ -104,9 +130,9 @@ void RemoteDjiDR16::UartRxCpltCallback(uint8_t* buffer)
  */
 void RemoteDjiDR16::ClearData()
 {
-    output_.pitch = k_pitch * 1024 + c_pitch;
-    output_.chassis_x = output_.chassis_y = output_.rotation = 1024;
-    output_.switch_l = output_.switch_r = 3;
+    output_.remote.pitch = k_pitch * 1024 + c_pitch;
+    output_.remote.chassis_x = output_.remote.chassis_y = output_.remote.rotation = 1024;
+    output_.remote.switch_l = output_.remote.switch_r = 3;
 }
 
 /**

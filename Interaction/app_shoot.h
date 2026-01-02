@@ -34,11 +34,11 @@ public:
 
     void Task();
 
-    inline void SetTargetShootSpeed(float target_shoot_speed);
+    inline void SetTargetShootOmega(float target_shoot_omega);
 
 protected:
     // 目标发射速度
-    float target_shoot_speed_ = 0.0f;
+    float target_shoot_omega_ = 0.0f;
 
     void MotorToOutput();
 
@@ -54,9 +54,9 @@ protected:
  * 
  * @param target_shoot_speed 
  */
-inline void Shoot::SetTargetShootSpeed(float target_shoot_speed)
+inline void Shoot::SetTargetShootOmega(float target_shoot_omega)
 {
-    target_shoot_speed_ = target_shoot_speed;
+    target_shoot_omega_ = target_shoot_omega;
 }
 
 
