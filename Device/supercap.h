@@ -29,8 +29,8 @@
  */
 enum SupercapSwitchStatus
 {
-    SUPERCAP_STATUS_SWITCH_DISABLE = 0,
-    SUPERCAP_STATUS_SWITCH_ENABLE = 1,
+    SUPERCAP_SWITCH_STATUS_ENABLE = 0,
+    SUPERCAP_SWITCH_STATUS_DISABLE,
 };
 
 /**
@@ -39,8 +39,8 @@ enum SupercapSwitchStatus
  */
 enum SupercapRecordStatus
 {
-    SUPERCAP_STATUS_RECORD_DISABLE = 0,
-    SUPERCAP_STATUS_RECORD_ENABLE = 1,
+    SUPERCAP_RECORD_STATUS_ENABLE = 0,
+    SUPERCAP_RECORD_STATUS_DISABLE,
 };
 
 /**
@@ -108,8 +108,8 @@ class Supercap
 public:
     void Init(CAN_HandleTypeDef *hcan, uint16_t can_rx_id = 0x030, uint16_t can_tx_id1 = 0x02E, uint16_t can_tx_id2 = 0x02F,
               uint16_t chassis_power_limit = 55, uint16_t chassis_power_buffer = 50, int16_t discharge_power_limit = 50, 
-              uint16_t charge_power_limit = 50, SupercapSwitchStatus switch_status = SUPERCAP_STATUS_SWITCH_DISABLE, 
-              SupercapRecordStatus record_status = SUPERCAP_STATUS_RECORD_DISABLE);
+              uint16_t charge_power_limit = 50, SupercapSwitchStatus switch_status = SUPERCAP_SWITCH_STATUS_DISABLE, 
+              SupercapRecordStatus record_status = SUPERCAP_RECORD_STATUS_DISABLE);
 
     void Task();
 
@@ -158,9 +158,6 @@ protected:
 
     // 超电接收数据
     SupercapRecivedData received_data_;
-
-    // 超电发送数据（未用）
-    // SupercapSendData send_data_;
 
     // 底盘功率缓冲
     uint16_t chassis_power_buffer_;

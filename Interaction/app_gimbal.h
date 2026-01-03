@@ -64,6 +64,16 @@ public:
 
     void Task();
 
+    inline void SetTargetYawAngle(float target_yaw_angle);
+
+    inline void SetTargetYawOmega(float target_yaw_omega);
+
+    inline void SetTargetYawTorque(float target_yaw_torque);
+
+    inline void SetTargetYawRadian(float target_yaw_radian);
+
+    inline void SetNowImuYawRadian(float imu_yaw_radian);
+
     inline float GetNowYawAngle();
 
     inline float GetNowYawOmega();
@@ -79,21 +89,6 @@ public:
     inline float GetTargetYawTorque();
 
     inline float GetTargetYawRadian();
-
-    inline void SetTargetYawAngle(float target_yaw_angle);
-
-    inline void SetTargetYawOmega(float target_yaw_omega);
-
-    inline void SetTargetYawTorque(float target_yaw_torque);
-
-    inline void SetTargetYawRadian(float target_yaw_radian);
-
-    inline void SetImuYawAngle(float imu_yaw_angle);
-
-    float yaw_angle_diff_ = 0.0f;
-
-    float imu_yaw_angle_ = 0.0f;
-
 
 protected:
     // 内部变量
@@ -112,10 +107,11 @@ protected:
     // yaw轴当前弧度
     float now_yaw_radian_ = 0.0f;
 
-    // 陀螺仪yaw轴角度
-    
-    // yaw角角度差，用于角度环
-    
+    // 陀螺仪yaw轴弧度
+    float imu_yaw_radian_ = 0.0f;
+
+    // yaw角角度差
+    float yaw_angle_diff_ = 0.0f;
 
     // 写变量
 
@@ -147,6 +143,56 @@ protected:
 /* Exported variables --------------------------------------------------------*/
 
 /* Exported function declarations ---------------------------------------------*/
+
+/**
+ * @brief 设定yaw轴角度
+ *
+ * @param target_yaw_angle yaw轴角度
+ */
+inline void Gimbal::SetTargetYawAngle(float target_yaw_angle)
+{
+    target_yaw_angle_ = target_yaw_angle;
+}
+
+/**
+ * @brief 设定yaw轴角速度
+ *
+ * @param target_yaw_omega yaw轴角速度
+ */
+inline void Gimbal::SetTargetYawOmega(float target_yaw_omega)
+{
+    target_yaw_omega_ = target_yaw_omega;
+}
+
+/**
+ * @brief 设定yaw轴力矩
+ *
+ * @param target_yaw_torque yaw轴力矩
+ */
+inline void Gimbal::SetTargetYawTorque(float target_yaw_torque)
+{
+    target_yaw_torque_ = target_yaw_torque;
+}
+
+/**
+ * @brief 设定yaw轴弧度
+ * 
+ * @param target_yaw_radian yaw轴弧度
+ */
+inline void Gimbal::SetTargetYawRadian(float target_yaw_radian)
+{
+    target_yaw_radian_ = target_yaw_radian;
+}
+
+/**
+ * @brief 设定陀螺仪yaw轴角度
+ * 
+ * @param imu_yaw_angle 
+ */
+inline void Gimbal::SetNowImuYawRadian(float imu_yaw_radian)
+{
+    imu_yaw_radian_ = imu_yaw_radian;
+}
 
 /**
  * @brief 获取yaw轴当前角度
@@ -228,54 +274,5 @@ inline float Gimbal::GetTargetYawRadian()
     return (target_yaw_radian_);
 }
 
-/**
- * @brief 设定yaw轴角度
- *
- * @param target_yaw_angle yaw轴角度
- */
-inline void Gimbal::SetTargetYawAngle(float target_yaw_angle)
-{
-    target_yaw_angle_ = target_yaw_angle;
-}
-
-/**
- * @brief 设定yaw轴角速度
- *
- * @param target_yaw_omega yaw轴角速度
- */
-inline void Gimbal::SetTargetYawOmega(float target_yaw_omega)
-{
-    target_yaw_omega_ = target_yaw_omega;
-}
-
-/**
- * @brief 设定yaw轴力矩
- *
- * @param target_yaw_torque yaw轴力矩
- */
-inline void Gimbal::SetTargetYawTorque(float target_yaw_torque)
-{
-    target_yaw_torque_ = target_yaw_torque;
-}
-
-/**
- * @brief 设定yaw轴弧度
- * 
- * @param target_yaw_radian yaw轴弧度
- */
-inline void Gimbal::SetTargetYawRadian(float target_yaw_radian)
-{
-    target_yaw_radian_ = target_yaw_radian;
-}
-
-/**
- * @brief 设定陀螺仪yaw轴角度
- * 
- * @param imu_yaw_angle 
- */
-inline void Gimbal::SetImuYawAngle(float imu_yaw_angle)
-{
-    imu_yaw_angle_ = imu_yaw_angle;
-}
 
 #endif

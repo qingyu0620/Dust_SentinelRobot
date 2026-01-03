@@ -83,8 +83,8 @@ void Chassis::TaskEntry(void *argument)
  */
 void Chassis::RotationMatrixTransform()
 {
-    cos_theta_ = cosf(now_yawdiff_);
-    sin_theta_ = sinf(now_yawdiff_);
+    float cos_theta_ = cosf(now_yawdiff_);
+    float sin_theta_ = sinf(now_yawdiff_);
     target_vx_in_chassis_ = cos_theta_ * target_vx_in_gimbal_ - sin_theta_ * target_vy_in_gimbal_;
     target_vy_in_chassis_ = sin_theta_ * target_vx_in_gimbal_ + cos_theta_ * target_vy_in_gimbal_;
 }

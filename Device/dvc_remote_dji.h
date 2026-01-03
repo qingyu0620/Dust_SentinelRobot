@@ -120,7 +120,7 @@ public:
 
     void AlivePeriodElapsedCallback();
 
-    void UartRxCpltCallback(uint8_t* buffer);
+    void UartRxCpltCallback(uint8_t* rx_data);
 
     static void TaskEntry(void *param);  // FreeRTOS 入口，静态函数
 
@@ -155,7 +155,7 @@ protected:
 
     // 内部数据处理函数
 
-    void DataProcess(uint8_t* buffer);
+    void DataProcess(uint8_t* rx_data);
 };
 
 /* Exported variables --------------------------------------------------------*/

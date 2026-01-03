@@ -90,6 +90,7 @@ void Supercap::CanRxCpltCallback(uint8_t *rx_data)
 {
     // 滑动窗口，判断超级电容在线状态
     flag_ += 1;
+
     DataProcess();
 }
 
@@ -99,7 +100,7 @@ void Supercap::CanRxCpltCallback(uint8_t *rx_data)
  */
 void Supercap::AlivePeriodElapsedCallback()
 {
-    // TODO:待实现
+    
 }
 
 /**
@@ -158,7 +159,6 @@ void Supercap::Task()
 {
     for (;;)
     {
-        AlivePeriodElapsedCallback();
         SendPeriodElapsedCallback();
         osDelay(pdMS_TO_TICKS(10));
     }

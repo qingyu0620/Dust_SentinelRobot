@@ -12,6 +12,7 @@
 
 #include "Robot.h"
 #include "dvc_MCU_comm.h"
+#include "supercap.h"
 
 /* Private macros ------------------------------------------------------------*/
 
@@ -101,12 +102,9 @@ void Robot::Task()
     mcu_autoaim_data_local.flag                = 0;
     mcu_autoaim_data_local.autoaim_yaw_ang.f   = 0;
 
-    // 底盘yaw角角度差，用于底盘跟随
-    float chassis_angle_diff = 0.0f;
-
     for(;;)
     {
-        /****************************   通讯   ****************************/
+        /****************************   McuComm   ****************************/
 
 
         // 用临界区一次性复制，避免撕裂
@@ -117,11 +115,11 @@ void Robot::Task()
         __enable_irq();
 
 
-        /****************************   云台   ****************************/
+        /****************************   Gimbal   ****************************/
 
         if(mcu_comm_data_local.switch_r == SWITCH_MID)
         {
-            remote_yaw_angle_ += (M_PI / 180.f * (K * mcu_chassis_data_local.rotation + C)) * 0.;
+            remote_yaw_angle_ += (M_PI / 180.f * (K * mcu_chassis_data_local.rotation + C)) * 0.5;
 
             remote_yaw_angle_ = normalize_pi(remote_yaw_angle_);
 
@@ -174,21 +172,29 @@ void Robot::Task()
             }
         }
 
-        gimbal_.SetImuYawAngle(normalize_angle_pm_pi(mcu_comm_data_local.imu_yaw.f));
+
+        if(mcu_comm_.GetMcuAliveState() == MCU_ALIVE_STATE_ENABLE)
+        {
+            gimbal_.SetNowImuYawRadian(normalize_angle_pm_pi(mcu_comm_data_local.imu_yaw.f));
+        }
+        else if (mcu_comm_.GetMcuAliveState() == MCU_ALIVE_STATE_DISABLE) 
+        {
+            gimbal_.SetNowImuYawRadian(gimbal_.GetTargetYawRadian());
+        }
 
 
-        /****************************   底盘   ****************************/
+        /****************************   Chassis   ****************************/
 
 
-        // 设置当前角度差
-        chassis_.SetNowYawAngleDiff(-gimbal_.GetNowYawRadian());
+        // 设置当前云台弧度差
+        chassis_.SetNowYawRadianDiff(-gimbal_.GetNowYawRadian());
 
         // 设置目标映射速度
         chassis_.SetTargetVxInGimbal((mcu_chassis_data_local.chassis_speed_x * K + C) * MAX_OMEGA_SPEED);
         chassis_.SetTargetVyInGimbal((mcu_chassis_data_local.chassis_speed_y * K + C) * MAX_OMEGA_SPEED);
 
 
-        /****************************   模式   ****************************/
+        /*****************************     Mode   *****************************/
 
         
         // 左按钮
@@ -226,17 +232,17 @@ void Robot::Task()
         }
         
 
-        /****************************   超电   ****************************/
+        /****************************   Supercap   ****************************/
 
 
         if(mcu_comm_data_local.supercap){
-            supercap_.SetSupercapCharge(SUPERCAP_STATUS_SWITCH_ENABLE);
+            supercap_.SetSupercapCharge(SUPERCAP_SWITCH_STATUS_ENABLE);
         }else if(mcu_comm_data_local.supercap){
-            supercap_.SetSupercapCharge(SUPERCAP_STATUS_SWITCH_DISABLE);
+            supercap_.SetSupercapCharge(SUPERCAP_SWITCH_STATUS_DISABLE);
         }
 
 
-        /****************************   调试   ****************************/
+        /****************************   Debug   ****************************/
 
 
         osDelay(pdMS_TO_TICKS(1));

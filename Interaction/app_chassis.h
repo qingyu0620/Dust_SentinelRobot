@@ -47,38 +47,25 @@ public:
 
     inline void SetTargetVelocityRotation(float target_velocity_rotation);
 
-    inline void SetNowYawAngleDiff(float now_yawdiff);
-
-    inline void SetMaxAccelXY(float max_accel_xy);
-
-    inline void SetMaxAccelR(float max_accel_r);
+    inline void SetNowYawRadianDiff(float yaw_radian_diff);
 
 protected:
-// 底盘速度参数
 
     // 云台坐标系目标速度
-
     float target_vx_in_gimbal_ = 0.0f;
-    
+
     float target_vy_in_gimbal_ = 0.0f;
 
     // 底盘坐标系目标速度
-
     float target_vx_in_chassis_ = 0.0f;
 
     float target_vy_in_chassis_ = 0.0f;
 
     // 目标速度 旋转
-
     float target_velocity_rotation_ = 0.0f;
 
-// 旋转矩阵参数
-
-    float now_yawdiff_ = 0.0f;
-
-    float cos_theta_ = 1.0f;
-    
-    float sin_theta_ = 0.0f;
+    // yaw轴角度差
+    float yaw_radian_diff_ = 0.0f;
 
 // 斜坡规划参数
 
@@ -160,19 +147,9 @@ inline void Chassis::SetTargetVelocityRotation(float target_velocity_rotation)
  * 
  * @param now_yawdiff 
  */
-inline void Chassis::SetNowYawAngleDiff(float now_yawdiff)
+inline void Chassis::SetNowYawRadianDiff(float yaw_radian_diff)
 {
-    now_yawdiff_ = now_yawdiff;
-}
-
-inline void Chassis::SetMaxAccelXY(float max_accel_xy)
-{
-    max_accel_xy_ = max_accel_xy;
-}
-
-inline void Chassis::SetMaxAccelR(float max_accel_r)
-{
-    max_accel_r = max_accel_r;
+    yaw_radian_diff_ = yaw_radian_diff;
 }
 
 #endif // !APP_CHASSIS_H_

@@ -76,20 +76,6 @@ void Gimbal::Init()
     motor_yaw_.CanSendEnter();
     osDelay(pdMS_TO_TICKS(1000));
 
-    // // 小Kp粗调
-    // motor_yaw_.SetKp(0.8);    // MIT模式kp
-    // motor_yaw_.SetKd(0.3);    // MIT模式kd
-    // motor_yaw_.SetControlAngle(0);
-    // motor_yaw_.Output();
-    // osDelay(pdMS_TO_TICKS(1300));
-
-    // // 大Kp细调
-    // motor_yaw_.SetKp(10.0);    // MIT模式kp
-    // motor_yaw_.SetKd(1.0);    // MIT模式kd
-    // motor_yaw_.SetControlAngle(0);
-    // motor_yaw_.Output();
-    // osDelay(pdMS_TO_TICKS(500));
-
     // 力矩控制
     motor_yaw_.SetKp(0);  // MIT模式kp
     motor_yaw_.SetKd(0);  // MIT模式kd
@@ -123,16 +109,13 @@ void Gimbal::TaskEntry(void *argument)
  */
 void Gimbal::SelfResolution()
 {
-    static float total_theta = 0.0f;
-    static float final_radian = 0.0f;
-
     // 获取当前数据
     now_yaw_omega_ = motor_yaw_.GetNowOmega();
     now_yaw_angle_ = motor_yaw_.GetNowAngle() * 14.4f;
     now_yaw_radian_ = normalize_angle_pm_pi(now_yaw_angle_);
 
     // 计算yaw轴偏差
-    yaw_angle_diff_ = CalcYawError(imu_yaw_angle_, target_yaw_radian_);
+    yaw_angle_diff_ = CalcYawError(imu_yaw_radian_, target_yaw_radian_);
     
     // 角度环
     yaw_angle_pid_.SetTarget(0);
@@ -167,7 +150,9 @@ void Gimbal::MotorNearestTransposition()
 {
     // Yaw就近转位
     float tmp_delta_angle;
+
     tmp_delta_angle = fmod(target_yaw_angle_ - now_yaw_angle_, 2.0f * PI);
+
     if (tmp_delta_angle > PI)
     {
         tmp_delta_angle -= 2.0f * PI;
@@ -176,6 +161,7 @@ void Gimbal::MotorNearestTransposition()
     {
         tmp_delta_angle += 2.0f * PI;
     }
+    
     target_yaw_angle_ = motor_yaw_.GetNowAngle() + tmp_delta_angle;
 }
 
