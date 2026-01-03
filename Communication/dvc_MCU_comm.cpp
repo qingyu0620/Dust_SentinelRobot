@@ -106,7 +106,8 @@ void McuComm::CanSendChassisData()
 void McuComm::CanSendCommandData()
 {
      static uint8_t can_tx_frame[8];
-     McuConv yaw_conv;
+     static McuConv yaw_conv;
+
      yaw_conv.f = INS.Yaw;
 
      can_tx_frame[0] = 0xAB;
@@ -127,7 +128,6 @@ void McuComm::CanSendAutoaimData()
 {
      static uint8_t can_tx_frame[8];
 
-     // 第一帧发送yaw包
      can_tx_frame[0] = 0xAC;
      can_tx_frame[1] = send_autoaim_data_.mode;
 

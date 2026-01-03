@@ -39,9 +39,13 @@
  */
 void Robot::Init()
 {
-    // 遥控初始化
+    dwt_init(168);
 
+    // 遥控初始化
     remote_dr16_.Init(&huart3, uart3_callback_function, UART_BUFFER_LENGTH);
+
+    // 陀螺仪初始化
+    imu_.Init();
 
     // 上下板通讯组件初始化
     mcu_comm_.Init(&hcan1, 0x00, 0x01);
@@ -51,9 +55,6 @@ void Robot::Init()
 
     // 等待云台yaw角回正
     osDelay(pdMS_TO_TICKS(5000));
-
-    // 陀螺仪初始化
-    imu_.Init();
 
     // 云台初始化
     gimbal_.Init();
@@ -101,6 +102,7 @@ void Robot::Task()
     for(;;)
     {
         /****************************   Robot    ****************************/
+
 
         if(remote_dr16_.output_.remote.switch_r == SWITCH_MID)
         {
@@ -196,13 +198,12 @@ void Robot::Task()
             shoot_.SetTargetShootOmega(MAX_SHOOT_OMEGA);
         }
 
-        gimbal_.SetImuPitchAngle(normalize_angle_pm_pi(imu_.GetRollAngle()));
+        gimbal_.SetNowImuPitchRadian(normalize_angle_pm_pi(imu_.GetRollAngle()));
 
 
         /****************************   Debug   ****************************/
         
-        // printf("%f,%f,%f,%d,%d\n", remote_dr16_.output_.mouse.mouse_x, remote_dr16_.output_.mouse.mouse_y, remote_dr16_.output_.mouse.mouse_z
-        //                       , remote_dr16_.output_.mouse.press_l, remote_dr16_.output_.keyboard.all);
+
 
         osDelay(pdMS_TO_TICKS(1));
     }

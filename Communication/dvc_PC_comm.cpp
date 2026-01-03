@@ -31,8 +31,6 @@
  */
 void PcComm::Init()
 {
-    dwt_init(168);
-
     static const osThreadAttr_t KPcCommTaskAttr = 
     {
         .name = "pccomm_task",

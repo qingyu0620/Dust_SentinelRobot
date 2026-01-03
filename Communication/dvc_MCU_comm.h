@@ -136,6 +136,8 @@ public:
 
     void CanRxCpltCallback(uint8_t *rx_data);
 
+    inline McuAliveState GetMcuAliveState();
+
 protected:
 
     CanManageObject *can_manage_object_;
@@ -165,5 +167,10 @@ protected:
 /* Exported variables --------------------------------------------------------*/
 
 /* Exported function declarations --------------------------------------------*/
+
+inline McuAliveState McuComm::GetMcuAliveState()
+{
+    return (mcu_alive_state_);
+}
 
 #endif

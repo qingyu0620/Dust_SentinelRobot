@@ -74,13 +74,13 @@ struct RemoteDjiOutput
         float chassis_x, chassis_y;      // x, y, r 采用右手系
         float rotation;
         float pitch;
-    } remote;
+    } remote;                           // 遥控数据
 
     struct
     {
         float mouse_x, mouse_y, mouse_z;
         uint8_t press_l, press_r;
-    } mouse;
+    } mouse;                            // 鼠标数据
 
     union
     {
@@ -97,8 +97,7 @@ struct RemoteDjiOutput
                      ctrl : 1;
             uint16_t reserved : 8;
         } key;
-    } keyboard;
-    
+    } keyboard;                         // 键盘数据
 };
 
 /**

@@ -141,6 +141,12 @@ struct PCRecvNavigationData
 class PcComm
 {
 public:
+    // 导航x通道值
+    uint16_t pc_chassis_x_ = 1024;
+
+    // 导航y通道值
+    uint16_t pc_chassis_y_ = 1024;
+
     // 发送自瞄数据
     PCSendAutoAimData send_autoaim_data = 
     {
@@ -170,10 +176,6 @@ public:
         {0,0,0,0},
         {0,0},
     };
-
-    uint16_t pc_chassis_x_ = 1024;
-
-    uint16_t pc_chassis_y_ = 1024;
 
     void Init();
 
