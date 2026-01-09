@@ -199,7 +199,7 @@ void McuComm::Task()
  */
 void McuComm::CanRxCpltCallback(uint8_t* rx_data)
 {
-     // 滑动窗口, 判断是否在线
+     // 滑动窗口，判断是否在线
      flag_ += 1;
      
      DataProcess(rx_data);

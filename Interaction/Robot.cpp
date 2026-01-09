@@ -155,7 +155,7 @@ void Robot::Task()
 
                     gimbal_.SetTargetPitchRadian(remote_angle);
 
-                    shoot_.SetTargetShootOmega(0);
+                    shoot_.SetTargetShootOmega(MAX_SHOOT_OMEGA);
 
                     break;
                 }
@@ -169,7 +169,7 @@ void Robot::Task()
 
                     gimbal_.SetTargetPitchRadian(remote_angle);
 
-                    shoot_.SetTargetShootOmega(0);
+                    shoot_.SetTargetShootOmega(MAX_SHOOT_OMEGA);
 
                     break;
                 }
@@ -195,7 +195,7 @@ void Robot::Task()
 
             gimbal_.SetTargetPitchRadian(remote_angle);
 
-            shoot_.SetTargetShootOmega(MAX_SHOOT_OMEGA);
+            // shoot_.SetTargetShootOmega(MAX_SHOOT_OMEGA);
         }
 
         gimbal_.SetNowImuPitchRadian(normalize_angle_pm_pi(imu_.GetRollAngle()));
