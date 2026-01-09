@@ -59,6 +59,7 @@ void Gimbal::Init()
     // yaw轴速度环滤波器
     yaw_omega_filter_.Init(15.0f, 0.001f);
 
+    // yaw轴自瞄滤波器
     yaw_autoaim_filter_.Init(20.0f, 0.001f);
 
     // 4310电机初始化

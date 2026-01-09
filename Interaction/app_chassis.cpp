@@ -14,6 +14,9 @@
 
 /* Private macros ------------------------------------------------------------*/
 
+#define dt      0.001f
+#define MAX_GYROSCOPE_SPEED     25.f
+
 /* Private types -------------------------------------------------------------*/
 
 /* Private variables ---------------------------------------------------------*/
@@ -78,13 +81,52 @@ void Chassis::TaskEntry(void *argument)
 }
 
 /**
+ * @brief Chassis操作模式
+ * 
+ */
+void Chassis::OperationMode()
+{
+    switch (chassis_opreation_mode_)
+    {
+        case (CHASSIS_OPERATION_MODE_SPIN):
+        {
+            SetTargetVelocityRotation(MAX_GYROSCOPE_SPEED);
+
+            break;
+        }
+        case (CHASSIS_OPERATION_MODE_NORMAL):
+        {
+            SetTargetVelocityRotation(0);
+
+            break;
+        }
+        case (CHASSIS_OPERATION_MODE_FOLLOW):
+        {
+            chassis_follow_pid_.SetTarget(0);
+            chassis_follow_pid_.SetNow(-yaw_radian_diff_);
+            chassis_follow_pid_.CalculatePeriodElapsedCallback();
+
+            SetTargetVelocityRotation(chassis_follow_pid_.GetOut());
+
+            break;
+        }
+        default:
+        {
+            SetTargetVelocityRotation(0);
+            break;
+        }
+        
+    }
+}
+
+/**
  * @brief Chassis旋转矩阵变换
  * 
  */
 void Chassis::RotationMatrixTransform()
 {
-    float cos_theta_ = cosf(now_yawdiff_);
-    float sin_theta_ = sinf(now_yawdiff_);
+    float cos_theta_ = cosf(yaw_radian_diff_);
+    float sin_theta_ = sinf(yaw_radian_diff_);
     target_vx_in_chassis_ = cos_theta_ * target_vx_in_gimbal_ - sin_theta_ * target_vy_in_gimbal_;
     target_vy_in_chassis_ = sin_theta_ * target_vx_in_gimbal_ + cos_theta_ * target_vy_in_gimbal_;
 }
@@ -181,6 +223,8 @@ void Chassis::Task()
 {
     for (;;)
     {
+        // 操作模式
+        OperationMode();
         // 旋转矩阵转换
         RotationMatrixTransform();
         // 斜坡规划算法

@@ -56,7 +56,7 @@ public:
 protected:
 
     // 遥控累加yaw角值
-    float remote_yaw_angle_ = 0.0f;
+    float remote_yaw_radian_ = 0.0f;
 
     // 机器人等级
     int32_t robot_level_ = 1;

@@ -11,7 +11,9 @@
 /* Includes ------------------------------------------------------------------*/
 
 #include "Robot.h"
+#include "app_chassis.h"
 #include "dvc_MCU_comm.h"
+#include "dvc_remote_dji.h"
 #include "supercap.h"
 
 /* Private macros ------------------------------------------------------------*/
@@ -19,7 +21,7 @@
 #define K                       1.f / 660.f
 #define C                       -256.f / 165.f
 #define MAX_OMEGA_SPEED         15.f
-#define MAX_GYROSCOPE_SPEED     25.f
+#define REMOTE_YAW_RATIO        0.5f
 
 /* Private types -------------------------------------------------------------*/
 
@@ -102,6 +104,8 @@ void Robot::Task()
     mcu_autoaim_data_local.flag                = 0;
     mcu_autoaim_data_local.autoaim_yaw_ang.f   = 0;
 
+    float chassis_angle_diff = 0.0f;
+
     for(;;)
     {
         /****************************   McuComm   ****************************/
@@ -119,11 +123,11 @@ void Robot::Task()
 
         if(mcu_comm_data_local.switch_r == SWITCH_MID)
         {
-            remote_yaw_angle_ += (M_PI / 180.f * (K * mcu_chassis_data_local.rotation + C)) * 0.5;
+            remote_yaw_radian_ += (M_PI / 180.f * (K * mcu_chassis_data_local.rotation + C)) * REMOTE_YAW_RATIO;
 
-            remote_yaw_angle_ = normalize_pi(remote_yaw_angle_);
+            remote_yaw_radian_ = normalize_pi(remote_yaw_radian_);
 
-            gimbal_.SetTargetYawRadian(remote_yaw_angle_);
+            gimbal_.SetTargetYawRadian(remote_yaw_radian_);
             
         }
         else if(mcu_comm_data_local.switch_r == SWITCH_UP)
@@ -132,11 +136,13 @@ void Robot::Task()
             {
                 case(AUTOAIM_MODE_IDIE):
                 {
-                    remote_yaw_angle_ += (M_PI / 180.f * (K * mcu_chassis_data_local.rotation + C)) * 0.005;
+                    remote_yaw_radian_ += (M_PI / 180.f * (K * mcu_chassis_data_local.rotation + C)) * REMOTE_YAW_RATIO;
 
-                    remote_yaw_angle_ = normalize_pi(remote_yaw_angle_);
+                    remote_yaw_radian_ = normalize_pi(remote_yaw_radian_);
 
-                    gimbal_.SetTargetYawRadian(remote_yaw_angle_);
+                    gimbal_.SetTargetYawRadian(remote_yaw_radian_);
+
+                    reload_.SetTargetReloadRotation(0);
 
                     break;
                 }
@@ -145,12 +151,14 @@ void Robot::Task()
                     float filtered_autoaim = gimbal_.yaw_autoaim_filter_.Update(mcu_autoaim_data_local.autoaim_yaw_ang.f);
 
                     if(mcu_autoaim_data_local.flag == 1){
-                        remote_yaw_angle_ += (filtered_autoaim / 120.f);
+                        remote_yaw_radian_ += (filtered_autoaim / 120.f);
                     } else if(mcu_autoaim_data_local.flag == 2){
-                        remote_yaw_angle_ -= (filtered_autoaim / 480.f);
+                        remote_yaw_radian_ -= (filtered_autoaim / 480.f);
                     }
                         
-                    gimbal_.SetTargetYawRadian(remote_yaw_angle_);
+                    gimbal_.SetTargetYawRadian(remote_yaw_radian_);
+
+                    reload_.SetTargetReloadRotation(0);
 
                     break;
                 }
@@ -159,17 +167,26 @@ void Robot::Task()
                     float filtered_autoaim = gimbal_.yaw_autoaim_filter_.Update(mcu_autoaim_data_local.autoaim_yaw_ang.f);
 
                     if(mcu_autoaim_data_local.flag == 1){
-                        remote_yaw_angle_ += (filtered_autoaim / 120.f);
+                        remote_yaw_radian_ += (filtered_autoaim / 120.f);
                     } else if(mcu_autoaim_data_local.flag == 2){
-                        remote_yaw_angle_ -= (filtered_autoaim / 480.f);
+                        remote_yaw_radian_ -= (filtered_autoaim / 480.f);
                     }
 
-                    gimbal_.SetTargetYawRadian(remote_yaw_angle_);
-                    // reload_.SetTargetReloadRotation(MAX_RELOAD_SPEED);
+                    gimbal_.SetTargetYawRadian(remote_yaw_radian_);
+
+                    reload_.SetTargetReloadRotation(MAX_RELOAD_SPEED);
 
                     break;
                 }
             }
+        }
+        if(mcu_comm_data_local.switch_r == SWITCH_DOWN)
+        {
+            remote_yaw_radian_ += (M_PI / 180.f * (K * mcu_chassis_data_local.rotation + C)) * REMOTE_YAW_RATIO;
+
+            remote_yaw_radian_ = normalize_pi(remote_yaw_radian_);
+
+            gimbal_.SetTargetYawRadian(remote_yaw_radian_);
         }
 
 
@@ -202,31 +219,35 @@ void Robot::Task()
         {
             case SWITCH_UP:
             {
-                chassis_.SetTargetVelocityRotation(MAX_GYROSCOPE_SPEED);
+                chassis_.SetChassisOperationMode(CHASSIS_OPERATION_MODE_SPIN);
+
+                // reload_.SetTargetReloadRotation(MAX_RELOAD_SPEED);
+
                 break;
+
             }
             case SWITCH_MID:
             {
-                chassis_.SetTargetVelocityRotation(0);
+                chassis_.SetChassisOperationMode(CHASSIS_OPERATION_MODE_NORMAL);
+
                 reload_.SetTargetReloadRotation(0);
+
                 break;
             }
             case SWITCH_DOWN:
             {
-                // chassis_angle_diff = CalcYawError(remote_yaw_angle_ ,imu_.GetYawRadian());
+                chassis_angle_diff = CalcYawError(remote_yaw_radian_ ,imu_.GetYawRadian());
 
-                // chassis_.chassis_follow_pid_.SetTarget(0);
-                // chassis_.chassis_follow_pid_.SetNow(chassis_angle_diff);
-                // chassis_.chassis_follow_pid_.CalculatePeriodElapsedCallback();
+                chassis_.SetChassisOperationMode(CHASSIS_OPERATION_MODE_FOLLOW);
 
-                // chassis_.SetTargetVelocityRotation(chassis_.chassis_follow_pid_.GetOut());
-                reload_.SetTargetReloadRotation(MAX_RELOAD_SPEED);
+                // reload_.SetTargetReloadRotation(0);
 
                 break;
             }
             default:
             {
-                chassis_.SetTargetVelocityRotation(0);
+                chassis_.SetChassisOperationMode(CHASSIS_OPERATION_MODE_NORMAL);
+
                 break;
             }
         }
@@ -235,9 +256,12 @@ void Robot::Task()
         /****************************   Supercap   ****************************/
 
 
-        if(mcu_comm_data_local.supercap){
+        if(mcu_comm_data_local.supercap)
+        {
             supercap_.SetSupercapCharge(SUPERCAP_SWITCH_STATUS_ENABLE);
-        }else if(mcu_comm_data_local.supercap){
+        }
+        else if(mcu_comm_data_local.supercap)
+        {
             supercap_.SetSupercapCharge(SUPERCAP_SWITCH_STATUS_DISABLE);
         }
 
