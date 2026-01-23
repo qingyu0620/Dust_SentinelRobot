@@ -91,21 +91,23 @@ public:
     inline float GetTargetYawRadian();
 
 protected:
-    // 内部变量
-
-    // 读变量
-
-    // yaw轴当前角度
+    // yaw轴当前值
     float now_yaw_angle_ = 0.0f;
 
-    // yaw轴当前角速度
     float now_yaw_omega_ = 0.0f;
 
-    // yaw轴当前力矩
     float now_yaw_torque_ = 0.0f;
 
-    // yaw轴当前弧度
     float now_yaw_radian_ = 0.0f;
+
+    // yaw轴目标值
+    float target_yaw_angle_ = 0.0f;
+
+    float target_yaw_omega_ = 0.0f;
+
+    float target_yaw_torque_ = 0.0f;
+
+    float target_yaw_radian_ = 0.0f;
 
     // 陀螺仪yaw轴弧度
     float imu_yaw_radian_ = 0.0f;
@@ -113,27 +115,15 @@ protected:
     // yaw角角度差
     float yaw_angle_diff_ = 0.0f;
 
-    // 写变量
-
-    // 云台状态
+    // 云台控制状态
     GimbalControlType gimbal_control_type_ = GIMBAL_CONTROL_TYPE_MANUAL;
-    // 读写变量
 
-    // yaw轴目标角度
-    float target_yaw_angle_ = 0.0f;
+    // 云台存活状态
+    MotorDmStatus gimbal_alive_status_ = MOTOR_DM_STATUS_ENABLE;
 
-    // yaw轴目标角速度
-    float target_yaw_omega_ = 0.0f;
-
-    // yaw轴目标力矩
-    float target_yaw_torque_ = 0.0f;
-
-    // yaw轴目标弧度
-    float target_yaw_radian_ = 0.0f;
+    void AlivePeriodElapsedCallback();
 
     void SelfResolution();
-    
-    void MotorNearestTransposition();
 
     void Output();
     
@@ -265,9 +255,9 @@ inline float Gimbal::GetTargetYawTorque()
 }
 
 /**
- * @brief 获取yaw轴目标力矩
+ * @brief 获取yaw轴目标弧度
  *
- * @return float yaw轴目标力矩
+ * @return float yaw轴目标弧度
  */
 inline float Gimbal::GetTargetYawRadian()
 {

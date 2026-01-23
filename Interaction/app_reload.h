@@ -20,7 +20,7 @@
 
 /* Exported macros -----------------------------------------------------------*/
 
-#define MAX_RELOAD_SPEED        -8.5f
+#define MAX_RELOAD_SPEED        -6.5f
 
 /* Exported types ------------------------------------------------------------*/
 
@@ -37,11 +37,6 @@ public:
     inline void SetTargetReloadRotation(float target_reload_rotation);
 
 protected:
-
-    float pre_reload_angle_ = 0.0f;
-
-    float now_reload_angle_ = 0.0f;
-
     // 目标装载速度 旋转
     float target_reload_rotation_ = 0.0f;
 

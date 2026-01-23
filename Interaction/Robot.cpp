@@ -12,16 +12,17 @@
 
 #include "Robot.h"
 #include "app_chassis.h"
-#include "dvc_MCU_comm.h"
-#include "dvc_remote_dji.h"
-#include "supercap.h"
+#include "dvc_remote_dr16.h"
 
 /* Private macros ------------------------------------------------------------*/
 
-#define K                       1.f / 660.f
-#define C                       -256.f / 165.f
-#define MAX_OMEGA_SPEED         15.f
+#define K_NORM                  1.f / 660.f
+#define C_NORM                  -256.f / 165.f
+
 #define REMOTE_YAW_RATIO        0.5f
+#define AUTOAIM_YAW_RATIO       120.f
+#define SCAN_YAW_RATIO          0.16f
+#define REAR_YAW_RATIO          0.22f
 
 /* Private types -------------------------------------------------------------*/
 
@@ -56,7 +57,7 @@ void Robot::Init()
     reload_.Init();
 
     // 超级电容初始化 
-    supercap_.Init(&hcan2);
+    // supercap_.Init(&hcan2);
 
     static const osThreadAttr_t kRobotTaskAttr = 
     {
@@ -92,19 +93,16 @@ void Robot::Task()
     mcu_chassis_data_local.rotation            = 1024;
 
     // Mcu命令数据
-    McuCommData mcu_comm_data_local;
-    mcu_comm_data_local.switch_l               = SWITCH_MID;
-    mcu_comm_data_local.switch_r               = SWITCH_MID;
-    mcu_comm_data_local.supercap               = 0;
-    mcu_comm_data_local.imu_yaw.f              = 0;
+    McuCommandData mcu_comm_data_local;
+    mcu_comm_data_local.keyboard.all = 0;
+    mcu_comm_data_local.mouse_lr.all = 0;
+    mcu_comm_data_local.imu_yaw.f = 0.0f;
 
     // Mcu自瞄数据
     McuRecvAutoaimData mcu_autoaim_data_local;
     mcu_autoaim_data_local.mode                = 0;
     mcu_autoaim_data_local.flag                = 0;
     mcu_autoaim_data_local.autoaim_yaw_ang.f   = 0;
-
-    float chassis_angle_diff = 0.0f;
 
     for(;;)
     {
@@ -114,30 +112,35 @@ void Robot::Task()
         // 用临界区一次性复制，避免撕裂
         __disable_irq();
         mcu_chassis_data_local = *(static_cast<const McuChassisData*>(&(mcu_comm_.recv_chassis_data_)));
-        mcu_comm_data_local = *(static_cast<const McuCommData*>(&(mcu_comm_.recv_comm_data_)));
+        mcu_comm_data_local = *(static_cast<const McuCommandData*>(&(mcu_comm_.recv_comm_data_)));
         mcu_autoaim_data_local = *(static_cast<const McuRecvAutoaimData*>(&(mcu_comm_.recv_autoaim_data_)));
         __enable_irq();
 
 
         /****************************   Gimbal   ****************************/
 
-        if(mcu_comm_data_local.switch_r == SWITCH_MID)
-        {
-            remote_yaw_radian_ += (M_PI / 180.f * (K * mcu_chassis_data_local.rotation + C)) * REMOTE_YAW_RATIO;
 
-            remote_yaw_radian_ = normalize_pi(remote_yaw_radian_);
-
-            gimbal_.SetTargetYawRadian(remote_yaw_radian_);
-            
-        }
-        else if(mcu_comm_data_local.switch_r == SWITCH_UP)
+        // 自瞄模式
+        if(mcu_chassis_data_local.switch_lr.switchcode.switch_r == SWITCH_UP || mcu_comm_data_local.mouse_lr.mousecode.mouse_r == REMOTE_DR16_KEY_STATUS_PRESS)
         {
             switch (mcu_autoaim_data_local.mode) 
             {
-                case(AUTOAIM_MODE_IDIE):
+                case(PC_AUTOAIM_MODE_IDLE):
                 {
-                    remote_yaw_radian_ += (M_PI / 180.f * (K * mcu_chassis_data_local.rotation + C)) * REMOTE_YAW_RATIO;
+                    remote_yaw_radian_ += (M_PI / 180.f * (K_NORM * mcu_chassis_data_local.rotation + C_NORM)) * REMOTE_YAW_RATIO;
 
+                    // remote_yaw_radian_ += (M_PI / 180.f) * SCAN_YAW_RATIO;
+                    // remote_yaw_radian_ = normalize_pi(remote_yaw_radian_);
+
+                    gimbal_.SetTargetYawRadian(remote_yaw_radian_);
+
+                    reload_.SetTargetReloadRotation(0);
+
+                    break;
+                }
+                case(PC_AUTOAIM_MODE_REAR):
+                {
+                    remote_yaw_radian_ += (M_PI / 180.f) * REAR_YAW_RATIO;
                     remote_yaw_radian_ = normalize_pi(remote_yaw_radian_);
 
                     gimbal_.SetTargetYawRadian(remote_yaw_radian_);
@@ -146,31 +149,12 @@ void Robot::Task()
 
                     break;
                 }
-                case(AUTOAIM_MODE_FOLLOW):
+                case(PC_AUTOAIM_MODE_FRONT):
                 {
                     float filtered_autoaim = gimbal_.yaw_autoaim_filter_.Update(mcu_autoaim_data_local.autoaim_yaw_ang.f);
 
-                    if(mcu_autoaim_data_local.flag == 1){
-                        remote_yaw_radian_ += (filtered_autoaim / 120.f);
-                    } else if(mcu_autoaim_data_local.flag == 2){
-                        remote_yaw_radian_ -= (filtered_autoaim / 480.f);
-                    }
-                        
-                    gimbal_.SetTargetYawRadian(remote_yaw_radian_);
-
-                    reload_.SetTargetReloadRotation(0);
-
-                    break;
-                }
-                case(AUTOAIM_MODE_FIRE):
-                {
-                    float filtered_autoaim = gimbal_.yaw_autoaim_filter_.Update(mcu_autoaim_data_local.autoaim_yaw_ang.f);
-
-                    if(mcu_autoaim_data_local.flag == 1){
-                        remote_yaw_radian_ += (filtered_autoaim / 120.f);
-                    } else if(mcu_autoaim_data_local.flag == 2){
-                        remote_yaw_radian_ -= (filtered_autoaim / 480.f);
-                    }
+                    remote_yaw_radian_ += (filtered_autoaim / AUTOAIM_YAW_RATIO);
+                    remote_yaw_radian_ = normalize_pi(remote_yaw_radian_);
 
                     gimbal_.SetTargetYawRadian(remote_yaw_radian_);
 
@@ -180,9 +164,52 @@ void Robot::Task()
                 }
             }
         }
-        if(mcu_comm_data_local.switch_r == SWITCH_DOWN)
+        // 巡航模式
+        else if(mcu_chassis_data_local.switch_lr.switchcode.switch_r == SWITCH_DOWN || mcu_comm_data_local.keyboard.keycode.q == REMOTE_DR16_KEY_STATUS_PRESS)
         {
-            remote_yaw_radian_ += (M_PI / 180.f * (K * mcu_chassis_data_local.rotation + C)) * REMOTE_YAW_RATIO;
+            switch (mcu_autoaim_data_local.mode) 
+            {
+                case(PC_AUTOAIM_MODE_IDLE):
+                {
+                    remote_yaw_radian_ += (M_PI / 180.f) * SCAN_YAW_RATIO;
+                    remote_yaw_radian_ = normalize_pi(remote_yaw_radian_);
+
+                    gimbal_.SetTargetYawRadian(remote_yaw_radian_);
+
+                    reload_.SetTargetReloadRotation(0);
+
+                    break;
+                }
+                case(PC_AUTOAIM_MODE_REAR):
+                {
+                    remote_yaw_radian_ += (M_PI / 180.f) * REAR_YAW_RATIO;
+                    remote_yaw_radian_ = normalize_pi(remote_yaw_radian_);
+
+                    gimbal_.SetTargetYawRadian(remote_yaw_radian_);
+
+                    reload_.SetTargetReloadRotation(0);
+
+                    break;
+                }
+                case(PC_AUTOAIM_MODE_FRONT):
+                {
+                    float filtered_autoaim = gimbal_.yaw_autoaim_filter_.Update(mcu_autoaim_data_local.autoaim_yaw_ang.f);
+
+                    remote_yaw_radian_ += (filtered_autoaim / AUTOAIM_YAW_RATIO);
+                    remote_yaw_radian_ = normalize_pi(remote_yaw_radian_);
+
+                    gimbal_.SetTargetYawRadian(remote_yaw_radian_);
+
+                    reload_.SetTargetReloadRotation(MAX_RELOAD_SPEED);
+
+                    break;
+                }
+            }
+        }
+        // 正常模式
+        else 
+        {
+            remote_yaw_radian_ += (M_PI / 180.f * (K_NORM * mcu_chassis_data_local.rotation + C_NORM)) * REMOTE_YAW_RATIO;
 
             remote_yaw_radian_ = normalize_pi(remote_yaw_radian_);
 
@@ -190,6 +217,7 @@ void Robot::Task()
         }
 
 
+        // 检测MCU掉线
         if(mcu_comm_.GetMcuAliveState() == MCU_ALIVE_STATE_ENABLE)
         {
             gimbal_.SetNowImuYawRadian(normalize_angle_pm_pi(mcu_comm_data_local.imu_yaw.f));
@@ -207,63 +235,42 @@ void Robot::Task()
         chassis_.SetNowYawRadianDiff(-gimbal_.GetNowYawRadian());
 
         // 设置目标映射速度
-        chassis_.SetTargetVxInGimbal((mcu_chassis_data_local.chassis_speed_x * K + C) * MAX_OMEGA_SPEED);
-        chassis_.SetTargetVyInGimbal((mcu_chassis_data_local.chassis_speed_y * K + C) * MAX_OMEGA_SPEED);
+        chassis_.SetTargetVxInGimbal((K_NORM * mcu_chassis_data_local.chassis_speed_x + C_NORM) * MAX_OMEGA_SPEED);
+        chassis_.SetTargetVyInGimbal((K_NORM * mcu_chassis_data_local.chassis_speed_y + C_NORM) * MAX_OMEGA_SPEED);
 
 
         /*****************************     Mode   *****************************/
 
-        
-        // 左按钮
-        switch (mcu_comm_data_local.switch_l) 
+        if(mcu_chassis_data_local.switch_lr.switchcode.switch_l == SWITCH_UP || 
+          (mcu_comm_data_local.mouse_lr.mousecode.mouse_r && mcu_comm_data_local.mouse_lr.mousecode.mouse_l) || 
+          (mcu_comm_data_local.keyboard.keycode.e && mcu_comm_data_local.mouse_lr.mousecode.mouse_l))
         {
-            case SWITCH_UP:
-            {
-                chassis_.SetChassisOperationMode(CHASSIS_OPERATION_MODE_SPIN);
-
-                // reload_.SetTargetReloadRotation(MAX_RELOAD_SPEED);
-
-                break;
-
-            }
-            case SWITCH_MID:
-            {
-                chassis_.SetChassisOperationMode(CHASSIS_OPERATION_MODE_NORMAL);
-
-                reload_.SetTargetReloadRotation(0);
-
-                break;
-            }
-            case SWITCH_DOWN:
-            {
-                chassis_angle_diff = CalcYawError(remote_yaw_radian_ ,imu_.GetYawRadian());
-
-                chassis_.SetChassisOperationMode(CHASSIS_OPERATION_MODE_FOLLOW);
-
-                // reload_.SetTargetReloadRotation(0);
-
-                break;
-            }
-            default:
-            {
-                chassis_.SetChassisOperationMode(CHASSIS_OPERATION_MODE_NORMAL);
-
-                break;
-            }
+            reload_.SetTargetReloadRotation(MAX_RELOAD_SPEED);
+        }
+        else if(mcu_chassis_data_local.switch_lr.switchcode.switch_l == SWITCH_MID)
+        {
+            reload_.SetTargetReloadRotation(0);
         }
         
+        
+        if(mcu_comm_data_local.keyboard.keycode.shift == REMOTE_DR16_KEY_STATUS_PRESS)
+        {
+            chassis_.SetChassisOperationMode(CHASSIS_OPERATION_MODE_SPIN);
+        }
+        else if (mcu_comm_data_local.keyboard.keycode.ctrl == REMOTE_DR16_KEY_STATUS_PRESS)
+        {
+            chassis_.SetChassisOperationMode(CHASSIS_OPERATION_MODE_FOLLOW);
+        }
+        else
+        {
+            chassis_.SetChassisOperationMode(CHASSIS_OPERATION_MODE_NORMAL);
+        }
+
 
         /****************************   Supercap   ****************************/
 
 
-        if(mcu_comm_data_local.supercap)
-        {
-            supercap_.SetSupercapCharge(SUPERCAP_SWITCH_STATUS_ENABLE);
-        }
-        else if(mcu_comm_data_local.supercap)
-        {
-            supercap_.SetSupercapCharge(SUPERCAP_SWITCH_STATUS_DISABLE);
-        }
+
 
 
         /****************************   Debug   ****************************/

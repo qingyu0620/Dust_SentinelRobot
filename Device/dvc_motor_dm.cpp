@@ -312,12 +312,6 @@ void MotorDmNormal::AlivePeriodElapsedCallback()
     }
 
     pre_flag_ = flag_;
-
-    if(motor_dm_status_ == MOTOR_DM_STATUS_DISABLE)
-    {
-        CanSendClearError();
-        CanSendEnter();
-    }
 }
 
 /**

@@ -14,8 +14,8 @@
 
 /* Private macros ------------------------------------------------------------*/
 
-#define dt      0.001f
-#define MAX_GYROSCOPE_SPEED     25.f
+#define DT      0.001f
+#define MAX_GYROSCOPE_SPEED     17.f
 
 /* Private types -------------------------------------------------------------*/
 
@@ -113,6 +113,7 @@ void Chassis::OperationMode()
         default:
         {
             SetTargetVelocityRotation(0);
+            
             break;
         }
         
@@ -137,21 +138,21 @@ void Chassis::RotationMatrixTransform()
  */
 void Chassis::SlopePlanning()
 {
-    now_accel_x_ = (target_vx_in_chassis_ - last_target_vx_) / dt;
-    now_accel_y_ = (target_vy_in_chassis_ - last_target_vy_) / dt;
-    now_accel_r_ = (target_velocity_rotation_ - last_target_rotation_) / dt;
+    now_accel_x_ = (target_vx_in_chassis_ - last_target_vx_) / DT;
+    now_accel_y_ = (target_vy_in_chassis_ - last_target_vy_) / DT;
+    now_accel_r_ = (target_velocity_rotation_ - last_target_rotation_) / DT;
 
     if(fabs(now_accel_x_) > max_accel_xy_)
     {
         if(target_vx_in_chassis_ > last_target_vx_)
         {
-            target_vx_in_chassis_ = (last_target_vx_ + max_accel_xy_ * dt) < target_vx_in_chassis_ ? 
-                                    (last_target_vx_ + max_accel_xy_ * dt) : target_vx_in_chassis_;
+            target_vx_in_chassis_ = (last_target_vx_ + max_accel_xy_ * DT) < target_vx_in_chassis_ ? 
+                                    (last_target_vx_ + max_accel_xy_ * DT) : target_vx_in_chassis_;
         } 
         else
         {
-            target_vx_in_chassis_ = (last_target_vx_ - max_accel_xy_ * dt) > target_vx_in_chassis_ ? 
-                                    (last_target_vx_ - max_accel_xy_ * dt) : target_vx_in_chassis_;
+            target_vx_in_chassis_ = (last_target_vx_ - max_accel_xy_ * DT) > target_vx_in_chassis_ ? 
+                                    (last_target_vx_ - max_accel_xy_ * DT) : target_vx_in_chassis_;
         }
     }
 
@@ -159,13 +160,13 @@ void Chassis::SlopePlanning()
     {
         if(target_vy_in_chassis_ > last_target_vy_) 
         {
-            target_vy_in_chassis_ = (last_target_vy_ + max_accel_xy_ * dt) < target_vy_in_chassis_ ? 
-                                    (last_target_vy_ + max_accel_xy_ * dt) : target_vy_in_chassis_;
+            target_vy_in_chassis_ = (last_target_vy_ + max_accel_xy_ * DT) < target_vy_in_chassis_ ? 
+                                    (last_target_vy_ + max_accel_xy_ * DT) : target_vy_in_chassis_;
         } 
         else
         {
-            target_vy_in_chassis_ = (last_target_vy_ - max_accel_xy_ * dt) > target_vy_in_chassis_ ? 
-                                    (last_target_vy_ - max_accel_xy_ * dt) : target_vy_in_chassis_;
+            target_vy_in_chassis_ = (last_target_vy_ - max_accel_xy_ * DT) > target_vy_in_chassis_ ? 
+                                    (last_target_vy_ - max_accel_xy_ * DT) : target_vy_in_chassis_;
         }
     }
 
@@ -173,13 +174,13 @@ void Chassis::SlopePlanning()
     {
         if(target_velocity_rotation_ > last_target_rotation_) 
         {
-            target_velocity_rotation_ = (last_target_rotation_ + max_accel_r_ * dt) < target_velocity_rotation_ ? 
-                                        (last_target_rotation_ + max_accel_r_ * dt) : target_velocity_rotation_;
+            target_velocity_rotation_ = (last_target_rotation_ + max_accel_r_ * DT) < target_velocity_rotation_ ? 
+                                        (last_target_rotation_ + max_accel_r_ * DT) : target_velocity_rotation_;
         } 
         else
         {
-            target_velocity_rotation_ = (last_target_rotation_ - max_accel_r_ * dt) > target_velocity_rotation_ ? 
-                                        (last_target_rotation_ - max_accel_r_ * dt) : target_velocity_rotation_;
+            target_velocity_rotation_ = (last_target_rotation_ - max_accel_r_ * DT) > target_velocity_rotation_ ? 
+                                        (last_target_rotation_ - max_accel_r_ * DT) : target_velocity_rotation_;
         }
     }
 

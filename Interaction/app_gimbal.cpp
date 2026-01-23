@@ -70,8 +70,8 @@ void Gimbal::Init()
     osDelay(pdMS_TO_TICKS(1000));
     
     // 保存零点（当云台与底盘上电有偏差时需重新设置零点）
-    motor_yaw_.CanSendSaveZero();
-    osDelay(pdMS_TO_TICKS(1000));
+    // motor_yaw_.CanSendSaveZero();
+    // osDelay(pdMS_TO_TICKS(1000));
     
     // 发送使能命令
     motor_yaw_.CanSendEnter();
@@ -144,26 +144,13 @@ void Gimbal::Output()
 }
 
 /**
- * @brief Gimbal就近转位函数
- *
+ * @brief Gimbal存活周期检测回调函数
+ * 
  */
-void Gimbal::MotorNearestTransposition()
+void Gimbal::AlivePeriodElapsedCallback()
 {
-    // Yaw就近转位
-    float tmp_delta_angle;
-
-    tmp_delta_angle = fmod(target_yaw_angle_ - now_yaw_angle_, 2.0f * PI);
-
-    if (tmp_delta_angle > PI)
-    {
-        tmp_delta_angle -= 2.0f * PI;
-    }
-    else if (tmp_delta_angle < -PI)
-    {
-        tmp_delta_angle += 2.0f * PI;
-    }
-    
-    target_yaw_angle_ = motor_yaw_.GetNowAngle() + tmp_delta_angle;
+    motor_yaw_.AlivePeriodElapsedCallback();
+    gimbal_alive_status_ =  motor_yaw_.GetStatus();
 }
 
 /**
@@ -174,8 +161,19 @@ void Gimbal::Task()
 {
     for (;;)
     {
-        SelfResolution();
-        Output();
+        AlivePeriodElapsedCallback();
+        
+        if(gimbal_alive_status_ == MOTOR_DM_STATUS_ENABLE)
+        {
+            SelfResolution();
+            Output();
+        }
+        else if(gimbal_alive_status_ == MOTOR_DM_STATUS_DISABLE)
+        {
+            motor_yaw_.CanSendEnter();
+            osDelay(pdMS_TO_TICKS(1000));
+        }
+        
         osDelay(pdMS_TO_TICKS(1));
     }
 }

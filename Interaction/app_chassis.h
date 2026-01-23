@@ -23,20 +23,25 @@
 
 /* Exported macros -----------------------------------------------------------*/
 
+#define MAX_OMEGA_SPEED         10.f
+
 /* Exported types ------------------------------------------------------------*/
 
 /**
- * @brief 底盘控制模式枚举
+ * @brief Chassis控制模式枚举
  * 
  */
 enum ChassisOperationMode
 {
-    CHASSIS_OPERATION_MODE_SPIN = 0,
-    CHASSIS_OPERATION_MODE_NORMAL,
-    CHASSIS_OPERATION_MODE_FOLLOW,
+    CHASSIS_OPERATION_MODE_SPIN = 0,        // 小陀螺模式
+    CHASSIS_OPERATION_MODE_NORMAL,          // 正常模式
+    CHASSIS_OPERATION_MODE_FOLLOW,          // 底盘跟随
 };
 
-
+/**
+ * @brief Chassis类
+ * 
+ */
 class Chassis
 {
 public:
@@ -85,8 +90,8 @@ protected:
 
     // xyr轴最大加速度
 
-    float max_accel_xy_ = 180.f;
-    float max_accel_r_  = 180.f;
+    float max_accel_xy_ = 70.f;
+    float max_accel_r_  = 100.f;
 
     // xyr当前加速度
 

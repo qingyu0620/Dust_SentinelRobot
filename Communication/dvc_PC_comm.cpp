@@ -17,6 +17,8 @@
 #define K_PC    660.f
 #define C_PC    256.f / 165.f
 
+#define MAX_PC_DISALIVE_PERIOD  200     // 200ms
+
 /* Private types -------------------------------------------------------------*/
 
 /* Private variables ---------------------------------------------------------*/
@@ -29,8 +31,6 @@
  */
 void PcComm::Init()
 {
-    dwt_init(168);
-
     static const osThreadAttr_t KPcCommTaskAttr = 
     {
         .name = "pccomm_task",
@@ -38,7 +38,7 @@ void PcComm::Init()
         .priority = (osPriority_t) osPriorityNormal
     };
     // 启动任务，将 this 传入
-    osThreadNew(PcComm::TaskEntry, this, &KPcCommTaskAttr);
+    // osThreadNew(PcComm::TaskEntry, this, &KPcCommTaskAttr);
 }
 
 /**
@@ -58,15 +58,24 @@ void PcComm::TaskEntry(void *argument)
  */
 void PcComm::UpdataAutoaimData()
 {
-    memcpy(&send_autoaim_data.q, INS.q, 16);
+    memcpy(&send_autoaim_data1.q, INS.q, 16);
 
-    send_autoaim_data.mode           = 0;
-    send_autoaim_data.yaw.ang        = INS.Yaw;
-    send_autoaim_data.yaw.vel        = INS.Gyro[Z];
-    send_autoaim_data.pitch.ang      = -INS.Roll;
-    send_autoaim_data.pitch.vel      = -INS.Gyro[X]; 
-    send_autoaim_data.bullet.speed   = 16;
-    send_autoaim_data.bullet.count   = 20;
+    send_autoaim_data1.mode           = PC_AUTOAIM_MODE_IDLE;
+    
+    send_autoaim_data1.yaw.ang        = INS.Yaw;
+    send_autoaim_data1.yaw.vel        = INS.Gyro[Z];
+
+    send_autoaim_data1.pitch.ang      = -INS.Roll;
+    send_autoaim_data1.pitch.vel      = -INS.Gyro[X]; 
+
+    send_autoaim_data1.bullet.speed   = 16;
+    send_autoaim_data1.bullet.count   = 20;
+
+
+    send_autoaim_data2.start_of_frame = 0xA6;
+
+    send_autoaim_data2.current_hp = 0;
+    send_autoaim_data2.checksum = 0;
 }
 
 /**
@@ -74,16 +83,24 @@ void PcComm::UpdataAutoaimData()
  * 
  */
 void PcComm::Send_Message()
-{
-    uint16_t lenth = sizeof(send_autoaim_data);
-    uint8_t buffer[lenth];
-
-    send_autoaim_data.crc16 = 0;
-
-    memcpy(buffer, &send_autoaim_data, lenth);
-    append_crc16_check_sum(buffer, lenth);
+{   
+    uint16_t length1 = sizeof(send_autoaim_data1);
+    static uint8_t buffer1[sizeof(send_autoaim_data1)];
     
-    usb_transmit(buffer, lenth);
+    send_autoaim_data1.crc16 = 0;
+
+    memcpy(buffer1, &send_autoaim_data1, length1);
+    append_crc16_check_sum(buffer1, length1);
+
+    usb_transmit(buffer1, length1);
+
+    uint16_t length2 = sizeof(send_autoaim_data2);
+    static uint8_t buffer2[sizeof(send_autoaim_data2)];
+
+    memcpy(buffer2, &send_autoaim_data2, length2);
+    // append_crc16_check_sum(buffer2, length2);
+    
+    usb_transmit(buffer2, length2);
 }
 
 /**
@@ -92,7 +109,7 @@ void PcComm::Send_Message()
  */
 void PcComm::ClearData()
 {
-    recv_autoaim_data.mode = 0;
+    recv_autoaim_data.mode = PC_AUTOAIM_MODE_IDLE;
 
     recv_autoaim_data.yaw.yaw_ang = 0;
     recv_autoaim_data.yaw.yaw_vel = 0;
@@ -103,6 +120,9 @@ void PcComm::ClearData()
     recv_autoaim_data.pitch.pitch_vel = 0;
 
     recv_autoaim_data.flag = 1;
+
+    recv_navigation_data.linear_x.f = 1024.f;
+    recv_navigation_data.linear_y.f = 1024.f;
 }
 
 /**
@@ -111,7 +131,7 @@ void PcComm::ClearData()
  */
 void PcComm::AlivePeriodElapsedCallback()
 {
-    if(++alive_count_ >= 200)
+    if(++alive_beat_ >= MAX_PC_DISALIVE_PERIOD)
     {
         if(pre_flag_ == flag_)
         {
@@ -125,9 +145,69 @@ void PcComm::AlivePeriodElapsedCallback()
 
         pre_flag_ = flag_;
 
-        alive_count_ = 0;
+        alive_beat_ = 0;
     }
 }
+
+/**
+ * @brief PcComm判断自瞄状态函数
+ * 
+ * @param now_autoaim_status 当前自瞄状态
+ * @param pre_autoaim_status 上一刻自瞄状态
+ */
+void PcComm::JudgeAutoaimStatus(PcAutoAimStatus* now_autoaim_status, PcAutoAimStatus pre_autoaim_status)
+{
+    // 获取当前收到的目标状态
+    PcAutoAimStatus input = *now_autoaim_status;
+    static uint16_t rear_beat = 0;      //后置摄像头运行节拍数
+
+    switch (pre_autoaim_status)
+    {
+        case(PC_AUTOAIM_MODE_IDLE):
+        {
+            *now_autoaim_status = input;
+            rear_beat = 0;
+            break;
+        }
+        case(PC_AUTOAIM_MODE_FRONT):
+        {
+            if(input == PC_AUTOAIM_MODE_REAR) 
+            {
+                *now_autoaim_status = PC_AUTOAIM_MODE_FRONT;
+            } 
+            else 
+            {
+                *now_autoaim_status = input;
+            }
+            rear_beat = 0;
+            break;
+        }
+        case(PC_AUTOAIM_MODE_REAR):
+        {
+            if(input == PC_AUTOAIM_MODE_IDLE) 
+            {
+                rear_beat++;
+                if(rear_beat >= 100)
+                {
+                    *now_autoaim_status = PC_AUTOAIM_MODE_IDLE;
+                    rear_beat = 0;
+                }
+                else
+                {
+                    *now_autoaim_status = PC_AUTOAIM_MODE_REAR;
+                }
+            } 
+            else 
+            {
+                *now_autoaim_status = input;
+                rear_beat = 0;
+            }
+            break;
+        }
+    }
+}
+
+
 
 /**
  * @brief PcComm任务函数
@@ -140,7 +220,7 @@ void PcComm::Task()
         AlivePeriodElapsedCallback();
         UpdataAutoaimData();
         Send_Message();
-        osDelay(pdMS_TO_TICKS(1));
+        osDelay(pdMS_TO_TICKS(2));
     }
 }
 
@@ -150,7 +230,7 @@ void PcComm::Task()
  */
 void PcComm::RxCpltCallback()
 {
-    // 滑动窗口，判断是否在线
+    // 滑动窗口, 判断是否在线
     flag_ += 1;
 
     DataProcess();
@@ -166,6 +246,10 @@ void PcComm::DataProcess()
     {
         uint16_t lenth = sizeof(recv_autoaim_data);
         memcpy(&recv_autoaim_data, bsp_usb_rx_buffer, lenth);
+
+        JudgeAutoaimStatus(&recv_autoaim_data.mode, pre_autoaim_status_);
+
+        pre_autoaim_status_ = recv_autoaim_data.mode;
         
         // if(verify_crc16_check_sum(bsp_usb_rx_buffer, lenth))
         // {

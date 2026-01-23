@@ -38,11 +38,11 @@ union PcConv
  * @brief PcComm自瞄模式枚举
  * 
  */
-enum PcAutoAimMode
+enum PcAutoAimStatus : uint8_t
 {
-    AUTOAIM_MODE_IDIE = 0,
-    AUTOAIM_MODE_FOLLOW,
-    AUTOAIM_MODE_FIRE,
+    PC_AUTOAIM_MODE_IDLE = 0,
+    PC_AUTOAIM_MODE_REAR,
+    PC_AUTOAIM_MODE_FRONT,
 };
 
 /**
@@ -61,11 +61,11 @@ enum PcAliveState
  * @brief PcComm自瞄发送结构体
  * 
  */
-struct PCSendAutoAimData
+struct PCSendAutoAimData1
 {
     uint8_t head[2] = {'S','P'};
 
-    uint8_t mode = 0;               // 0-空闲 1-自瞄不开火 2-自瞄开火
+    PcAutoAimStatus mode;               // 0-空闲 1-自瞄不开火 2-自瞄开火
 
     float q[4];                     // 四元数姿态[w,x,y,z]
 
@@ -91,13 +91,27 @@ struct PCSendAutoAimData
 };
 
 /**
+ * @brief PcComm自瞄发送结构体
+ * 
+ */
+struct PCSendAutoAimData2
+{
+    uint8_t start_of_frame = 0xA6;
+
+    uint16_t current_hp;
+
+    uint16_t checksum = 0;
+};
+
+/**
  * @brief PcComm自瞄接收结构体
  * 
  */
 struct PCRecvAutoAimData
 {
     uint8_t head[2] = {'S','P'};
-    uint8_t mode = 0;           // 0-空闲 1-自瞄不开火 2-自瞄开火
+
+    PcAutoAimStatus mode = PC_AUTOAIM_MODE_IDLE;           // 0-空闲 1-后置摄像头 2-前置摄像头
 
     struct
     {
@@ -118,6 +132,8 @@ struct PCRecvAutoAimData
     uint16_t crc16;             // 校验位
 };
 
+
+
 /**
  * @brief PcComm导航接收结构体
  * 
@@ -129,7 +145,7 @@ struct PCRecvNavigationData
     PcConv linear_x;
     PcConv linear_y;
 
-    uint8_t crc16[2] = {0};
+    uint8_t crc16[2] = {0, 0};
 };
 
 #pragma pack()
@@ -141,22 +157,29 @@ struct PCRecvNavigationData
 class PcComm
 {
 public:
-    // 发送自瞄数据
-    PCSendAutoAimData send_autoaim_data = 
+    // 发送自瞄数据1
+    PCSendAutoAimData1 send_autoaim_data1 = 
     {
         {'S','P'},
-        0,
+        PC_AUTOAIM_MODE_IDLE,
         {1,0,0,0},
         {0,0},
         {0,0},
         {0,0},
         0,
     };
+    // 发送自瞄数据2
+    PCSendAutoAimData2 send_autoaim_data2 = 
+    {
+        0xA6,
+        0,
+        0,
+    };
     // 接收自瞄数据
     PCRecvAutoAimData recv_autoaim_data = 
     {
         {'S','P'},
-        0,
+        PC_AUTOAIM_MODE_IDLE,
         {0,0,0},
         {0,0,0},
         0,
@@ -171,8 +194,10 @@ public:
         {0,0},
     };
 
+    // 导航x通道值
     uint16_t pc_chassis_x_ = 1024;
 
+    // 导航y通道值
     uint16_t pc_chassis_y_ = 1024;
 
     void Init();
@@ -185,15 +210,19 @@ public:
 
     void UpdataAutoaimData();
 
+    void JudgeAutoaimStatus(PcAutoAimStatus* now_autoaim_status, PcAutoAimStatus pre_autoaim_status);
+
 private:
 
     uint32_t flag_ = 0;
 
     uint32_t pre_flag_ = 0;
 
-    uint32_t alive_count_ = 0;
+    uint32_t alive_beat_ = 0;
 
     PcAliveState pc_alive_state = PC_ALIVE_STATE_DISABLE;
+    
+    PcAutoAimStatus pre_autoaim_status_ = PC_AUTOAIM_MODE_IDLE;
 
     void ClearData();
 

@@ -21,7 +21,11 @@
 
 /* Exported types ------------------------------------------------------------*/
 
-enum RemoteDjiAliveStatus
+/**
+ * @brief DjiDR16存活状态
+ * 
+ */
+enum RemoteDR16AliveStatus
 {
     REMOTE_DJI_STATUS_DISABLE = 0,
     REMOTE_DJI_STATUS_ENABLE  = 1,
@@ -31,18 +35,60 @@ enum RemoteDjiAliveStatus
  * @brief DjiDR16按键状态
  * 
  */
-enum RemoteDjiSwitchStatus
+enum RemoteDR16SwitchStatus
 {
     SWITCH_UP    = (uint8_t)1,
     SWITCH_MID   = (uint8_t)3,
     SWITCH_DOWN  = (uint8_t)2,
 };
 
+enum RemoteDR16KeyStatus
+{
+    REMOTE_DR16_KEY_STATUS_FREE = 0,
+    REMOTE_DR16_KEY_STATUS_PRESS,
+};
+
+/**
+ * @brief DjiDR16键盘联合体
+ * 
+ */
+union RemoteDR16Keyboard
+{
+    uint16_t all;
+    struct
+    {
+        uint16_t w : 1, 
+                 s : 1,
+                 a : 1,
+                 d : 1,
+                 shift : 1, 
+                 ctrl : 1,
+                 q : 1, 
+                 e : 1;
+        uint16_t reserved : 8;
+    } keycode;
+};
+
+/**
+ * @brief 
+ * 
+ */
+union RemoteDR16MouseLR
+{
+    uint8_t all;
+    struct 
+    {
+        uint8_t mouse_l : 2;
+        uint8_t mouse_r : 2;
+        uint8_t reserved : 4;
+    } mousecode;
+};
+
 /**
  * @brief DjiDR16原始数据
  * 
  */
-struct RemoteDjiData
+struct RemoteDR16RawData
 {
     struct 
     {
@@ -52,21 +98,18 @@ struct RemoteDjiData
 
     struct
     {
-        int16_t x, y, z;
+        int32_t x, y, z;
         uint8_t pl, pr;
     } mouse;
 
-    struct 
-    {
-        uint16_t key;
-    } keyboard;
+    RemoteDR16Keyboard keyboard;
 };
 
 /**
  * @brief DjiDR16输出
  * 
  */
-struct RemoteDjiOutput
+struct RemoteDR16OutputData
 {
     struct 
     {
@@ -74,31 +117,16 @@ struct RemoteDjiOutput
         float chassis_x, chassis_y;      // x, y, r 采用右手系
         float rotation;
         float pitch;
-    } remote;
+    } remote;                            // 遥控数据
 
     struct
     {
-        float mouse_x, mouse_y, mouse_z;
+        uint16_t mouse_x;
+        float mouse_y;
         uint8_t press_l, press_r;
-    } mouse;
+    } mouse;                             // 鼠标数据
 
-    union
-    {
-        uint16_t all;
-        struct
-        {
-            uint16_t w : 1, 
-                     s : 1,
-                     a : 1,
-                     d : 1,
-                     q : 1, 
-                     e : 1;
-            uint16_t shift : 1, 
-                     ctrl : 1;
-            uint16_t reserved : 8;
-        } key;
-    } keyboard;
-    
+    RemoteDR16Keyboard keyboard;         // 键盘数据
 };
 
 /**
@@ -109,10 +137,10 @@ class RemoteDjiDR16
 {
 public:
     // 遥控器输出数据
-    RemoteDjiOutput output_;
+    RemoteDR16OutputData output_;
 
     // 遥控器状态
-    RemoteDjiAliveStatus remote_dji_alive_status = REMOTE_DJI_STATUS_DISABLE;
+    RemoteDR16AliveStatus remote_dji_alive_status = REMOTE_DJI_STATUS_DISABLE;
 
     void Init(UART_HandleTypeDef *huart, Uart_Callback callback_function, uint16_t rx_buffer_length);
 
@@ -120,7 +148,7 @@ public:
 
     void AlivePeriodElapsedCallback();
 
-    void UartRxCpltCallback(uint8_t* rx_data);
+    void UartRxCpltCallback(uint8_t* buffer);
 
     static void TaskEntry(void *param);  // FreeRTOS 入口，静态函数
 
@@ -129,7 +157,7 @@ protected:
     UartManageObject* uart_manage_object_;
 
     // 原始数据
-    RemoteDjiData raw_data_;
+    RemoteDR16RawData raw_data_;
 
     // 当前时刻flag
     uint32_t flag_ = 0;
@@ -137,25 +165,11 @@ protected:
     // 前一时刻flag
     uint32_t pre_flag_ = 0;
 
-    // 归一化线性转换参数
-
-    float k_nor = 1.0f / 660.0f;
-
-    float c_nor = -256.0f / 165.0f;
-
-    // pitch线性转换参数（-0.35rad为摇杆最低，0.65rad为摇杆最高）
-
-    float k_pitch = 1.f / 1320.f;
-
-    float c_pitch = -413.f / 660.f;
-
-    // 掉线清理数据函数
-
     void ClearData();
 
-    // 内部数据处理函数
+    void Process_Keyboard_Toggle(RemoteDR16Keyboard current_raw);
 
-    void DataProcess(uint8_t* rx_data);
+    void DataProcess(uint8_t* buffer);
 };
 
 /* Exported variables --------------------------------------------------------*/

@@ -16,6 +16,7 @@
 // alg
 #include "alg_pid.h"
 // bsp
+#include "dvc_referee.h"
 #include "stdio.h"
 #include "bsp_dwt.h"
 #include "bsp_uart.h"

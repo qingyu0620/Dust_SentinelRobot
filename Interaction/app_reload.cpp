@@ -36,7 +36,7 @@ void Reload::Init()
     static const osThreadAttr_t kReloadTaskAttr = 
     {
         .name = "reload_task",
-        .stack_size = 128 * 4,
+        .stack_size = 256,
         .priority = (osPriority_t) osPriorityNormal
     };
     // 启动任务，将 this 传入
