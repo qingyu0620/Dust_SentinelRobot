@@ -310,18 +310,32 @@ float normalize_pi_pm_angle(float pi)
 float normalize_angle(float angle)
 {
     angle = fmodf(angle, 360.f);
-
-    // 将 180° ~ 360° 的范围转换为 -180° ~ 0°
     if (angle > 180.0f) {
         angle -= 360.0f;
     }
-    // 将 -360° ~ -180° 的范围转换为 0° ~ 180°  
     else if (angle < -180.0f) 
     {
         angle += 360.0f;
     }
 
     return angle;
+}
+
+/**
+ * @brief 归一弧度
+ * 
+ * @param pi 目标弧度
+ * @return float 目标归一弧度 -pi ~ pi
+ */
+float normalize_pi(float pi)
+{
+    pi = fmodf(pi, 2 * M_PI);
+    if (pi > M_PI){
+        pi -= 2.0f * M_PI;
+    }else if(pi < -M_PI){
+        pi += 2.0f * M_PI;
+    }
+    return pi;
 }
 
 /************************ COPYRIGHT(C) HNUST-DUST **************************/

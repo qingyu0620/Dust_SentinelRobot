@@ -33,7 +33,7 @@ void PcComm::Init()
 {
     static const osThreadAttr_t KPcCommTaskAttr = 
     {
-        .name = "pccomm_task",
+        .name = "PcComm_task",
         .stack_size = 256,
         .priority = (osPriority_t) osPriorityNormal
     };
@@ -58,44 +58,62 @@ void PcComm::TaskEntry(void *argument)
  */
 void PcComm::UpdataAutoaimData()
 {
-    memcpy(&send_autoaim_data.q, INS.q, 16);
+    send_autoaim_data1.head[0] = 'S';
+    send_autoaim_data1.head[1] = 'P';
 
-    send_autoaim_data.mode           = 0;
+    memcpy(&send_autoaim_data1.q, INS.q, 16);
     
-    send_autoaim_data.yaw.ang        = INS.Yaw;
-    send_autoaim_data.yaw.vel        = INS.Gyro[Z];
+    send_autoaim_data1.yaw_angle      = INS.Yaw;
 
-    send_autoaim_data.pitch.ang      = -INS.Roll;
-    send_autoaim_data.pitch.vel      = -INS.Gyro[X]; 
+    send_autoaim_data1.pitch_angle    = -INS.Roll;
 
-    send_autoaim_data.bullet.speed   = 16;
-    send_autoaim_data.bullet.count   = 20;
+    send_autoaim_data1.bullet.speed   = 25;
+    send_autoaim_data1.bullet.count   = 16;
+
+
+    send_autoaim_data2.start_of_frame = 0xA6;
+    send_autoaim_data2.current_hp     = 400;
+    send_autoaim_data2.end_of_frame   = 0xEF;
 }
 
 /**
  * @brief PcComm发送信息函数
  * 
  */
-void PcComm::Send_Message()
+void PcComm::Send_Message1()
 {
-    uint16_t lenth = sizeof(send_autoaim_data);
-    uint8_t buffer[lenth];
+    uint16_t length = sizeof(send_autoaim_data1);
+    uint8_t buffer[length];
 
-    send_autoaim_data.crc16 = 0;
+    send_autoaim_data1.crc16 = 0;
 
-    memcpy(buffer, &send_autoaim_data, lenth);
-    append_crc16_check_sum(buffer, lenth);
-    
-    usb_transmit(buffer, lenth);
+    memcpy(buffer, &send_autoaim_data1, length);
+    append_crc16_check_sum(buffer, length);
+
+    usb_transmit(buffer, length);
 }
 
 /**
- * @brief PcComm清理数据函数
+ * @brief PcComm发送信息函数
  * 
  */
-void PcComm::ClearData()
+void PcComm::Send_Message2()
 {
-    recv_autoaim_data.mode = 0;
+    uint16_t length = sizeof(send_autoaim_data2);
+    uint8_t buffer[length];
+
+    memcpy(buffer, &send_autoaim_data2, length);
+
+    usb_transmit(buffer, length); 
+}
+
+/**
+ * @brief PcComm清理自瞄数据函数
+ * 
+ */
+void PcComm::ClearAutoaimData()
+{
+    recv_autoaim_data.mode = PC_AUTOAIM_MODE_IDLE;
 
     recv_autoaim_data.yaw.yaw_ang = 0;
     recv_autoaim_data.yaw.yaw_vel = 0;
@@ -106,6 +124,18 @@ void PcComm::ClearData()
     recv_autoaim_data.pitch.pitch_vel = 0;
 
     recv_autoaim_data.flag = 1;
+
+    
+}
+
+/**
+ * @brief PcComm清理导航数据函数
+ * 
+ */
+void PcComm::ClearNavigationData()
+{
+    pc_chassis_x_ = 1024;
+    pc_chassis_y_ = 1024;
 }
 
 /**
@@ -114,23 +144,83 @@ void PcComm::ClearData()
  */
 void PcComm::AlivePeriodElapsedCallback()
 {
-    if(++alive_count_ >= MAX_PC_DISALIVE_PERIOD)
+    if(++alive_beat_ >= MAX_PC_DISALIVE_PERIOD)
     {
-        if(pre_flag_ == flag_)
+        if(pre_autoaim_flag_ == autoaim_flag_)
         {
-            pc_alive_state = PC_ALIVE_STATE_DISABLE;
-            ClearData();
+            ClearAutoaimData();
         }
-        else
+        if(pre_navigation_flag_ == navigation_flag_)
         {
-            pc_alive_state = PC_ALIVE_STATE_ENABLE;
+            ClearNavigationData();
         }
 
-        pre_flag_ = flag_;
+        pre_autoaim_flag_ = autoaim_flag_;
+        pre_navigation_flag_ = navigation_flag_;
 
-        alive_count_ = 0;
+        alive_beat_ = 0;
     }
 }
+
+/**
+ * @brief PcComm判断自瞄状态函数
+ * 
+ * @param now_autoaim_status 当前自瞄状态
+ * @param pre_autoaim_status 上一刻自瞄状态
+ */
+void PcComm::JudgeAutoaimStatus(PcAutoAimStatus* now_autoaim_status, PcAutoAimStatus pre_autoaim_status)
+{
+    // 获取当前收到的目标状态
+    PcAutoAimStatus input = *now_autoaim_status;
+    static uint16_t rear_beat = 0;      //后置摄像头运行节拍数
+
+    switch (pre_autoaim_status)
+    {
+        case(PC_AUTOAIM_MODE_IDLE):
+        {
+            *now_autoaim_status = input;
+            rear_beat = 0;
+            break;
+        }
+        case(PC_AUTOAIM_MODE_FRONT):
+        {
+            if(input == PC_AUTOAIM_MODE_REAR) 
+            {
+                *now_autoaim_status = PC_AUTOAIM_MODE_FRONT;
+            } 
+            else 
+            {
+                *now_autoaim_status = input;
+            }
+            rear_beat = 0;
+            break;
+        }
+        case(PC_AUTOAIM_MODE_REAR):
+        {
+            if(input == PC_AUTOAIM_MODE_IDLE) 
+            {
+                rear_beat++;
+                if(rear_beat >= 100)
+                {
+                    *now_autoaim_status = PC_AUTOAIM_MODE_IDLE;
+                    rear_beat = 0;
+                }
+                else
+                {
+                    *now_autoaim_status = PC_AUTOAIM_MODE_REAR;
+                }
+            } 
+            else 
+            {
+                *now_autoaim_status = input;
+                rear_beat = 0;
+            }
+            break;
+        }
+    }
+}
+
+
 
 /**
  * @brief PcComm任务函数
@@ -138,11 +228,24 @@ void PcComm::AlivePeriodElapsedCallback()
  */
 void PcComm::Task()
 {
+    uint16_t send_flag = 0;
     for(;;)
     {
         AlivePeriodElapsedCallback();
         UpdataAutoaimData();
-        Send_Message();
+
+        send_flag++;
+
+        if(send_flag == 1)
+        {
+            Send_Message1();
+        }
+        else if(send_flag == 2)
+        {
+            Send_Message2();
+            send_flag = 0;
+        }
+        
         osDelay(pdMS_TO_TICKS(1));
     }
 }
@@ -153,9 +256,6 @@ void PcComm::Task()
  */
 void PcComm::RxCpltCallback()
 {
-    // 滑动窗口, 判断是否在线
-    flag_ += 1;
-
     DataProcess();
 }
 
@@ -167,16 +267,27 @@ void PcComm::DataProcess()
 {
     if(bsp_usb_rx_buffer[0] == 'S' && bsp_usb_rx_buffer[1] == 'P')
     {
+        // 滑动窗口, 判断是否在线
+        autoaim_flag_ += 1;
+
         uint16_t lenth = sizeof(recv_autoaim_data);
         memcpy(&recv_autoaim_data, bsp_usb_rx_buffer, lenth);
+
+        JudgeAutoaimStatus(&recv_autoaim_data.mode, pre_autoaim_status_);
+
+        pre_autoaim_status_ = recv_autoaim_data.mode;
         
         // if(verify_crc16_check_sum(bsp_usb_rx_buffer, lenth))
         // {
         //     memcpy(&recv_autoaim_data, bsp_usb_rx_buffer, lenth);
         // }
+
     }
     else if(bsp_usb_rx_buffer[0] == recv_navigation_data.start_of_frame)
     {
+        // 滑动窗口, 判断是否在线
+        navigation_flag_ += 1;
+
         memcpy(&recv_navigation_data.linear_x.b, &bsp_usb_rx_buffer[1], 4);
         memcpy(&recv_navigation_data.linear_y.b, &bsp_usb_rx_buffer[5], 4);
 

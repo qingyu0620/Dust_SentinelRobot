@@ -16,10 +16,9 @@
 #include "bsp_dwt.h"
 #include "imu.hpp"
 
-#include "dvc_remote_dji.h"
+#include "dvc_remote_dr16.h"
 #include "dvc_MCU_comm.h"
 #include "dvc_PC_comm.h"
-#include "VT03.h"
 
 #include "app_gimbal.h"
 #include "app_shoot.h"
@@ -75,10 +74,12 @@ public:
 
 protected:
 
-    float remote_angle = 0.0f;
+    float remote_radian = 0.0f;
+
+    float scan_pitch_count_ = 0.0f;
 
     // 机器人等级
-    int32_t robot_level_ = 1;
+    int32_t robot_level_ = 10;
 
     static void TaskEntry(void *param);  // FreeRTOS 入口，静态函数
 };

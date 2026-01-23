@@ -26,6 +26,9 @@
 
 /* Exported macros -----------------------------------------------------------*/
 
+#define MAX_PITCH_RADIAN            0.45f
+#define MIN_PITCH_RADIAN           -0.35f
+
 /* Exported types ------------------------------------------------------------*/
 
 /**
@@ -64,6 +67,16 @@ public:
 
     void Task();
 
+    inline void SetTargetPitchAngle(float target_pitch_angle);
+
+    inline void SetTargetPitchOmega(float target_pitch_omega);
+
+    inline void SetTargetPitchTorque(float target_pitch_torque);
+
+    inline void SetTargetPitchRadian(float target_pitch_radian);
+
+    inline void SetNowImuPitchRadian(float imu_pitch_radian);
+
     inline float GetNowPitchAngle();
 
     inline float GetNowPitchOmega();
@@ -80,68 +93,37 @@ public:
 
     inline float GetTargetPitchRadian();
 
-    inline void SetTargetPitchAngle(float target_pitch_angle);
-
-    inline void SetTargetPitchOmega(float target_pitch_omega);
-
-    inline void SetTargetPitchTorque(float target_pitch_torque);
-
-    inline void SetTargetPitchRadian(float target_pitch_radian);
-
-    inline void SetNowImuPitchRadian(float imu_pitch_radian);
-
-    inline void SetControlPitch(float pitch_vel, float pitch_acc);
-
 protected:
-    // pitch轴最小值
-    float min_pitch_angle_ = -0.60f;
+    // pitch轴当前值
+    float now_pitch_angle_ = 0.0f;
 
-    // pitch轴最大值
-    float max_pitch_angle_ = 0.33f;
+    float now_pitch_omega_ = 0.0f;
+
+    float now_pitch_torque_ = 0.0f;
+
+    float now_pitch_radian_ = 0.0f;
+
+    // pitch轴目标值
+    float target_pitch_angle_ = 0.0f;
+
+    float target_pitch_omega_ = 0.0f;
+
+    float target_pitch_torque_ = 0.0f;
+
+    float target_pitch_radian_ = 0.0f;
 
     // pitch轴角度差
     float pitch_angle_diff_ = 0.0f;
 
-    // 内部变量
-
-    // 读变量
-
-    // pitch轴当前角度
-    float now_pitch_angle_ = 0.0f;
-
-    // pitch轴当前角速度
-    float now_pitch_omega_ = 0.0f;
-
-    // pitch轴当前力矩
-    float now_pitch_torque_ = 0.0f;
-
-    // pitch轴当前弧度
-    float now_pitch_radian_ = 0.0f;
-
     // 陀螺仪pitch轴角度
     float imu_pitch_radian_ = 0.0f;
 
-    // 写变量
-
     // 云台状态
     GimbalControlType gimbal_control_type_ = GIMBAL_CONTROL_TYPE_MANUAL;
-    // 读写变量
 
-    // pitch轴目标角度
-    float target_pitch_angle_ = 0.0f;
-
-    // pitch轴目标角速度
-    float target_pitch_omega_ = 0.0f;
-
-    // pitch轴目标力矩
-    float target_pitch_torque_ = 0.0f;
-
-    // pitch轴目标弧度
-    float target_pitch_radian_ = 0.0f;
+    MotorDmStatus now_pitch_status_ = MOTOR_DM_STATUS_ENABLE;
 
     void SelfResolution();
-
-    void MotorNearestTransposition();
 
     void Output();
 

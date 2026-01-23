@@ -70,6 +70,9 @@ float normalize_angle_pm_pi(float angle);
 float normalize_pi_pm_angle(float pi);
 
 float normalize_angle(float angle);
+
+float normalize_pi(float pi);
+
 /**
  * @brief 限幅函数
  *

@@ -12,6 +12,7 @@
 
 #include "app_gimbal.h"
 #include "alg_math.h"
+#include "dvc_motor_dm.h"
 #include "ins_task.h"
 
 /* Private macros ------------------------------------------------------------*/
@@ -107,9 +108,12 @@ void Gimbal::TaskEntry(void *argument)
  */
 void Gimbal::SelfResolution()
 {
+    motor_pitch_.AlivePeriodElapsedCallback();
+   
     // 获取当前数据
-    now_pitch_omega_ = motor_pitch_.GetNowOmega();                                          // 角速度
-    now_pitch_angle_ = K_MOTOR_ANGLE * motor_pitch_.GetNowAngle() + C_MOTOR_ANGLE;          // 角度
+    now_pitch_status_ = motor_pitch_.GetStatus();
+    now_pitch_omega_  = motor_pitch_.GetNowOmega();                                          // 角速度
+    now_pitch_angle_  = K_MOTOR_ANGLE * motor_pitch_.GetNowAngle() + C_MOTOR_ANGLE;          // 角度
     now_pitch_radian_ = normalize_angle_pm_pi(now_pitch_angle_);                     // 弧度
         
     // 计算pitch轴偏差
@@ -141,15 +145,6 @@ void Gimbal::Output()
 }
 
 /**
- * @brief Gimbal就近转位函数
- *
- */
-void Gimbal::MotorNearestTransposition()
-{
-    
-}
-
-/**
  * @brief Gimbal任务函数
  * 
  */
@@ -158,7 +153,16 @@ void Gimbal::Task()
     for (;;)
     {
         SelfResolution();
-        Output();
+        if(now_pitch_status_ == MOTOR_DM_STATUS_ENABLE)
+        {
+            Output();
+        }
+        else
+        {
+            motor_pitch_.CanSendEnter();
+            // osDelay(pdMS_TO_TICKS(1000));
+        }
+        
         osDelay(pdMS_TO_TICKS(1));
     }
 }

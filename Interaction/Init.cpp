@@ -69,10 +69,10 @@ void can2_callback_function(CanRxBuffer* CAN_RxMessage)
 }
 
 /**
- * @brief ：UART1回调函数
+ * @brief 
  * 
- * @param buffer ：接收缓冲区
- * @param length ：接收长度
+ * @param buffer 
+ * @param length 
  */
 void uart1_callback_function(uint8_t* buffer, uint16_t length)
 {	
@@ -93,16 +93,53 @@ void uart3_callback_function(uint8_t* buffer, uint16_t length)
     
     if(robot_.robot_control_method_ == ROBOT_CONTROL_METHOD_REMOTE)
     {
-        robot_.mcu_comm_.send_chassis_data_.chassis_speed_x  = robot_.remote_dr16_.output_.remote.chassis_x;
-        robot_.mcu_comm_.send_chassis_data_.chassis_speed_y  = robot_.remote_dr16_.output_.remote.chassis_y;
+        if(robot_.remote_dr16_.output_.keyboard.keycode.w)
+        {
+            robot_.mcu_comm_.send_chassis_data_.chassis_speed_x = 1684;
+        }
+        else if (robot_.remote_dr16_.output_.keyboard.keycode.s)
+        {
+            robot_.mcu_comm_.send_chassis_data_.chassis_speed_x = 364;
+        }
+        else
+        {
+            robot_.mcu_comm_.send_chassis_data_.chassis_speed_x = 1024;
+        }
+
+        if(robot_.remote_dr16_.output_.keyboard.keycode.a)
+        {
+            robot_.mcu_comm_.send_chassis_data_.chassis_speed_y = 364;
+        }
+        else if (robot_.remote_dr16_.output_.keyboard.keycode.d)
+        {
+            robot_.mcu_comm_.send_chassis_data_.chassis_speed_y = 1684;
+        }
+        else
+        {
+            robot_.mcu_comm_.send_chassis_data_.chassis_speed_y = 1024;
+        }
+
+        if(robot_.mcu_comm_.send_chassis_data_.chassis_speed_x == 1024)
+        {
+            robot_.mcu_comm_.send_chassis_data_.chassis_speed_x  = robot_.remote_dr16_.output_.remote.chassis_x;
+        }
+        if(robot_.mcu_comm_.send_chassis_data_.chassis_speed_y == 1024)
+        {
+            robot_.mcu_comm_.send_chassis_data_.chassis_speed_y  = robot_.remote_dr16_.output_.remote.chassis_y;
+        }
     }
 
-    robot_.mcu_comm_.send_chassis_data_.rotation         = robot_.remote_dr16_.output_.remote.rotation;
+    robot_.mcu_comm_.send_chassis_data_.rotation = robot_.remote_dr16_.output_.remote.rotation -  robot_.remote_dr16_.output_.mouse.mouse_x + 1025;
 
-    robot_.mcu_comm_.send_comm_data_.start_of_frame      = 0xAB;
-    robot_.mcu_comm_.send_comm_data_.switch_l            = robot_.remote_dr16_.output_.remote.switch_l;
-    robot_.mcu_comm_.send_comm_data_.switch_r            = robot_.remote_dr16_.output_.remote.switch_r;
-    robot_.mcu_comm_.send_comm_data_.supercap            = 0;
+    robot_.mcu_comm_.send_chassis_data_.switch_lr.switchcode.switch_l = robot_.remote_dr16_.output_.remote.switch_l;
+    robot_.mcu_comm_.send_chassis_data_.switch_lr.switchcode.switch_r = robot_.remote_dr16_.output_.remote.switch_r;
+
+
+    robot_.mcu_comm_.send_command_data_.start_of_frame     = 0xAB;
+
+    robot_.mcu_comm_.send_command_data_.mouse_lr.mousecode.mouse_l = robot_.remote_dr16_.output_.mouse.press_l;
+    robot_.mcu_comm_.send_command_data_.mouse_lr.mousecode.mouse_r = robot_.remote_dr16_.output_.mouse.press_r;
+    robot_.mcu_comm_.send_command_data_.keyboard.all = robot_.remote_dr16_.output_.keyboard.all;
 }
 
 /**

@@ -68,7 +68,7 @@ void McuComm::TaskEntry(void *argument)
  * 
  * @param pc_recv_autoaim_data 
  */
-void McuComm::UpdataAutoaimData(PCRecvAutoAimData* pc_recv_autoaim_data)
+void McuComm::UpdateAutoaimData(PCRecvAutoAimData* pc_recv_autoaim_data)
 {
      send_autoaim_data_.mode = pc_recv_autoaim_data->mode;
      send_autoaim_data_.autoaim_yaw_angle.f = pc_recv_autoaim_data->yaw.yaw_ang;
@@ -94,7 +94,7 @@ void McuComm::CanSendChassisData()
      can_tx_frame[5] = send_chassis_data_.rotation >> 8;
      can_tx_frame[6] = send_chassis_data_.rotation;
 
-     can_tx_frame[7] = 0x00;
+     can_tx_frame[7] = send_chassis_data_.switch_lr.all;
 
      can_send_data(can_manage_object_->can_handler, can_tx_id_, can_tx_frame, 8);
 }
@@ -111,9 +111,9 @@ void McuComm::CanSendCommandData()
      yaw_conv.f = INS.Yaw;
 
      can_tx_frame[0] = 0xAB;
-     can_tx_frame[1] = send_comm_data_.switch_l;
-     can_tx_frame[2] = send_comm_data_.switch_r;
-     can_tx_frame[3] = send_comm_data_.supercap;
+     can_tx_frame[1] = send_command_data_.mouse_lr.all;
+     can_tx_frame[2] = send_command_data_.keyboard.all >> 8;
+     can_tx_frame[3] = send_command_data_.keyboard.all;
 
      memcpy(&can_tx_frame[4], yaw_conv.b, 4);
 
@@ -149,9 +149,6 @@ void McuComm::ClearData()
      send_chassis_data_.chassis_speed_y = 1024;
      send_chassis_data_.rotation = 1024;
 
-     send_comm_data_.switch_r = SWITCH_MID;
-     send_comm_data_.switch_l = SWITCH_MID;
-     send_comm_data_.supercap = 0;
 }
 
 /**
