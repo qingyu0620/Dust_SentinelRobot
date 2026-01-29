@@ -8,8 +8,8 @@
  * @copyright Copyright (c) 2025
  * 
  */
-#ifndef PC_COMM_H
-#define PC_COMM_H
+#ifndef __DVC_PC_COMM_H__
+#define __DVC_PC_COMM_H__
 
 /* Includes ------------------------------------------------------------------*/
 

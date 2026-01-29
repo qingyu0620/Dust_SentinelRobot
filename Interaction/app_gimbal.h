@@ -119,9 +119,7 @@ protected:
     GimbalControlType gimbal_control_type_ = GIMBAL_CONTROL_TYPE_MANUAL;
 
     // 云台存活状态
-    MotorDmStatus gimbal_alive_status_ = MOTOR_DM_STATUS_ENABLE;
-
-    void AlivePeriodElapsedCallback();
+    MotorDmStatus now_yaw_status_ = MOTOR_DM_STATUS_ENABLE;
 
     void SelfResolution();
 

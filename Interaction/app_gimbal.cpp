@@ -110,7 +110,10 @@ void Gimbal::TaskEntry(void *argument)
  */
 void Gimbal::SelfResolution()
 {
+    motor_yaw_.AlivePeriodElapsedCallback();
+
     // 获取当前数据
+    now_yaw_status_ =  motor_yaw_.GetStatus();
     now_yaw_omega_ = motor_yaw_.GetNowOmega();
     now_yaw_angle_ = motor_yaw_.GetNowAngle() * 14.4f;
     now_yaw_radian_ = normalize_angle_pm_pi(now_yaw_angle_);
@@ -144,16 +147,6 @@ void Gimbal::Output()
 }
 
 /**
- * @brief Gimbal存活周期检测回调函数
- * 
- */
-void Gimbal::AlivePeriodElapsedCallback()
-{
-    motor_yaw_.AlivePeriodElapsedCallback();
-    gimbal_alive_status_ =  motor_yaw_.GetStatus();
-}
-
-/**
  * @brief Gimbal任务函数
  * 
  */
@@ -161,14 +154,13 @@ void Gimbal::Task()
 {
     for (;;)
     {
-        AlivePeriodElapsedCallback();
-        
-        if(gimbal_alive_status_ == MOTOR_DM_STATUS_ENABLE)
+        SelfResolution();
+
+        if(now_yaw_status_ == MOTOR_DM_STATUS_ENABLE)
         {
-            SelfResolution();
             Output();
         }
-        else if(gimbal_alive_status_ == MOTOR_DM_STATUS_DISABLE)
+        else if(now_yaw_status_ == MOTOR_DM_STATUS_DISABLE)
         {
             motor_yaw_.CanSendEnter();
             osDelay(pdMS_TO_TICKS(1000));

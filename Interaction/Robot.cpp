@@ -44,13 +44,7 @@ void Robot::Init()
     // 云台初始化
     gimbal_.Init();
 
-    // 底盘陀螺仪初始化
-    imu_.Init();
-
-    // 10s时间等待陀螺仪收敛
-    osDelay(pdMS_TO_TICKS(10 * 1000));
-
-    // 摩擦轮初始化
+    // 底盘初始化
     chassis_.Init();
 
     // 拨弹盘初始化
@@ -94,9 +88,9 @@ void Robot::Task()
 
     // Mcu命令数据
     McuCommandData mcu_comm_data_local;
-    mcu_comm_data_local.keyboard.all = 0;
-    mcu_comm_data_local.mouse_lr.all = 0;
-    mcu_comm_data_local.imu_yaw.f = 0.0f;
+    mcu_comm_data_local.keyboard.all           = 0;
+    mcu_comm_data_local.mouse_lr.all           = 0;
+    mcu_comm_data_local.imu_yaw.f              = 0.0f;
 
     // Mcu自瞄数据
     McuRecvAutoaimData mcu_autoaim_data_local;
@@ -121,16 +115,13 @@ void Robot::Task()
 
 
         // 自瞄模式
-        if(mcu_chassis_data_local.switch_lr.switchcode.switch_r == SWITCH_UP || mcu_comm_data_local.mouse_lr.mousecode.mouse_r == REMOTE_DR16_KEY_STATUS_PRESS)
+        if(mcu_chassis_data_local.switch_lr.switchcode.switch_r == SWITCH_UP || mcu_comm_data_local.mouse_lr.mousecode.mouse_r == REMOTE_KEY_STATUS_PRESS)
         {
             switch (mcu_autoaim_data_local.mode) 
             {
                 case(PC_AUTOAIM_MODE_IDLE):
                 {
                     remote_yaw_radian_ += (M_PI / 180.f * (K_NORM * mcu_chassis_data_local.rotation + C_NORM)) * REMOTE_YAW_RATIO;
-
-                    // remote_yaw_radian_ += (M_PI / 180.f) * SCAN_YAW_RATIO;
-                    // remote_yaw_radian_ = normalize_pi(remote_yaw_radian_);
 
                     gimbal_.SetTargetYawRadian(remote_yaw_radian_);
 
@@ -165,7 +156,7 @@ void Robot::Task()
             }
         }
         // 巡航模式
-        else if(mcu_chassis_data_local.switch_lr.switchcode.switch_r == SWITCH_DOWN || mcu_comm_data_local.keyboard.keycode.q == REMOTE_DR16_KEY_STATUS_PRESS)
+        else if(mcu_chassis_data_local.switch_lr.switchcode.switch_r == SWITCH_DOWN || mcu_comm_data_local.keyboard.keycode.q == REMOTE_KEY_STATUS_PRESS)
         {
             switch (mcu_autoaim_data_local.mode) 
             {
@@ -253,11 +244,11 @@ void Robot::Task()
         }
         
         
-        if(mcu_comm_data_local.keyboard.keycode.shift == REMOTE_DR16_KEY_STATUS_PRESS)
+        if(mcu_comm_data_local.keyboard.keycode.shift == REMOTE_KEY_STATUS_PRESS)
         {
             chassis_.SetChassisOperationMode(CHASSIS_OPERATION_MODE_SPIN);
         }
-        else if (mcu_comm_data_local.keyboard.keycode.ctrl == REMOTE_DR16_KEY_STATUS_PRESS)
+        else if (mcu_comm_data_local.keyboard.keycode.ctrl == REMOTE_KEY_STATUS_PRESS)
         {
             chassis_.SetChassisOperationMode(CHASSIS_OPERATION_MODE_FOLLOW);
         }
@@ -275,6 +266,7 @@ void Robot::Task()
 
         /****************************   Debug   ****************************/
 
+        
 
         osDelay(pdMS_TO_TICKS(1));
     }

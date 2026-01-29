@@ -8,8 +8,8 @@
  * @copyright Copyright (c) 2025
  * 
  */
-#ifndef MODULES_COMM_DVC_MCU_COMM_H
-#define MODULES_COMM_DVC_MCU_COMM_H
+#ifndef __DVC_MCU_COMM_H__
+#define __DVC_MCU_COMM_H__
 
 /* Includes ------------------------------------------------------------------*/
 
@@ -25,7 +25,7 @@
 /* Exported types ------------------------------------------------------------*/
 
 /**
- * @brief 转换联合体
+ * @brief McuComm转换联合体
  * 
  */
 union McuConv
@@ -35,7 +35,7 @@ union McuConv
 };
 
 /**
- * @brief Mcu存活状态枚举
+ * @brief McuComm存活状态枚举
  * 
  */
 enum McuAliveState
@@ -45,7 +45,7 @@ enum McuAliveState
 };
 
 /**
- * @brief Mcu底盘数据结构体
+ * @brief McuComm底盘数据结构体
  * 
  */
 struct McuChassisData
@@ -67,19 +67,19 @@ struct McuChassisData
 };
 
 /**
- * @brief Mcu通用数据结构体
+ * @brief McuComm通用数据结构体
  * 
  */
 struct McuCommandData
 {
     uint8_t start_of_frame = 0xAB;
-    RemoteDR16MouseLR  mouse_lr;
-    RemoteDR16Keyboard keyboard;
+    RemoteMouseLR  mouse_lr;
+    RemoteKeyboard keyboard;
     McuConv imu_yaw;                    // yaw轴角度
 };
 
 /**
- * @brief Mcu接收自瞄数据结构体
+ * @brief McuComm接收自瞄数据结构体
  * 
  */
 struct McuRecvAutoaimData
@@ -91,7 +91,7 @@ struct McuRecvAutoaimData
 };
 
 /**
- * @brief Mcu发送自瞄数据结构体
+ * @brief McuComm发送自瞄数据结构体
  * 
  */
 struct McuSendAutoaimData
