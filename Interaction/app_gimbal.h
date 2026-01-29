@@ -26,8 +26,10 @@
 
 /* Exported macros -----------------------------------------------------------*/
 
-#define MAX_PITCH_RADIAN            0.45f
-#define MIN_PITCH_RADIAN           -0.35f
+#define K_PITCH                   13.f / 13200.f
+#define C_PITCH                   -832.f / 825.f
+#define MAX_PITCH_RADIAN          0.45f
+#define MIN_PITCH_RADIAN          -0.35f
 
 /* Exported types ------------------------------------------------------------*/
 

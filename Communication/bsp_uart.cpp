@@ -1,16 +1,24 @@
 /**
- * @file bsp_usart.cpp
+ * @file bsp_uart.cpp
  * @author qingyu
  * @brief 
  * @version 0.1
- * @date 2025-10-08
+ * @date 2026-01-27
  * 
- * @copyright Copyright (c) 2025
- *
+ * @copyright Copyright (c) 2026
+ * 
  */
 /* Includes ------------------------------------------------------------------*/
 
 #include "bsp_uart.h"
+
+/* Private types -------------------------------------------------------------*/
+
+typedef struct UartMapEntry
+{
+	USART_TypeDef* Instance;
+	UartManageObject* manage_obj;
+} UartMapEntry;
 
 /* Private variables ---------------------------------------------------------*/
 
@@ -21,7 +29,26 @@ UartManageObject uart4_manage_object = {0};
 UartManageObject uart5_manage_object = {0};
 UartManageObject uart6_manage_object = {0};
 
+static const UartMapEntry uart_map_inquiry_[]
+{
+	{USART1, &uart1_manage_object},
+	{USART2, &uart2_manage_object},
+	{USART3, &uart3_manage_object},
+	{UART4,  &uart4_manage_object},
+	{UART5,  &uart5_manage_object},
+	{USART6, &uart6_manage_object},
+};
+
+/* Private macros ------------------------------------------------------------*/
+
+#define UART_MAP_SIZE	(sizeof(uart_map_inquiry_)) / sizeof(UartMapEntry)
+
 /* Private function declarations ---------------------------------------------*/
+
+__weak void UartHardFault()
+{
+	while(1);
+}
 
 /**
  * @brief ：printf重定向函数（不用管）
@@ -31,21 +58,39 @@ UartManageObject uart6_manage_object = {0};
  */
 int __io_putchar(int ch)
 {
-    HAL_UART_Transmit(&huart6, (uint8_t *)&ch, 1, HAL_MAX_DELAY);
+    HAL_UART_Transmit(&huart1, (uint8_t *)&ch, 1, HAL_MAX_DELAY);
     return ch;
 }
 
 
 int _write(int file, char *ptr, int len)
 {
-    HAL_UART_Transmit(&huart6, (uint8_t *)ptr, len, HAL_MAX_DELAY);
+    HAL_UART_Transmit(&huart1, (uint8_t *)ptr, len, HAL_MAX_DELAY);
     return len;
 }
 
 /* function prototypes -------------------------------------------------------*/
 
 /**
- * @brief UART初始化函数
+ * @brief Uart管理模块获取函数
+ * 
+ * @param huart 句柄
+ * @return UartManageObject* Uart管理模块指针
+ */
+static UartManageObject* GetUartManageObject(UART_HandleTypeDef* huart)
+{
+	for(uint8_t i = 0; i < UART_MAP_SIZE; i++) 
+	{
+        if(huart->Instance == uart_map_inquiry_[i].Instance) 
+		{
+            return uart_map_inquiry_[i].manage_obj;
+        }
+    }
+    return NULL;
+}
+
+/**
+ * @brief Uart初始化函数
  * 
  * @param huart 句柄
  * @param callback_function 回调函数
@@ -53,52 +98,22 @@ int _write(int file, char *ptr, int len)
  */
 void uart_init(UART_HandleTypeDef* huart, Uart_Callback callback_function, uint16_t rx_buffer_length)
 {
-	if(huart->Instance == USART1)
+	UartManageObject* uart_manage_object = GetUartManageObject(huart);
+	if(uart_manage_object != NULL)
 	{
-		uart1_manage_object.uart_handle = huart;
-		uart1_manage_object.callback_function = callback_function;
-		uart1_manage_object.rx_buffer_length = rx_buffer_length;
-		HAL_UARTEx_ReceiveToIdle_DMA(uart1_manage_object.uart_handle, uart1_manage_object.rx_buffer, uart1_manage_object.rx_buffer_length);
+		uart_manage_object->uart_handle = huart;
+		uart_manage_object->callback_function = callback_function;
+		uart_manage_object->rx_buffer_length = rx_buffer_length;
+		HAL_UARTEx_ReceiveToIdle_DMA(uart_manage_object->uart_handle, uart_manage_object->rx_buffer, uart_manage_object->rx_buffer_length);
 	}
-	else if(huart->Instance == USART2)
+	else
 	{
-		uart2_manage_object.uart_handle = huart;
-		uart2_manage_object.callback_function = callback_function;
-		uart2_manage_object.rx_buffer_length = rx_buffer_length;
-		HAL_UARTEx_ReceiveToIdle_DMA(uart2_manage_object.uart_handle, uart2_manage_object.rx_buffer, uart2_manage_object.rx_buffer_length);
-	}
-	else if(huart->Instance == USART3)
-	{
-		uart3_manage_object.uart_handle = huart;
-		uart3_manage_object.callback_function = callback_function;
-		uart3_manage_object.rx_buffer_length = rx_buffer_length;
-		HAL_UARTEx_ReceiveToIdle_DMA(uart3_manage_object.uart_handle, uart3_manage_object.rx_buffer, uart3_manage_object.rx_buffer_length);
-	}
-	else if(huart->Instance == UART4)
-	{
-		uart4_manage_object.uart_handle = huart;
-		uart4_manage_object.callback_function = callback_function;
-		uart4_manage_object.rx_buffer_length = rx_buffer_length;
-		HAL_UARTEx_ReceiveToIdle_DMA(uart4_manage_object.uart_handle, uart4_manage_object.rx_buffer, uart4_manage_object.rx_buffer_length);
-	}
-	else if(huart->Instance == UART5)
-	{
-		uart5_manage_object.uart_handle = huart;
-		uart5_manage_object.callback_function = callback_function;
-		uart5_manage_object.rx_buffer_length = rx_buffer_length;
-		HAL_UARTEx_ReceiveToIdle_DMA(uart5_manage_object.uart_handle, uart5_manage_object.rx_buffer, uart5_manage_object.rx_buffer_length);
-	}
-	else if(huart->Instance == USART6)
-	{
-		uart6_manage_object.uart_handle = huart;
-		uart6_manage_object.callback_function = callback_function;
-		uart6_manage_object.rx_buffer_length = rx_buffer_length;
-		HAL_UARTEx_ReceiveToIdle_DMA(uart6_manage_object.uart_handle, uart6_manage_object.rx_buffer, uart6_manage_object.rx_buffer_length);
+		UartHardFault();
 	}
 }
-
+	
 /**
- * @brief UART再初始化
+ * @brief Uart再初始化
  * 
  * @param huart 句柄
  * @param callback_function 回调函数
@@ -106,178 +121,79 @@ void uart_init(UART_HandleTypeDef* huart, Uart_Callback callback_function, uint1
  */
 void uart_reinit(UART_HandleTypeDef* huart, Uart_Callback callback_function, uint16_t rx_buffer_length)
 {
-	if(huart->Instance == USART1)
+	UartManageObject* uart_manage_object = GetUartManageObject(huart);
+	if(uart_manage_object != NULL)
 	{
-		HAL_UART_AbortReceive(uart1_manage_object.uart_handle);
-		memset(uart1_manage_object.rx_buffer, 0, uart1_manage_object.rx_buffer_length);
-		HAL_UARTEx_ReceiveToIdle_DMA(uart1_manage_object.uart_handle, uart1_manage_object.rx_buffer, uart1_manage_object.rx_buffer_length);
+		HAL_UART_AbortReceive(uart_manage_object->uart_handle);
+		memset(uart_manage_object->rx_buffer, 0, uart_manage_object->rx_buffer_length);
+		HAL_UARTEx_ReceiveToIdle_DMA(uart_manage_object->uart_handle, uart_manage_object->rx_buffer, uart_manage_object->rx_buffer_length);
 	}
-	else if(huart->Instance == USART2)
+	else
 	{
-		HAL_UART_AbortReceive(uart2_manage_object.uart_handle);
-		memset(uart2_manage_object.rx_buffer, 0, uart2_manage_object.rx_buffer_length);
-		HAL_UARTEx_ReceiveToIdle_DMA(uart2_manage_object.uart_handle, uart2_manage_object.rx_buffer, uart2_manage_object.rx_buffer_length);
-	}
-	else if(huart->Instance == USART3)
-	{
-		HAL_UART_AbortReceive(uart3_manage_object.uart_handle);
-		memset(uart3_manage_object.rx_buffer, 0, uart3_manage_object.rx_buffer_length);
-		HAL_UARTEx_ReceiveToIdle_DMA(uart3_manage_object.uart_handle, uart3_manage_object.rx_buffer, uart3_manage_object.rx_buffer_length);
-	}
-	else if(huart->Instance == UART4)
-	{
-		HAL_UART_AbortReceive(uart4_manage_object.uart_handle);
-		memset(uart4_manage_object.rx_buffer, 0, uart4_manage_object.rx_buffer_length);
-		HAL_UARTEx_ReceiveToIdle_DMA(uart4_manage_object.uart_handle, uart4_manage_object.rx_buffer, uart4_manage_object.rx_buffer_length);
-	}
-	else if(huart->Instance == UART5)
-	{
-		HAL_UART_AbortReceive(uart5_manage_object.uart_handle);
-		memset(uart5_manage_object.rx_buffer, 0, uart5_manage_object.rx_buffer_length);
-		HAL_UARTEx_ReceiveToIdle_DMA(uart5_manage_object.uart_handle, uart5_manage_object.rx_buffer, uart5_manage_object.rx_buffer_length);
-	}
-	else if(huart->Instance == USART6)
-	{
-		HAL_UART_AbortReceive(uart6_manage_object.uart_handle);
-		memset(uart6_manage_object.rx_buffer, 0, uart6_manage_object.rx_buffer_length);
-		HAL_UARTEx_ReceiveToIdle_DMA(uart6_manage_object.uart_handle, uart6_manage_object.rx_buffer, uart6_manage_object.rx_buffer_length);
+		UartHardFault();
 	}
 }
 
 /** 
- * @brief ：UART接收DMA空闲中断函数
+ * @brief Uart接收DMA空闲中断函数
  * 
- * @param huart ：句柄
- * @param Size ：接收长度
+ * @param huart 句柄
+ * @param Size 接收长度
  */
 void HAL_UARTEx_RxEventCallback(UART_HandleTypeDef *huart, uint16_t Size)
 {
-	if(huart->Instance == USART1)
+	UartManageObject* uart_manage_object = GetUartManageObject(huart);
+	if(uart_manage_object->callback_function != NULL)
 	{
-		if(uart1_manage_object.callback_function != NULL)
-		{
-			uart1_manage_object.callback_function(uart1_manage_object.rx_buffer, Size);
-		}
-		HAL_UARTEx_ReceiveToIdle_DMA(uart1_manage_object.uart_handle, uart1_manage_object.rx_buffer, uart1_manage_object.rx_buffer_length);
+		uart_manage_object->callback_function(uart_manage_object->rx_buffer, Size);
+		HAL_UARTEx_ReceiveToIdle_DMA(uart_manage_object->uart_handle, uart_manage_object->rx_buffer, uart_manage_object->rx_buffer_length);
 	}
-	else if(huart->Instance == USART2)
+	else
 	{
-		if(uart2_manage_object.callback_function != NULL)
-		{
-			uart2_manage_object.callback_function(uart2_manage_object.rx_buffer, Size);
-		}
-		HAL_UARTEx_ReceiveToIdle_DMA(uart2_manage_object.uart_handle, uart2_manage_object.rx_buffer, uart2_manage_object.rx_buffer_length);
-	}
-	else if(huart->Instance == USART3)
-	{
-		if(uart3_manage_object.callback_function != NULL)
-		{
-			uart3_manage_object.callback_function(uart3_manage_object.rx_buffer, Size);
-		}
-		HAL_UARTEx_ReceiveToIdle_DMA(uart3_manage_object.uart_handle, uart3_manage_object.rx_buffer, uart3_manage_object.rx_buffer_length);
-	}
-	else if(huart->Instance == UART4)
-	{
-		if(uart4_manage_object.callback_function != NULL)
-		{
-			uart4_manage_object.callback_function(uart4_manage_object.rx_buffer, Size);
-		}
-		HAL_UARTEx_ReceiveToIdle_DMA(uart4_manage_object.uart_handle, uart4_manage_object.rx_buffer, uart4_manage_object.rx_buffer_length);
-	}
-	else if(huart->Instance == UART5)
-	{
-		if(uart5_manage_object.callback_function != NULL)
-		{
-			uart5_manage_object.callback_function(uart5_manage_object.rx_buffer, Size);
-		}
-		HAL_UARTEx_ReceiveToIdle_DMA(uart5_manage_object.uart_handle, uart5_manage_object.rx_buffer, uart5_manage_object.rx_buffer_length);
-	}
-	else if(huart->Instance == USART6)
-	{
-		if(uart6_manage_object.callback_function != NULL)
-		{
-			uart6_manage_object.callback_function(uart6_manage_object.rx_buffer, Size);
-		}
-		HAL_UARTEx_ReceiveToIdle_DMA(uart6_manage_object.uart_handle, uart6_manage_object.rx_buffer, uart6_manage_object.rx_buffer_length);
+		UartHardFault();
 	}
 }
 
 /**
- * @brief UART错误帧回调函数
+ * @brief Uart错误帧回调函数
  * 
  * @param huart 
  */
 void HAL_UART_ErrorCallback(UART_HandleTypeDef *huart)
 {
-	if(huart->Instance == USART1)
+	uint32_t error_code = huart->ErrorCode;
+	UartManageObject* uart_manage_object = GetUartManageObject(huart);
+
+	HAL_UART_DMAStop(uart_manage_object->uart_handle);
+
+	if (error_code & HAL_UART_ERROR_ORE) 
 	{
-		uint32_t error_code = huart->ErrorCode;
-
-		HAL_UART_DMAStop(uart1_manage_object.uart_handle);
-
-        if (error_code & HAL_UART_ERROR_ORE) 
-		{
-            uart1_manage_object.error_code.check.overrun_error = 1;
-			__HAL_UART_CLEAR_OREFLAG(huart);
-        }
-        if (error_code & HAL_UART_ERROR_FE)
-		{
-            uart1_manage_object.error_code.check.frame_error = 1;
-			__HAL_UART_CLEAR_FEFLAG(huart);
-        }
-        if (error_code & HAL_UART_ERROR_NE)
-		{
-            uart1_manage_object.error_code.check.noise_error = 1;
-			__HAL_UART_CLEAR_NEFLAG(huart);
-        }
-        if (error_code & HAL_UART_ERROR_PE)
-		{
-            uart1_manage_object.error_code.check.parity_error = 1;
-			__HAL_UART_CLEAR_PEFLAG(huart);
-        }
-        if (error_code & HAL_UART_ERROR_DMA)
-		{
-            uart1_manage_object.error_code.check.dma_error = 1;
-		}
-
-		memset(uart1_manage_object.rx_buffer, 0, UART_BUFFER_LENGTH);
-
-		HAL_UARTEx_ReceiveToIdle_DMA(uart1_manage_object.uart_handle, uart1_manage_object.rx_buffer, uart1_manage_object.rx_buffer_length);
+		uart_manage_object->error_code.check.overrun_error = 1;
+		__HAL_UART_CLEAR_OREFLAG(huart);
 	}
-	else if(huart->Instance == USART3)
+	if (error_code & HAL_UART_ERROR_FE)
 	{
-        uint32_t error_code = huart->ErrorCode;
-
-		HAL_UART_DMAStop(uart3_manage_object.uart_handle);
-
-        if (error_code & HAL_UART_ERROR_ORE) 
-		{
-            uart3_manage_object.error_code.check.overrun_error = 1;
-			__HAL_UART_CLEAR_OREFLAG(huart);
-        }
-        if (error_code & HAL_UART_ERROR_FE)
-		{
-            uart3_manage_object.error_code.check.frame_error = 1;
-			__HAL_UART_CLEAR_FEFLAG(huart);
-        }
-        if (error_code & HAL_UART_ERROR_NE)
-		{
-            uart3_manage_object.error_code.check.noise_error = 1;
-			__HAL_UART_CLEAR_NEFLAG(huart);
-        }
-        if (error_code & HAL_UART_ERROR_PE)
-		{
-            uart3_manage_object.error_code.check.parity_error = 1;
-			__HAL_UART_CLEAR_PEFLAG(huart);
-        }
-        if (error_code & HAL_UART_ERROR_DMA)
-		{
-            uart3_manage_object.error_code.check.dma_error = 1;
-		}
-
-		memset(uart3_manage_object.rx_buffer, 0, UART_BUFFER_LENGTH);
-
-		HAL_UARTEx_ReceiveToIdle_DMA(uart3_manage_object.uart_handle, uart3_manage_object.rx_buffer, uart3_manage_object.rx_buffer_length);
+		uart_manage_object->error_code.check.frame_error = 1;
+		__HAL_UART_CLEAR_FEFLAG(huart);
 	}
+	if (error_code & HAL_UART_ERROR_NE)
+	{
+		uart_manage_object->error_code.check.noise_error = 1;
+		__HAL_UART_CLEAR_NEFLAG(huart);
+	}
+	if (error_code & HAL_UART_ERROR_PE)
+	{
+		uart_manage_object->error_code.check.parity_error = 1;
+		__HAL_UART_CLEAR_PEFLAG(huart);
+	}
+	if (error_code & HAL_UART_ERROR_DMA)
+	{
+		uart_manage_object->error_code.check.dma_error = 1;
+	}
+
+	memset(uart_manage_object->rx_buffer, 0, UART_BUFFER_LENGTH);
+
+	HAL_UARTEx_ReceiveToIdle_DMA(uart_manage_object->uart_handle, uart_manage_object->rx_buffer, uart_manage_object->rx_buffer_length);
+
 }
 

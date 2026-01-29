@@ -58,13 +58,13 @@ void PcComm::TaskEntry(void *argument)
  */
 void PcComm::UpdataAutoaimData()
 {
-    send_autoaim_data1.head[0] = 'S';
-    send_autoaim_data1.head[1] = 'P';
+    float rotation_q[4] = {0};
 
-    memcpy(&send_autoaim_data1.q, INS.q, 16);
+    EularAngleToQuaternion(INS.Yaw, INS.Pitch, -INS.Roll, rotation_q);
     
-    send_autoaim_data1.yaw_angle      = INS.Yaw;
+    memcpy(&send_autoaim_data1.q, rotation_q, 16);
 
+    send_autoaim_data1.yaw_angle      = INS.Yaw;
     send_autoaim_data1.pitch_angle    = -INS.Roll;
 
     send_autoaim_data1.bullet.speed   = 25;
@@ -124,8 +124,6 @@ void PcComm::ClearAutoaimData()
     recv_autoaim_data.pitch.pitch_vel = 0;
 
     recv_autoaim_data.flag = 1;
-
-    
 }
 
 /**

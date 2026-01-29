@@ -116,7 +116,7 @@ void Robot::Task()
 
 
         // 若掉线发送空白数据
-        if(remote_dr16_.remote_dji_alive_status == REMOTE_DJI_STATUS_DISABLE)
+        if(remote_dr16_.remote_alive_status == REMOTE_ALIVE_STATUS_DISABLE)
         {
             mcu_comm_.ClearData();
         }
@@ -136,7 +136,7 @@ void Robot::Task()
 
 
         // 自瞄模式
-        if(remote_dr16_.output_.remote.switch_r == SWITCH_UP || remote_dr16_.output_.mouse.press_r == REMOTE_DR16_KEY_STATUS_PRESS)
+        if(remote_dr16_.output_.remote.switch_r == SWITCH_UP || remote_dr16_.output_.mouse.mouse_lr.mousecode.mouse_r == REMOTE_KEY_STATUS_PRESS)
         {
             switch (pc_comm_.recv_autoaim_data.mode)
             {
@@ -177,7 +177,7 @@ void Robot::Task()
             }
         }
         // 巡航模式
-        else if(remote_dr16_.output_.remote.switch_r == SWITCH_DOWN || remote_dr16_.output_.keyboard.keycode.q == REMOTE_DR16_KEY_STATUS_PRESS)
+        else if(remote_dr16_.output_.remote.switch_r == SWITCH_DOWN || remote_dr16_.output_.keyboard.keycode.q == REMOTE_KEY_STATUS_PRESS)
         {
             switch (pc_comm_.recv_autoaim_data.mode)
             {
@@ -245,7 +245,7 @@ void Robot::Task()
 
 
         if(remote_dr16_.output_.remote.switch_r == SWITCH_UP || 
-           remote_dr16_.output_.mouse.press_r || remote_dr16_.output_.keyboard.keycode.e)
+           remote_dr16_.output_.mouse.mouse_lr.mousecode.mouse_r || remote_dr16_.output_.keyboard.keycode.e)
         {
             shoot_.SetTargetShootOmega(MAX_SHOOT_OMEGA);
         }
@@ -256,6 +256,8 @@ void Robot::Task()
 
 
         /****************************   Debug   ****************************/
+
+
 
 
         osDelay(pdMS_TO_TICKS(1));
