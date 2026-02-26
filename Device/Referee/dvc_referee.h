@@ -119,28 +119,14 @@ enum RefereeDataRobotID : uint8_t
 enum RefereeDataRobotsID : uint8_t
 {
     Referee_Data_Robots_ID_NO = 0,
-    Referee_Data_Robots_ID_RED_HERO_1,
-    Referee_Data_Robots_ID_RED_ENGINEER_2,
-    Referee_Data_Robots_ID_RED_INFANTRY_3,
-    Referee_Data_Robots_ID_RED_INFANTRY_4,
-    Referee_Data_Robots_ID_RED_INFANTRY_5,
-    Referee_Data_Robots_ID_RED_AERIAL_6,
-    Referee_Data_Robots_ID_RED_SENTRY_7,
-    Referee_Data_Robots_ID_RED_DART_8,
-    Referee_Data_Robots_ID_RED_RADAR_9,
-    Referee_Data_Robots_ID_RED_BASE_10,
-    Referee_Data_Robots_ID_RED_OUTPOST_11,
-    Referee_Data_Robots_ID_BLUE_HERO_1 = 101,
-    Referee_Data_Robots_ID_BLUE_ENGINEER_2,
-    Referee_Data_Robots_ID_BLUE_INFANTRY_3,
-    Referee_Data_Robots_ID_BLUE_INFANTRY_4,
-    Referee_Data_Robots_ID_BLUE_INFANTRY_5,
-    Referee_Data_Robots_ID_BLUE_AERIAL_6,
-    Referee_Data_Robots_ID_BLUE_SENTRY_7,
-    Referee_Data_Robots_ID_BLUE_DART_8,
-    Referee_Data_Robots_ID_BLUE_RADAR_9,
-    Referee_Data_Robots_ID_BLUE_BASE_10,
-    Referee_Data_Robots_ID_BLUE_OUTPOST_11,
+    Referee_Data_Robots_ID_HERO_1,
+    Referee_Data_Robots_ID_ENGINEER_2,
+    Referee_Data_Robots_ID_INFANTRY_3,
+    Referee_Data_Robots_ID_INFANTRY_4,
+    Referee_Data_Robots_ID_RESERVED_5,
+    Referee_Data_Robots_ID_SENTRY_7,
+    Referee_Data_Robots_ID_BASE_10,
+    Referee_Data_Robots_ID_OUTPOST_11,
 };
 
 /**
@@ -470,22 +456,14 @@ struct RefereeRxDataGameResult
  */
 struct RefereeRxDataGameRobotHP
 {
-    uint16_t Red_Hero_1;
-    uint16_t Red_Engineer_2;
-    uint16_t Red_Infantry_3;
-    uint16_t Red_Infantry_4;
-    uint16_t Red_Infantry_5;
-    uint16_t Red_Sentry_7;
-    uint16_t Red_Outpost_11;
-    uint16_t Red_Base_10;
-    uint16_t Blue_Hero_1;
-    uint16_t Blue_Engineer_2;
-    uint16_t Blue_Infantry_3;
-    uint16_t Blue_Infantry_4;
-    uint16_t Blue_Infantry_5;
-    uint16_t Blue_Sentry_7;
-    uint16_t Blue_Outpost_11;
-    uint16_t Blue_Base_10;
+    uint16_t Hero_1;
+    uint16_t Engineer_2;
+    uint16_t Infantry_3;
+    uint16_t Infantry_4;
+    uint16_t Reserved_5;
+    uint16_t Sentry_7;
+    uint16_t Outpost_11;
+    uint16_t Base_10;
     uint16_t CRC_16;
 } __attribute__((packed));
 
@@ -495,19 +473,20 @@ struct RefereeRxDataGameRobotHP
  */
 struct RefereeRxDataEventSelfData
 {
-    uint32_t Supply_Front_Status_Enum : 1;
-    uint32_t Supply_Inner_Status_Enum : 1;
-    uint32_t Supply_Status_Enum : 1;
-    uint32_t Power_Rune_Status_Enum : 1;
-    uint32_t Power_Rune_Small_Status_Enum : 1;
-    uint32_t Power_Rune_Big_Status_Enum : 1;
-    uint32_t Highland_2_Status_Enum : 2;
-    uint32_t Highland_3_Status_Enum : 2;
-    uint32_t Highland_4_Status_Enum : 2;
-    uint32_t Base_Virtual_Shield_Percent : 7;
+    uint32_t No_Resource_Supply_Status : 1;
+    uint32_t Resource_Supply_Status : 1;
+    uint32_t Supply_Status : 1;
+    uint32_t Power_Rune_Small_Status : 2;
+    uint32_t Power_Rune_Big_Status : 2;
+    uint32_t Central_Highland_Status : 2;
+    uint32_t Trapezoid_Highland_Status : 2;
     uint32_t Enemy_Dart_Hit_Time : 9;
-    uint32_t Enemy_Dart_Hit_Target_Enum : 2;
-    uint32_t Middle_Buff_Status_Enum : 2;
+    uint32_t Enemy_Dart_Hit_Target : 3;
+    uint32_t Middle_Buff_Status : 2;
+    uint32_t Fortress_Buff_Status : 2;
+    uint32_t Outpost_Buff_Status : 2;
+    uint32_t Base_Buff_Status : 1;
+    uint32_t Reserved : 2;
     uint16_t CRC_16;
 } __attribute__((packed));
 
@@ -1026,10 +1005,11 @@ public:
     inline RefereeGameResult GetResult();
 
     inline uint16_t GetHP(RefereeDataRobotsID Robots_ID);
+    
 
-    inline RefereeDataStatus GetSupplyFrontStatus();
+    inline RefereeDataStatus GetNoResourceSupplyStatus();
 
-    inline RefereeDataStatus GetSupplyInnerStatus();
+    inline RefereeDataStatus GetResourceSupplyStatus();
 
     inline RefereeDataStatus GetSupplyStatus();
 
@@ -1039,19 +1019,21 @@ public:
 
     inline RefereeDataStatus GetPowerRuneBigStatus();
 
-    inline RefereeDataStatus GetHighland2Status();
+    inline RefereeDataStatus GetCentralHighlandStatus();
 
-    inline RefereeDataStatus GetHighland3Status();
-
-    inline RefereeDataStatus GetHighland4Status();
-
-    inline uint8_t GetBaseVirtualShieldPercent();
+    inline RefereeDataStatus GetTrapezoidHighlandStatus();
 
     inline uint16_t GetEnemyDartHitTime();
 
-    inline RefereeDartHitTarget GetEnemyDartHitTargetEnum();
+    inline RefereeDartHitTarget GetEnemyDartHitTarget();
 
     inline RefereeDataStatus GetMiddleBuffStatus();
+
+    inline RefereeDataStatus GetFortressBuffStatus();
+
+    inline RefereeDataStatus GetOutpostBuffStatus();
+
+    inline RefereeDataStatus GetBaseBuffStatus();
 
     inline RefereeDataRobotsID GetSupplyRequestRobot();
 
@@ -1233,38 +1215,6 @@ public:
 
     inline void SetRefereeTrustStatus(RefereeDataStatus __Referee_Trust_Status);
 
-    inline void SetRefereeUiChangeFlagClear();
-
-    inline RefereeDataInteractionGraphicConfig *SetRefereeUiClear(uint8_t Layer_Num, uint8_t Graphic_Num);
-
-    inline RefereeDataInteractionGraphicConfig *SetRefereeUiLine(uint8_t Layer_Num, uint8_t Graphic_Num, RefereeDataInteractionGraphicColor Color, uint32_t Line_Width, uint32_t Start_X, uint32_t Start_Y, uint32_t End_X, uint32_t End_Y);
-
-    inline RefereeDataInteractionGraphicConfig *SetRefereeUiRectangle(uint8_t Layer_Num, uint8_t Graphic_Num, RefereeDataInteractionGraphicColor Color, uint32_t Line_Width, uint32_t Start_X, uint32_t Start_Y, uint32_t End_X, uint32_t End_Y);
-
-    inline RefereeDataInteractionGraphicConfig *SetRefereeUiCircle(uint8_t Layer_Num, uint8_t Graphic_Num, RefereeDataInteractionGraphicColor Color, uint32_t Line_Width, uint32_t Center_X, uint32_t Center_Y, uint32_t Radius);
-
-    inline RefereeDataInteractionGraphicConfig *SetRefereeUiOval(uint8_t Layer_Num, uint8_t Graphic_Num, RefereeDataInteractionGraphicColor Color, uint32_t Line_Width, uint32_t Center_X, uint32_t Center_Y, uint32_t Length_X, uint32_t Length_Y);
-
-    inline RefereeDataInteractionGraphicConfig *SetRefereeUiArc(uint8_t Layer_Num, uint8_t Graphic_Num, RefereeDataInteractionGraphicColor Color, uint32_t Line_Width, uint32_t Center_X, uint32_t Center_Y, uint32_t Angle_Start, uint32_t Angle_End, uint32_t Length_X, uint32_t Length_Y);
-
-    inline RefereeDataInteractionGraphicConfig *SetRefereeUiFloat(uint8_t Layer_Num, uint8_t Graphic_Num, RefereeDataInteractionGraphicColor Color, uint32_t Line_Width, uint32_t Start_X, uint32_t Start_Y, uint32_t Font_Width, float Float);
-
-    inline RefereeDataInteractionGraphicConfig *SetRefereeUiInteger(uint8_t Layer_Num, uint8_t Graphic_Num, RefereeDataInteractionGraphicColor Color, uint32_t Line_Width, uint32_t Start_X, uint32_t Start_Y, uint32_t Font_Width, int32_t Integer);
-
-    inline RefereeDataInteractionGraphicConfig *SetRefereeUiString(uint8_t Layer_Num, uint8_t Graphic_Num, RefereeDataInteractionGraphicColor Color, uint32_t Line_Width, uint32_t Start_X, uint32_t Start_Y, uint32_t Font_Width, uint32_t String_Length);
-
-    void UartSendInteractionUiLayerDelete(RefereeDataInteractionLayerDeleteOperation Layer_Delete_Operation, uint8_t Layer);
-
-    void UartSendInteractionUiGraphic1(RefereeDataInteractionGraphicConfig *Graphic_1);
-
-    void UartSendInteractionUiGraphic2(RefereeDataInteractionGraphicConfig *Graphic_1, RefereeDataInteractionGraphicConfig *Graphic_2);
-
-    void UartSendInteractionUiGraphic5(RefereeDataInteractionGraphicConfig *Graphic_1, RefereeDataInteractionGraphicConfig *Graphic_2, RefereeDataInteractionGraphicConfig *Graphic_3, RefereeDataInteractionGraphicConfig *Graphic_4, RefereeDataInteractionGraphicConfig *Graphic_5);
-
-    void UartSendInteractionUiGraphic7(RefereeDataInteractionGraphicConfig *Graphic_1, RefereeDataInteractionGraphicConfig *Graphic_2, RefereeDataInteractionGraphicConfig *Graphic_3, RefereeDataInteractionGraphicConfig *Graphic_4, RefereeDataInteractionGraphicConfig *Graphic_5, RefereeDataInteractionGraphicConfig *Graphic_6, RefereeDataInteractionGraphicConfig *Graphic_7);
-
-    void UartSendInteractionUiGraphicString(RefereeDataInteractionGraphicConfig *Graphic_String, const char *String_Content);
-
     void UartRxCpltCallback(uint8_t *Rx_Data, uint16_t Length);
 
     void AlivePeriodElapsedCallback();
@@ -1443,97 +1393,65 @@ inline uint16_t Referee::GetHP(RefereeDataRobotsID Robots_ID)
 {
     switch (Robots_ID)
     {
-    case (Referee_Data_Robots_ID_RED_HERO_1):
-    {
-        return (game_robot_hp_.Red_Hero_1);
-    }
-        break;
-    case (Referee_Data_Robots_ID_RED_ENGINEER_2):
-    {
-        return (game_robot_hp_.Red_Engineer_2);
-    }
-        break;
-    case (Referee_Data_Robots_ID_RED_INFANTRY_3):
-    {
-        return (game_robot_hp_.Red_Infantry_3);
-    }
-        break;
-    case (Referee_Data_Robots_ID_RED_INFANTRY_4):
-    {
-        return (game_robot_hp_.Red_Infantry_4);
-    }
-        break;
-    case (Referee_Data_Robots_ID_RED_INFANTRY_5):
-    {
-        return (game_robot_hp_.Red_Infantry_5);
-    }
-        break;
-    case (Referee_Data_Robots_ID_RED_SENTRY_7):
-    {
-        return (game_robot_hp_.Red_Sentry_7);
-    }
-        break;
-    case (Referee_Data_Robots_ID_RED_OUTPOST_11):
-    {
-        return (game_robot_hp_.Red_Outpost_11);
-    }
-        break;
-    case (Referee_Data_Robots_ID_RED_BASE_10):
-    {
-        return (game_robot_hp_.Red_Base_10);
-    }
-        break;
-    case (Referee_Data_Robots_ID_BLUE_HERO_1):
-    {
-        return (game_robot_hp_.Blue_Hero_1);
-    }
-        break;
-    case (Referee_Data_Robots_ID_BLUE_ENGINEER_2):
-    {
-        return (game_robot_hp_.Blue_Engineer_2);
-    }
-        break;
-    case (Referee_Data_Robots_ID_BLUE_INFANTRY_3):
-    {
-        return (game_robot_hp_.Blue_Infantry_3);
-    }
-        break;
-    case (Referee_Data_Robots_ID_BLUE_INFANTRY_4):
-    {
-        return (game_robot_hp_.Blue_Infantry_4);
-    }
-        break;
-    case (Referee_Data_Robots_ID_BLUE_INFANTRY_5):
-    {
-        return (game_robot_hp_.Blue_Infantry_5);
-    }
-        break;
-    case (Referee_Data_Robots_ID_BLUE_SENTRY_7):
-    {
-        return (game_robot_hp_.Blue_Sentry_7);
-    }
-        break;
-    case (Referee_Data_Robots_ID_BLUE_OUTPOST_11):
-    {
-        return (game_robot_hp_.Blue_Outpost_11);
-    }
-        break;
-    case (Referee_Data_Robots_ID_BLUE_BASE_10):
-    {
-        return (game_robot_hp_.Blue_Base_10);
-    }
-        break;
+        case (Referee_Data_Robots_ID_HERO_1):
+        {
+            return (game_robot_hp_.Hero_1);
+            break;
+        }
+        case (Referee_Data_Robots_ID_ENGINEER_2):
+        {
+            return (game_robot_hp_.Engineer_2);
+            break;
+        }
+        case (Referee_Data_Robots_ID_INFANTRY_3):
+        {
+            return (game_robot_hp_.Infantry_3);
+            break;
+        }
+        case (Referee_Data_Robots_ID_INFANTRY_4):
+        {
+            return (game_robot_hp_.Infantry_4);
+            
+        }
+        case (Referee_Data_Robots_ID_RESERVED_5):
+        {
+            return (game_robot_hp_.Reserved_5);
+            break;
+        }
+        case (Referee_Data_Robots_ID_SENTRY_7):
+        {
+            return (game_robot_hp_.Sentry_7);
+            break;
+        }
+        case (Referee_Data_Robots_ID_OUTPOST_11):
+        {
+            return (game_robot_hp_.Outpost_11);
+            break;
+        }
+        case (Referee_Data_Robots_ID_BASE_10):
+        {
+            return (game_robot_hp_.Base_10);
+            break;
+        }
+        default:
+        {
+            return 0;
+            break;
+        }
     }
 }
+
+
+//////////////////////////////////////////////////////////////
 
 /**
  * @brief 获取补给站前占领状态
  *
  * @return RefereeDataStatus 补给站前占领状态
  */
-inline RefereeDataStatus Referee::GetSupplyFrontStatus()
+inline RefereeDataStatus Referee::GetNoResourceSupplyStatus()
 {
-    return (static_cast<RefereeDataStatus>(event_self_data_.Supply_Front_Status_Enum));
+    return (static_cast<RefereeDataStatus>(event_self_data_.No_Resource_Supply_Status));
 }
 
 /**
@@ -1541,9 +1459,9 @@ inline RefereeDataStatus Referee::GetSupplyFrontStatus()
  *
  * @return RefereeDataStatus 补给站内占领状态
  */
-inline RefereeDataStatus Referee::GetSupplyInnerStatus()
+inline RefereeDataStatus Referee::GetResourceSupplyStatus()
 {
-    return (static_cast<RefereeDataStatus>(event_self_data_.Supply_Inner_Status_Enum));
+    return (static_cast<RefereeDataStatus>(event_self_data_.Resource_Supply_Status));
 }
 
 /**
@@ -1553,17 +1471,7 @@ inline RefereeDataStatus Referee::GetSupplyInnerStatus()
  */
 inline RefereeDataStatus Referee::GetSupplyStatus()
 {
-    return (static_cast<RefereeDataStatus>(event_self_data_.Supply_Status_Enum));
-}
-
-/**
- * @brief 获取能量机关占领状态
- *
- * @return RefereeDataStatus 能量机关占领状态
- */
-inline RefereeDataStatus Referee::GetPowerRuneStatus()
-{
-    return (static_cast<RefereeDataStatus>(event_self_data_.Power_Rune_Status_Enum));
+    return (static_cast<RefereeDataStatus>(event_self_data_.Supply_Status));
 }
 
 /**
@@ -1573,7 +1481,7 @@ inline RefereeDataStatus Referee::GetPowerRuneStatus()
  */
 inline RefereeDataStatus Referee::GetPowerRuneSmallStatus()
 {
-    return (static_cast<RefereeDataStatus>(event_self_data_.Power_Rune_Small_Status_Enum));
+    return (static_cast<RefereeDataStatus>(event_self_data_.Power_Rune_Small_Status));
 }
 
 /**
@@ -1583,17 +1491,7 @@ inline RefereeDataStatus Referee::GetPowerRuneSmallStatus()
  */
 inline RefereeDataStatus Referee::GetPowerRuneBigStatus()
 {
-    return (static_cast<RefereeDataStatus>(event_self_data_.Power_Rune_Big_Status_Enum));
-}
-
-/**
- * @brief 获取环形高地占领状态
- *
- * @return RefereeDataStatus 环形高地占领状态
- */
-inline RefereeDataStatus Referee::GetHighland2Status()
-{
-    return (static_cast<RefereeDataStatus>(event_self_data_.Highland_2_Status_Enum));
+    return (static_cast<RefereeDataStatus>(event_self_data_.Power_Rune_Big_Status));
 }
 
 /**
@@ -1601,9 +1499,9 @@ inline RefereeDataStatus Referee::GetHighland2Status()
  *
  * @return RefereeDataStatus 梯形高地3占领状态
  */
-inline RefereeDataStatus Referee::GetHighland3Status()
+inline RefereeDataStatus Referee::GetCentralHighlandStatus()
 {
-    return (static_cast<RefereeDataStatus>(event_self_data_.Highland_3_Status_Enum));
+    return (static_cast<RefereeDataStatus>(event_self_data_.Central_Highland_Status));
 }
 
 /**
@@ -1611,19 +1509,9 @@ inline RefereeDataStatus Referee::GetHighland3Status()
  *
  * @return RefereeDataStatus 梯形高地4占领状态
  */
-inline RefereeDataStatus Referee::GetHighland4Status()
+inline RefereeDataStatus Referee::GetTrapezoidHighlandStatus()
 {
-    return (static_cast<RefereeDataStatus>(event_self_data_.Highland_4_Status_Enum));
-}
-
-/**
- * @brief 获取基地护盾状态
- *
- * @return uint8_t 基地护盾状态
- */
-inline uint8_t Referee::GetBaseVirtualShieldPercent()
-{
-    return (event_self_data_.Base_Virtual_Shield_Percent);
+    return (static_cast<RefereeDataStatus>(event_self_data_.Trapezoid_Highland_Status));
 }
 
 /**
@@ -1641,9 +1529,9 @@ inline uint16_t Referee::GetEnemyDartHitTime()
  *
  * @return RefereeDartHitTarget 敌方飞镖最后一次命中己方建筑物
  */
-inline RefereeDartHitTarget Referee::GetEnemyDartHitTargetEnum()
+inline RefereeDartHitTarget Referee::GetEnemyDartHitTarget()
 {
-    return (static_cast<RefereeDartHitTarget>(event_self_data_.Enemy_Dart_Hit_Target_Enum));
+    return (static_cast<RefereeDartHitTarget>(event_self_data_.Enemy_Dart_Hit_Target));
 }
 
 /**
@@ -1653,8 +1541,40 @@ inline RefereeDartHitTarget Referee::GetEnemyDartHitTargetEnum()
  */
 inline RefereeDataStatus Referee::GetMiddleBuffStatus()
 {
-    return (static_cast<RefereeDataStatus>(event_self_data_.Middle_Buff_Status_Enum));
+    return (static_cast<RefereeDataStatus>(event_self_data_.Middle_Buff_Status));
 }
+
+/**
+ * @brief 获取己方堡垒增益点占领状态
+ * 
+ * @return RefereeDataStatus 
+ */
+inline RefereeDataStatus Referee::GetFortressBuffStatus()
+{
+    return (static_cast<RefereeDataStatus>(event_self_data_.Fortress_Buff_Status));
+}
+
+/**
+ * @brief 获取己方前哨站增益点占领状态
+ * 
+ * @return RefereeDataStatus 
+ */
+inline RefereeDataStatus Referee::GetOutpostBuffStatus()
+{
+    return (static_cast<RefereeDataStatus>(event_self_data_.Outpost_Buff_Status));
+}
+
+/**
+ * @brief 获取己方基地增益点占领状态
+ * 
+ * @return RefereeDataStatus 
+ */
+inline RefereeDataStatus Referee::GetBaseBuffStatus()
+{
+    return (static_cast<RefereeDataStatus>(event_self_data_.Base_Buff_Status));
+}
+
+//////////////////////////////////////////////////////////////
 
 /**
  * @brief 获取请求补给的机器人ID
@@ -2554,373 +2474,6 @@ inline RefereeDataStatus Referee::GetRadarDecisionDoubleDamageEnemyStatus()
 inline void Referee::SetRefereeTrustStatus(RefereeDataStatus __Referee_Trust_Status)
 {
     referee_trust_status_ = __Referee_Trust_Status;
-}
-
-/**
- * @brief 设定裁判系统UI清除
- *
- */
-inline void Referee::SetRefereeUiChangeFlagClear()
-{
-    for (int i = 0; i < 10; i++)
-    {
-        for (int j = 0; j < 10; j++)
-        {
-            ui_change_flag_[i][j] = 0;
-        }
-    }
-}
-
-/**
- * @brief 设定裁判系统UI清除
- *
- * @param Layer_Num 图层编号, 0~9
- * @param Graphic_Num 图形编号, 0~9
- */
-inline RefereeDataInteractionGraphicConfig *Referee::SetRefereeUiClear(uint8_t Layer_Num, uint8_t Graphic_Num)
-{
-    graphic_config_[Layer_Num][Graphic_Num].Index[0] = '0';
-    graphic_config_[Layer_Num][Graphic_Num].Index[1] = '0' + Layer_Num;
-
-    graphic_config_[Layer_Num][Graphic_Num].Index[2] = '0' + Graphic_Num;
-
-    graphic_config_[Layer_Num][Graphic_Num].Operation_Enum = Referee_Data_Interaction_Graphic_Operation_DELETE;
-
-    ui_change_flag_[Layer_Num][Graphic_Num] = 0;
-
-    return (&graphic_config_[Layer_Num][Graphic_Num]);
-}
-
-/**
- * @brief 设定裁判系统UI直线
- *
- * @param Layer_Num 图层编号, 0~9
- * @param Graphic_Num 图形编号, 0~9
- * @param Color 图形颜色
- * @param Line_Width 线宽
- * @param Start_X 起点x
- * @param Start_Y 起点y
- * @param End_X 终点x
- * @param End_Y 终点y
- * @return 对应图层指针
- */
-inline RefereeDataInteractionGraphicConfig *Referee::SetRefereeUiLine(uint8_t Layer_Num, uint8_t Graphic_Num, RefereeDataInteractionGraphicColor Color, uint32_t Line_Width, uint32_t Start_X, uint32_t Start_Y, uint32_t End_X, uint32_t End_Y)
-{
-    graphic_config_[Layer_Num][Graphic_Num].Index[0] = '0';
-    graphic_config_[Layer_Num][Graphic_Num].Index[1] = '0' + Layer_Num;
-    graphic_config_[Layer_Num][Graphic_Num].Index[2] = '0' + Graphic_Num;
-
-    if (ui_change_flag_[Layer_Num][Graphic_Num] == 0)
-    {
-        graphic_config_[Layer_Num][Graphic_Num].Operation_Enum = Referee_Data_Interaction_Graphic_Operation_ADD;
-        ui_change_flag_[Layer_Num][Graphic_Num] = 1;
-    }
-    else
-    {
-        graphic_config_[Layer_Num][Graphic_Num].Operation_Enum = Referee_Data_Interaction_Graphic_Operation_CHANGE;
-    }
-
-    graphic_config_[Layer_Num][Graphic_Num].Type_Enum = Referee_Data_Interaction_Graphic_Type_LINE;
-    graphic_config_[Layer_Num][Graphic_Num].Layer_Num = Layer_Num;
-    graphic_config_[Layer_Num][Graphic_Num].Color_Enum = Color;
-    graphic_config_[Layer_Num][Graphic_Num].Line_Width = Line_Width;
-    graphic_config_[Layer_Num][Graphic_Num].Start_X = Start_X;
-    graphic_config_[Layer_Num][Graphic_Num].Start_Y = Start_Y;
-    graphic_config_[Layer_Num][Graphic_Num].Details_D = End_X;
-    graphic_config_[Layer_Num][Graphic_Num].Details_E = End_Y;
-
-    return (&graphic_config_[Layer_Num][Graphic_Num]);
-}
-
-/**
- * @brief 设定裁判系统UI矩形
- *
- * @param Layer_Num 图层编号, 0~9
- * @param Graphic_Num 图形编号, 0~9
- * @param Color 图形颜色
- * @param Line_Width 线宽
- * @param Start_X 起点x
- * @param Start_Y 起点y
- * @param End_X 终点x
- * @param End_Y 终点y
- * @return 对应图层指针
- */
-inline RefereeDataInteractionGraphicConfig *Referee::SetRefereeUiRectangle(uint8_t Layer_Num, uint8_t Graphic_Num, RefereeDataInteractionGraphicColor Color, uint32_t Line_Width, uint32_t Start_X, uint32_t Start_Y, uint32_t End_X, uint32_t End_Y)
-{
-    graphic_config_[Layer_Num][Graphic_Num].Index[0] = '0';
-    graphic_config_[Layer_Num][Graphic_Num].Index[1] = '0' + Layer_Num;
-    graphic_config_[Layer_Num][Graphic_Num].Index[2] = '0' + Graphic_Num;
-
-    if (ui_change_flag_[Layer_Num][Graphic_Num] == 0)
-    {
-        graphic_config_[Layer_Num][Graphic_Num].Operation_Enum = Referee_Data_Interaction_Graphic_Operation_ADD;
-        ui_change_flag_[Layer_Num][Graphic_Num] = 1;
-    }
-    else
-    {
-        graphic_config_[Layer_Num][Graphic_Num].Operation_Enum = Referee_Data_Interaction_Graphic_Operation_CHANGE;
-    }
-
-    graphic_config_[Layer_Num][Graphic_Num].Type_Enum = Referee_Data_Interaction_Graphic_Type_RECTANGLE;
-    graphic_config_[Layer_Num][Graphic_Num].Layer_Num = Layer_Num;
-    graphic_config_[Layer_Num][Graphic_Num].Color_Enum = Color;
-    graphic_config_[Layer_Num][Graphic_Num].Line_Width = Line_Width;
-    graphic_config_[Layer_Num][Graphic_Num].Start_X = Start_X;
-    graphic_config_[Layer_Num][Graphic_Num].Start_Y = Start_Y;
-    graphic_config_[Layer_Num][Graphic_Num].Details_D = End_X;
-    graphic_config_[Layer_Num][Graphic_Num].Details_E = End_Y;
-
-    return (&graphic_config_[Layer_Num][Graphic_Num]);
-}
-
-/**
- * @brief 设定裁判系统UI圆形
- *
- * @param Layer_Num 图层编号, 0~9
- * @param Graphic_Num 图形编号, 0~9
- * @param Color 图形颜色
- * @param Line_Width 线宽
- * @param Center_X 圆心x
- * @param Center_Y 圆心y
- * @param Radius 半径
- * @return 对应图层指针
- */
-inline RefereeDataInteractionGraphicConfig *Referee::SetRefereeUiCircle(uint8_t Layer_Num, uint8_t Graphic_Num, RefereeDataInteractionGraphicColor Color, uint32_t Line_Width, uint32_t Center_X, uint32_t Center_Y, uint32_t Radius)
-{
-    graphic_config_[Layer_Num][Graphic_Num].Index[0] = '0';
-    graphic_config_[Layer_Num][Graphic_Num].Index[1] = '0' + Layer_Num;
-    graphic_config_[Layer_Num][Graphic_Num].Index[2] = '0' + Graphic_Num;
-
-    if (ui_change_flag_[Layer_Num][Graphic_Num] == 0)
-    {
-        graphic_config_[Layer_Num][Graphic_Num].Operation_Enum = Referee_Data_Interaction_Graphic_Operation_ADD;
-        ui_change_flag_[Layer_Num][Graphic_Num] = 1;
-    }
-    else
-    {
-        graphic_config_[Layer_Num][Graphic_Num].Operation_Enum = Referee_Data_Interaction_Graphic_Operation_CHANGE;
-    }
-
-    graphic_config_[Layer_Num][Graphic_Num].Type_Enum = Referee_Data_Interaction_Graphic_Type_CIRCLE;
-    graphic_config_[Layer_Num][Graphic_Num].Layer_Num = Layer_Num;
-    graphic_config_[Layer_Num][Graphic_Num].Color_Enum = Color;
-    graphic_config_[Layer_Num][Graphic_Num].Line_Width = Line_Width;
-    graphic_config_[Layer_Num][Graphic_Num].Start_X = Center_X;
-    graphic_config_[Layer_Num][Graphic_Num].Start_Y = Center_Y;
-    graphic_config_[Layer_Num][Graphic_Num].Details_C = Radius;
-
-    return (&graphic_config_[Layer_Num][Graphic_Num]);
-}
-
-/**
- * @brief 设定裁判系统UI椭圆形
- *
- * @param Layer_Num 图层编号, 0~9
- * @param Graphic_Num 图形编号, 0~9
- * @param Color 图形颜色
- * @param Line_Width 线宽
- * @param Center_X 圆心x
- * @param Center_Y 圆心y
- * @param Length_X x半轴长度
- * @param Length_Y y半轴长度
- * @return 对应图层指针
- */
-inline RefereeDataInteractionGraphicConfig *Referee::SetRefereeUiOval(uint8_t Layer_Num, uint8_t Graphic_Num, RefereeDataInteractionGraphicColor Color, uint32_t Line_Width, uint32_t Center_X, uint32_t Center_Y, uint32_t Length_X, uint32_t Length_Y)
-{
-    graphic_config_[Layer_Num][Graphic_Num].Index[0] = '0';
-    graphic_config_[Layer_Num][Graphic_Num].Index[1] = '0' + Layer_Num;
-    graphic_config_[Layer_Num][Graphic_Num].Index[2] = '0' + Graphic_Num;
-
-    if (ui_change_flag_[Layer_Num][Graphic_Num] == 0)
-    {
-        graphic_config_[Layer_Num][Graphic_Num].Operation_Enum = Referee_Data_Interaction_Graphic_Operation_ADD;
-        ui_change_flag_[Layer_Num][Graphic_Num] = 1;
-    }
-    else
-    {
-        graphic_config_[Layer_Num][Graphic_Num].Operation_Enum = Referee_Data_Interaction_Graphic_Operation_CHANGE;
-    }
-
-    graphic_config_[Layer_Num][Graphic_Num].Type_Enum = Referee_Data_Interaction_Graphic_Type_OVAL;
-    graphic_config_[Layer_Num][Graphic_Num].Layer_Num = Layer_Num;
-    graphic_config_[Layer_Num][Graphic_Num].Color_Enum = Color;
-    graphic_config_[Layer_Num][Graphic_Num].Line_Width = Line_Width;
-    graphic_config_[Layer_Num][Graphic_Num].Start_X = Center_X;
-    graphic_config_[Layer_Num][Graphic_Num].Start_Y = Center_Y;
-    graphic_config_[Layer_Num][Graphic_Num].Details_D = Length_X;
-    graphic_config_[Layer_Num][Graphic_Num].Details_E = Length_Y;
-
-    return (&graphic_config_[Layer_Num][Graphic_Num]);
-}
-
-/**
- * @brief 设定裁判系统UI圆弧形
- *
- * @param Layer_Num 图层编号, 0~9
- * @param Graphic_Num 图形编号, 0~9
- * @param Color 图形颜色
- * @param Line_Width 线宽
- * @param Center_X 圆心x
- * @param Center_Y 圆心y
- * @param Angle_Start 起始角度
- * @param Angle_End 终止角度
- * @param Length_X x半轴长度
- * @param Length_Y y半轴长度
- * @return 对应图层指针
- */
-inline RefereeDataInteractionGraphicConfig *Referee::SetRefereeUiArc(uint8_t Layer_Num, uint8_t Graphic_Num, RefereeDataInteractionGraphicColor Color, uint32_t Line_Width, uint32_t Center_X, uint32_t Center_Y, uint32_t Angle_Start, uint32_t Angle_End, uint32_t Length_X, uint32_t Length_Y)
-{
-    graphic_config_[Layer_Num][Graphic_Num].Index[0] = '0';
-    graphic_config_[Layer_Num][Graphic_Num].Index[1] = '0' + Layer_Num;
-    graphic_config_[Layer_Num][Graphic_Num].Index[2] = '0' + Graphic_Num;
-
-    if (ui_change_flag_[Layer_Num][Graphic_Num] == 0)
-    {
-        graphic_config_[Layer_Num][Graphic_Num].Operation_Enum = Referee_Data_Interaction_Graphic_Operation_ADD;
-        ui_change_flag_[Layer_Num][Graphic_Num] = 1;
-    }
-    else
-    {
-        graphic_config_[Layer_Num][Graphic_Num].Operation_Enum = Referee_Data_Interaction_Graphic_Operation_CHANGE;
-    }
-
-    graphic_config_[Layer_Num][Graphic_Num].Type_Enum = Referee_Data_Interaction_Graphic_Type_ARC;
-    graphic_config_[Layer_Num][Graphic_Num].Layer_Num = Layer_Num;
-    graphic_config_[Layer_Num][Graphic_Num].Color_Enum = Color;
-    graphic_config_[Layer_Num][Graphic_Num].Line_Width = Line_Width;
-    graphic_config_[Layer_Num][Graphic_Num].Start_X = Center_X;
-    graphic_config_[Layer_Num][Graphic_Num].Start_Y = Center_Y;
-    graphic_config_[Layer_Num][Graphic_Num].Details_A = Angle_Start;
-    graphic_config_[Layer_Num][Graphic_Num].Details_B = Angle_End;
-    graphic_config_[Layer_Num][Graphic_Num].Details_D = Length_X;
-    graphic_config_[Layer_Num][Graphic_Num].Details_E = Length_Y;
-
-    return (&graphic_config_[Layer_Num][Graphic_Num]);
-}
-
-/**
- * @brief 设定裁判系统UI浮点数
- *
- * @param Layer_Num 图层编号, 0~9
- * @param Graphic_Num 图形编号, 0~9
- * @param Color 图形颜色
- * @param Line_Width 线宽
- * @param Start_X 起点x
- * @param Start_Y 起点y
- * @param Font_Width 字体大小
- * @param Float 数值
- * @return 对应图层指针
- */
-inline RefereeDataInteractionGraphicConfig *Referee::SetRefereeUiFloat(uint8_t Layer_Num, uint8_t Graphic_Num, RefereeDataInteractionGraphicColor Color, uint32_t Line_Width, uint32_t Start_X, uint32_t Start_Y, uint32_t Font_Width, float Float)
-{
-    graphic_config_[Layer_Num][Graphic_Num].Index[0] = '0';
-    graphic_config_[Layer_Num][Graphic_Num].Index[1] = '0' + Layer_Num;
-    graphic_config_[Layer_Num][Graphic_Num].Index[2] = '0' + Graphic_Num;
-
-    if (ui_change_flag_[Layer_Num][Graphic_Num] == 0)
-    {
-        graphic_config_[Layer_Num][Graphic_Num].Operation_Enum = Referee_Data_Interaction_Graphic_Operation_ADD;
-        ui_change_flag_[Layer_Num][Graphic_Num] = 1;
-    }
-    else
-    {
-        graphic_config_[Layer_Num][Graphic_Num].Operation_Enum = Referee_Data_Interaction_Graphic_Operation_CHANGE;
-    }
-
-    graphic_config_[Layer_Num][Graphic_Num].Type_Enum = Referee_Data_Interaction_Graphic_Type_FLOAT;
-    graphic_config_[Layer_Num][Graphic_Num].Layer_Num = Layer_Num;
-    graphic_config_[Layer_Num][Graphic_Num].Color_Enum = Color;
-    graphic_config_[Layer_Num][Graphic_Num].Line_Width = Line_Width;
-    graphic_config_[Layer_Num][Graphic_Num].Start_X = Start_X;
-    graphic_config_[Layer_Num][Graphic_Num].Start_Y = Start_Y;
-    graphic_config_[Layer_Num][Graphic_Num].Details_A = Font_Width;
-    int32_t *tmp_pointer = (int32_t *) ((uint32_t) &graphic_config_[Layer_Num][Graphic_Num] + 11);
-    *tmp_pointer = (int32_t) (Float * 1000.0f);
-
-    return (&graphic_config_[Layer_Num][Graphic_Num]);
-}
-
-/**
- * @brief 设定裁判系统UI整型数
- *
- * @param Layer_Num 图层编号, 0~9
- * @param Graphic_Num 图形编号, 0~9
- * @param Color 图形颜色
- * @param Line_Width 线宽
- * @param Start_X 起点x
- * @param Start_Y 起点y
- * @param Font_Width 字体大小
- * @param Integer 数值
- * @return 对应图层指针
- */
-inline RefereeDataInteractionGraphicConfig *Referee::SetRefereeUiInteger(uint8_t Layer_Num, uint8_t Graphic_Num, RefereeDataInteractionGraphicColor Color, uint32_t Line_Width, uint32_t Start_X, uint32_t Start_Y, uint32_t Font_Width, int32_t Integer)
-{
-    graphic_config_[Layer_Num][Graphic_Num].Index[0] = '0';
-    graphic_config_[Layer_Num][Graphic_Num].Index[1] = '0' + Layer_Num;
-    graphic_config_[Layer_Num][Graphic_Num].Index[2] = '0' + Graphic_Num;
-
-    if (ui_change_flag_[Layer_Num][Graphic_Num] == 0)
-    {
-        graphic_config_[Layer_Num][Graphic_Num].Operation_Enum = Referee_Data_Interaction_Graphic_Operation_ADD;
-        ui_change_flag_[Layer_Num][Graphic_Num] = 1;
-    }
-    else
-    {
-        graphic_config_[Layer_Num][Graphic_Num].Operation_Enum = Referee_Data_Interaction_Graphic_Operation_CHANGE;
-    }
-
-    graphic_config_[Layer_Num][Graphic_Num].Type_Enum = Referee_Data_Interaction_Graphic_Type_INTEGER;
-    graphic_config_[Layer_Num][Graphic_Num].Layer_Num = Layer_Num;
-    graphic_config_[Layer_Num][Graphic_Num].Color_Enum = Color;
-    graphic_config_[Layer_Num][Graphic_Num].Line_Width = Line_Width;
-    graphic_config_[Layer_Num][Graphic_Num].Start_X = Start_X;
-    graphic_config_[Layer_Num][Graphic_Num].Start_Y = Start_Y;
-    graphic_config_[Layer_Num][Graphic_Num].Details_A = Font_Width;
-    int32_t *tmp_pointer = (int32_t *) ((uint32_t) &graphic_config_[Layer_Num][Graphic_Num] + 11);
-    *tmp_pointer = (int32_t) (Integer);
-
-    return (&graphic_config_[Layer_Num][Graphic_Num]);
-}
-
-/**
- * @brief 设定裁判系统UI字符串
- *
- * @param Layer_Num 图层编号, 0~9
- * @param Graphic_Num 图形编号, 0~9
- * @param Color 图形颜色
- * @param Line_Width 线宽
- * @param Start_X 起点x
- * @param Start_Y 起点y
- * @param Font_Width 字体大小
- * @param String_Length 字符串长度
- * @return
- */
-inline RefereeDataInteractionGraphicConfig *Referee::SetRefereeUiString(uint8_t Layer_Num, uint8_t Graphic_Num, RefereeDataInteractionGraphicColor Color, uint32_t Line_Width, uint32_t Start_X, uint32_t Start_Y, uint32_t Font_Width, uint32_t String_Length)
-{
-    graphic_config_[Layer_Num][Graphic_Num].Index[0] = '0';
-    graphic_config_[Layer_Num][Graphic_Num].Index[1] = '0' + Layer_Num;
-    graphic_config_[Layer_Num][Graphic_Num].Index[2] = '0' + Graphic_Num;
-
-    if (ui_change_flag_[Layer_Num][Graphic_Num] == 0)
-    {
-        graphic_config_[Layer_Num][Graphic_Num].Operation_Enum = Referee_Data_Interaction_Graphic_Operation_ADD;
-        ui_change_flag_[Layer_Num][Graphic_Num] = 1;
-    }
-    else
-    {
-        graphic_config_[Layer_Num][Graphic_Num].Operation_Enum = Referee_Data_Interaction_Graphic_Operation_CHANGE;
-    }
-
-    graphic_config_[Layer_Num][Graphic_Num].Type_Enum = Referee_Data_Interaction_Graphic_Type_STRING;
-    graphic_config_[Layer_Num][Graphic_Num].Layer_Num = Layer_Num;
-    graphic_config_[Layer_Num][Graphic_Num].Color_Enum = Color;
-    graphic_config_[Layer_Num][Graphic_Num].Line_Width = Line_Width;
-    graphic_config_[Layer_Num][Graphic_Num].Start_X = Start_X;
-    graphic_config_[Layer_Num][Graphic_Num].Start_Y = Start_Y;
-    graphic_config_[Layer_Num][Graphic_Num].Details_A = Font_Width;
-    graphic_config_[Layer_Num][Graphic_Num].Details_B = String_Length;
-
-    return (&graphic_config_[Layer_Num][Graphic_Num]);
 }
 
 #endif

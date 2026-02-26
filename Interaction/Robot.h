@@ -32,6 +32,8 @@
 
 /* Exported macros -----------------------------------------------------------*/
 
+#define CURRENT_ROBOT_ID    Referee_Data_Robots_ID_SENTRY_7
+
 /* Exported types ------------------------------------------------------------*/
 
 class Robot
@@ -49,6 +51,8 @@ public:
     Imu imu_;
     // 超级电容
     Supercap supercap_;
+    // 裁判系统
+    Referee referee_;
 
     void Init();
 

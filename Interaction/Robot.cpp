@@ -12,6 +12,7 @@
 
 #include "Robot.h"
 #include "app_chassis.h"
+#include "bsp_uart.h"
 #include "dvc_remote_dr16.h"
 
 /* Private macros ------------------------------------------------------------*/
@@ -37,6 +38,9 @@
 void Robot::Init()
 {
     dwt_init(168);
+
+    // 裁判系统初始化
+    referee_.Init(&huart6, uart6_callback_function, UART_BUFFER_LENGTH);
 
     // 上下板通讯组件初始化
     mcu_comm_.Init(&hcan2, 0x01, 0x00);
@@ -95,7 +99,7 @@ void Robot::Task()
     // Mcu自瞄数据
     McuRecvAutoaimData mcu_autoaim_data_local;
     mcu_autoaim_data_local.mode                = 0;
-    mcu_autoaim_data_local.flag                = 0;
+    mcu_autoaim_data_local.ratio               = 1;
     mcu_autoaim_data_local.autoaim_yaw_ang.f   = 0;
 
     for(;;)

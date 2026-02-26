@@ -17,7 +17,6 @@ private:
     {
         Imu *self = static_cast<Imu *>(argument);  // 还原 this 指针
         self->Task();  // 调用成员函数
-
     }
 public:
     void Task()

@@ -88,7 +88,7 @@ void can2_callback_function(CanRxBuffer* CAN_RxMessage)
 }
 
 /**
- * @brief remote回调函数
+ * @brief UART3回调函数
  * 
  * @param buffer 
  * @param length 
@@ -106,7 +106,12 @@ void uart3_callback_function(uint8_t* buffer, uint16_t length)
  */
 void uart6_callback_function(uint8_t* buffer, uint16_t length)
 {	
+    robot_.referee_.UartRxCpltCallback(buffer, length);
     
+    robot_.mcu_comm_.send_autoaim_data_.start_of_yaw_frame = 0xAC;
+    robot_.mcu_comm_.send_autoaim_data_.stage_enum = robot_.referee_.GetGameStage();
+    robot_.mcu_comm_.send_autoaim_data_.robot_hp = robot_.referee_.GetHP(CURRENT_ROBOT_ID);
+    robot_.mcu_comm_.send_autoaim_data_.middle_buff_status = robot_.referee_.GetMiddleBuffStatus();
 }
 
 /* Function prototypes -------------------------------------------------------*/

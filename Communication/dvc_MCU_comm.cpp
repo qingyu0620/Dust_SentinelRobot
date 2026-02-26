@@ -14,7 +14,7 @@
 
 /* Private macros ------------------------------------------------------------*/
 
-#define MAX_MCU_DISALIVE_PERIOD   5          // 50ms
+#define MAX_MCU_DISALIVE_PERIOD   50          // 50ms
 
 /* Private types -------------------------------------------------------------*/
 
@@ -63,6 +63,25 @@ void McuComm::TaskEntry(void *argument)
      self->Task();  // 调用成员函数
 }
 
+void McuComm::CanSendAutoaimData()
+{
+     static uint8_t can_tx_frame[8];
+     
+     can_tx_frame[0] = 0xAC;
+
+     can_tx_frame[1] = send_autoaim_data_.stage_enum;
+
+     can_tx_frame[2] = send_autoaim_data_.robot_hp >> 8;
+     can_tx_frame[3] = send_autoaim_data_.robot_hp;
+
+     can_tx_frame[4] = send_autoaim_data_.middle_buff_status;
+     can_tx_frame[5] = 0;
+     can_tx_frame[6] = 0;
+     can_tx_frame[7] = 0;
+
+     can_send_data(can_manage_object_->can_handler, can_tx_id_, can_tx_frame, 8);
+}
+
 /**
  * @brief McuComm清理数据函数
  * 
@@ -109,8 +128,8 @@ void McuComm::Task()
 {
      for (;;)
      {
-          AlivePeriodElapsedCallback();
-          osDelay(pdMS_TO_TICKS(10));
+          CanSendAutoaimData();
+          osDelay(pdMS_TO_TICKS(1));
      }
 }
 

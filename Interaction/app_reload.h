@@ -20,7 +20,7 @@
 
 /* Exported macros -----------------------------------------------------------*/
 
-#define MAX_RELOAD_SPEED        -6.5f
+#define MAX_RELOAD_SPEED        -5.0f
 
 /* Exported types ------------------------------------------------------------*/
 

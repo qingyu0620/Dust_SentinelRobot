@@ -1,0 +1,19 @@
+{
+    "version": 4,
+    "configurations": [
+        {
+            "name": "ARM",
+            "includePath": [
+                "C:/Program Files/Path/gcc-arm-none-eabi/arm-none-eabi/include/c++/14.2.1",
+                "C:/Program Files/Path/gcc-arm-none-eabi/arm-none-eabi/include/c++/14.2.1/arm-none-eabi",
+                "C:/Program Files/Path/gcc-arm-none-eabi/arm-none-eabi/include",
+                "${workspaceFolder}/**"
+            ],
+            "defines": ["__CLANGD__"],
+            "compilerPath": "C:/Program Files/Path/gcc-arm-none-eabi/bin/arm-none-eabi-g++.exe",
+            "cStandard": "gnu17",
+            "cppStandard": "gnu++17",
+            "intelliSenseMode": "gcc-arm"
+        }
+    ]
+}

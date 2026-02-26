@@ -84,10 +84,10 @@ struct McuCommandData
  */
 struct McuRecvAutoaimData
 {
-    uint8_t         start_of_yaw_frame = 0xAC;
-    uint8_t         mode;                       // 0-空闲 1-自瞄不开火 2-自瞄开火
-    McuConv         autoaim_yaw_ang;            // 自瞄yaw轴角度
-    uint8_t         flag;
+    uint8_t start_of_yaw_frame = 0xAC;
+    uint8_t mode;                       // 0-空闲 1-自瞄不开火 2-自瞄开火
+    McuConv autoaim_yaw_ang;            // 自瞄yaw轴角度
+    uint8_t ratio;
 };
 
 /**
@@ -96,9 +96,10 @@ struct McuRecvAutoaimData
  */
 struct McuSendAutoaimData
 {
-    uint8_t         start_of_yaw_frame = 0xAC;
-
-    McuConv         autoaim_yaw_ang;            // 自瞄累加弧度
+    uint8_t start_of_yaw_frame = 0xAC;
+    uint8_t stage_enum;
+    uint16_t robot_hp;
+    uint8_t middle_buff_status;
 };
 
 /**
@@ -132,7 +133,8 @@ public:
 
     McuSendAutoaimData send_autoaim_data_ = 
     {   0xAC,
-        {0, 0, 0, 0},
+        0,
+        0,
     };
 
     void Init(CAN_HandleTypeDef *hcan, uint8_t can_rx_id, uint8_t can_tx_id);
@@ -140,6 +142,8 @@ public:
     void Task();
 
     void ClearData();
+
+    void CanSendAutoaimData();
 
     void CanRxCpltCallback(uint8_t *rx_data);
 
