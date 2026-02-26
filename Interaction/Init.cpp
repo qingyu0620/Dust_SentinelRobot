@@ -89,7 +89,7 @@ void uart3_callback_function(uint8_t* buffer, uint16_t length)
 {	
 	robot_.remote_dr16_.UartRxCpltCallback(buffer);
 
-    robot_.mcu_comm_.send_chassis_data_.start_of_frame   = 0xAA;
+    robot_.mcu_comm_.send_chassis_data_.start_of_frame = 0xAA;
     
     if(robot_.robot_control_method_ == ROBOT_CONTROL_METHOD_REMOTE)
     {

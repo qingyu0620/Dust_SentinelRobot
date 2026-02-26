@@ -1,16 +1,16 @@
 /**
- * @file dvc_remote_vt02.cpp
- * @author qingyu
+ * @file dvc_remote_vt03.cpp
+ * @author your name (you@domain.com)
  * @brief 
  * @version 0.1
- * @date 2026-01-17
+ * @date 2026-02-13
  * 
  * @copyright Copyright (c) 2026
  * 
  */
 /* Includes ------------------------------------------------------------------*/
 
-#include "dvc_remote_vt02.h"
+#include "dvc_remote_vt03.h"
 
 /* Private macros ------------------------------------------------------------*/
 
@@ -23,10 +23,10 @@
 /* Function prototypes -------------------------------------------------------*/
 
 /**
- * @brief VT02清理数据函数
+ * @brief VT03清理数据函数
  * 
  */
-void RemoteDjiVT02::ClearData()
+void RemoteDjiVT03::ClearData()
 {
     output_.mouse.mouse_x = 0;
     output_.mouse.mouse_y = 0;
@@ -39,10 +39,10 @@ void RemoteDjiVT02::ClearData()
 }
 
 /**
- * @brief VT02数据处理函数
+ * @brief VT03数据处理函数
  * 
  */
-void RemoteDjiVT02::DataProcess(uint8_t* buffer)
+void RemoteDjiVT03::DataProcess(uint8_t* buffer)
 {
     /****************************   原始数据    ****************************/
 
@@ -54,11 +54,9 @@ void RemoteDjiVT02::DataProcess(uint8_t* buffer)
 
     int16_t dx = (int16_t)((uint16_t)buffer[7] | ((uint16_t)buffer[8] << 8));
     int16_t dy = (int16_t)((uint16_t)buffer[9] | ((uint16_t)buffer[10] << 8));
-    // int16_t dz = (int16_t)((uint16_t)buffer[11] | ((uint16_t)buffer[12] << 8));
 
     raw_data_.mouse_x = CLAMP(dx * 15, INT16_MIN, INT16_MAX);
     raw_data_.mouse_y = CLAMP(dy, INT16_MIN, INT16_MAX);
-    // raw_data_.mouse_z = CLAMP(dz, INT16_MIN, INT16_MAX);
 
     raw_data_.mouse_l = buffer[13];
     raw_data_.mouse_r = buffer[14];
@@ -69,7 +67,6 @@ void RemoteDjiVT02::DataProcess(uint8_t* buffer)
 
     output_.mouse.mouse_x = (int16_t)raw_data_.mouse_x;
     output_.mouse.mouse_y = -(float)raw_data_.mouse_y / (float)INT16_MAX;
-    // output_.mouse.mouse_z = (int16_t)raw_data_.mouse_z;
 
     output_.mouse.mouse_lr.mousecode.mouse_l = raw_data_.mouse_l;
     output_.mouse.mouse_lr.mousecode.mouse_r = raw_data_.mouse_r;

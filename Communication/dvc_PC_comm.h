@@ -8,11 +8,14 @@
  * @copyright Copyright (c) 2025
  * 
  */
+#pragma once
+
 #ifndef PC_COMM_H
 #define PC_COMM_H
 
 /* Includes ------------------------------------------------------------------*/
 
+#include "dvc_MCU_comm.h"
 #include "FreeRTOS.h"
 #include "cmsis_os2.h"
 #include "ins_task.h"
@@ -23,6 +26,8 @@
 /* Exported macros -----------------------------------------------------------*/
 
 /* Exported types ------------------------------------------------------------*/
+
+struct McuRecvAutoaimData;      // 前置声明
 
 /**
  * @brief PcComm转换联合体
@@ -88,8 +93,10 @@ struct PCSendAutoAimData2
 {
     uint8_t start_of_frame = 0xA6;
 
+    uint8_t stage_enum = 0;
     uint16_t current_hp = 0;
-
+    uint8_t middle_buff_status = 0;
+    
     uint8_t end_of_frame = 0xEF;
 };
 
@@ -103,21 +110,11 @@ struct PCRecvAutoAimData
 
     PcAutoAimStatus mode = PC_AUTOAIM_MODE_IDLE;           // 0-空闲 1-后置摄像头 2-前置摄像头
 
-    struct
-    {
-        float yaw_ang;          // yaw轴角度
-        float yaw_vel;          // yaw轴角速度
-        float yaw_acc;          // yaw轴角加速度
-    } yaw;
+    float yaw_ang;              // yaw轴角度
     
-    struct
-    {
-        float pitch_ang;        // pitch轴角度
-        float pitch_vel;        // pitch轴角速度
-        float pitch_acc;        // pitch轴角加速度
-    } pitch;
-    
-    uint8_t flag;
+    float pitch_ang;            // pitch轴角度
+
+    uint8_t ratio;
 
     uint16_t crc16;             // 校验位
 };
@@ -167,8 +164,8 @@ public:
     {
         {'S','P'},
         PC_AUTOAIM_MODE_IDLE,
-        {0,0,0},
-        {0,0,0},
+        0,
+        0,
         0,
         0,
     };
@@ -197,7 +194,7 @@ public:
 
     void RxCpltCallback();
 
-    void UpdataAutoaimData();
+    void UpdataAutoaimData(McuRecvAutoaimData& recv_autoaim_data);
 
     void JudgeAutoaimStatus(PcAutoAimStatus* now_autoaim_status, PcAutoAimStatus pre_autoaim_status);
 

@@ -56,7 +56,7 @@ void PcComm::TaskEntry(void *argument)
  * @brief PcComm更新自瞄数据函数
  * 
  */
-void PcComm::UpdataAutoaimData()
+void PcComm::UpdataAutoaimData(McuRecvAutoaimData& recv_autoaim_data)
 {
     float rotation_q[4] = {0};
 
@@ -72,7 +72,11 @@ void PcComm::UpdataAutoaimData()
 
 
     send_autoaim_data2.start_of_frame = 0xA6;
-    send_autoaim_data2.current_hp     = 400;
+    
+    send_autoaim_data2.stage_enum     = recv_autoaim_data.stage_enum;
+    send_autoaim_data2.current_hp     = recv_autoaim_data.robot_hp;
+    send_autoaim_data2.middle_buff_status = recv_autoaim_data.middle_buff_status;
+
     send_autoaim_data2.end_of_frame   = 0xEF;
 }
 
@@ -115,15 +119,11 @@ void PcComm::ClearAutoaimData()
 {
     recv_autoaim_data.mode = PC_AUTOAIM_MODE_IDLE;
 
-    recv_autoaim_data.yaw.yaw_ang = 0;
-    recv_autoaim_data.yaw.yaw_vel = 0;
-    recv_autoaim_data.yaw.yaw_acc = 0;
+    recv_autoaim_data.yaw_ang = 0;
 
-    recv_autoaim_data.pitch.pitch_ang = 0;
-    recv_autoaim_data.pitch.pitch_acc = 0;
-    recv_autoaim_data.pitch.pitch_vel = 0;
+    recv_autoaim_data.pitch_ang = 0;
 
-    recv_autoaim_data.flag = 1;
+    recv_autoaim_data.ratio = 1;
 }
 
 /**
@@ -230,8 +230,7 @@ void PcComm::Task()
     for(;;)
     {
         AlivePeriodElapsedCallback();
-        UpdataAutoaimData();
-
+        
         send_flag++;
 
         if(send_flag == 1)

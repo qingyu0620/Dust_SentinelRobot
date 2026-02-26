@@ -11,6 +11,7 @@
 /* Includes ------------------------------------------------------------------*/
 
 #include "Robot.h"
+#include "dvc_MCU_comm.h"
 
 /* Private macros ------------------------------------------------------------*/
 
@@ -22,8 +23,8 @@
             (data) = (min);                 \
         }}while(0)
 
-#define SCAN_PITCH_RADIO        400
-#define AUTOAIM_PITCH_RATIO     300.f
+#define SCAN_PITCH_RATIO        400.f
+#define AUTOAIM_PITCH_RATIO     150.f
 
 /* Private types -------------------------------------------------------------*/
 
@@ -97,6 +98,10 @@ void Robot::SetControlMethod(RobotControlMethod robot_control_method)
  */
 void Robot::Task()
 {
+    McuRecvAutoaimData mcu_autoaim_data_local;
+    mcu_autoaim_data_local.gamestatus = 0;
+    mcu_autoaim_data_local.robot_hp = 0;
+
     for(;;)
     {
         /****************************   Robot    ****************************/
@@ -114,6 +119,9 @@ void Robot::Task()
 
         /****************************   McuComm   ****************************/
 
+        __disable_irq();
+        mcu_autoaim_data_local = *(static_cast<const McuRecvAutoaimData*>(&(mcu_comm_.recv_autoaim_data_)));
+        __enable_irq();
 
         // 若掉线发送空白数据
         if(remote_dr16_.remote_alive_status == REMOTE_ALIVE_STATUS_DISABLE)
@@ -129,7 +137,7 @@ void Robot::Task()
         /****************************   PcComm   ****************************/
 
 
-
+        pc_comm_.UpdataAutoaimData(mcu_autoaim_data_local);
         
         
         /****************************   Gimbal   ****************************/
@@ -162,7 +170,7 @@ void Robot::Task()
                 }
                 case(PC_AUTOAIM_MODE_FRONT):
                 {
-                    float filtered_autoaim =  gimbal_.pitch_autoaim_filter_.Update(pc_comm_.recv_autoaim_data.pitch.pitch_ang);
+                    float filtered_autoaim =  gimbal_.pitch_autoaim_filter_.Update(pc_comm_.recv_autoaim_data.pitch_ang);
 
                     remote_radian -= filtered_autoaim / AUTOAIM_PITCH_RATIO;
 
@@ -183,7 +191,7 @@ void Robot::Task()
             {
                 case(PC_AUTOAIM_MODE_IDLE):
                 {
-                    scan_pitch_count_ += M_PI / SCAN_PITCH_RADIO;
+                    scan_pitch_count_ += M_PI / SCAN_PITCH_RATIO;
                     scan_pitch_count_ = normalize_pi(scan_pitch_count_);
                     remote_radian = MIN_PITCH_RADIAN * arm_sin_f32(scan_pitch_count_);
 
@@ -197,7 +205,7 @@ void Robot::Task()
                 }
                 case(PC_AUTOAIM_MODE_REAR):
                 {
-                    scan_pitch_count_ += M_PI / SCAN_PITCH_RADIO;
+                    scan_pitch_count_ += M_PI / SCAN_PITCH_RATIO;
                     scan_pitch_count_ = normalize_pi(scan_pitch_count_);
                     remote_radian = MIN_PITCH_RADIAN * arm_sin_f32(scan_pitch_count_);
 
@@ -211,7 +219,7 @@ void Robot::Task()
                 }
                 case(PC_AUTOAIM_MODE_FRONT):
                 {
-                    float filtered_autoaim =  gimbal_.pitch_autoaim_filter_.Update(pc_comm_.recv_autoaim_data.pitch.pitch_ang);
+                    float filtered_autoaim =  gimbal_.pitch_autoaim_filter_.Update(pc_comm_.recv_autoaim_data.pitch_ang);
 
                     remote_radian -= filtered_autoaim / AUTOAIM_PITCH_RATIO;
 

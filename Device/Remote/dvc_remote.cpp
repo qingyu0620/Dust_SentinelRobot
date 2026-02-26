@@ -33,9 +33,6 @@
  */
 void Remote::Init(UART_HandleTypeDef *huart, Uart_Callback callback_function, uint16_t rx_buffer_length)
 {
-    uart_manage_object_->uart_handle = huart;
-    uart_manage_object_->callback_function = callback_function;
-    uart_manage_object_->rx_buffer_length = rx_buffer_length;
     uart_init(huart, callback_function, rx_buffer_length);
 
     static const osThreadAttr_t kRemoteTaskAttr = {

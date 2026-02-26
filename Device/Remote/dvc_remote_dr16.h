@@ -31,58 +31,52 @@ enum RemoteDR16SwitchStatus
 };
 
 /**
- * @brief DjiDR16原始数据
- * 
- */
-struct RemoteDR16RawData
-{
-    struct 
-    {
-        uint16_t ch0, ch1, ch2, ch3;
-        uint8_t s1, s2;
-    } rc;
-
-    struct
-    {
-        int32_t x, y, z;
-        uint8_t pl, pr;
-    } mouse;
-
-    RemoteKeyboard keyboard;
-};
-
-/**
- * @brief DjiDR16输出
- * 
- */
-struct RemoteDR16OutputData
-{
-    struct 
-    {
-        uint8_t switch_l, switch_r;
-        float chassis_x, chassis_y;      // x, y, r 采用右手系
-        float rotation;
-        float pitch;
-    } remote;                            // 遥控数据
-
-    RemoteMouse mouse;
-
-    RemoteKeyboard keyboard;         // 键盘数据
-};
-
-/**
  * @brief DjiDR16遥控器
  * 
  */
 class RemoteDjiDR16 : public Remote
 {
 public:
+
+    struct OutputData
+    {
+        struct 
+        {
+            uint8_t switch_l, switch_r;
+            float chassis_x, chassis_y;      // x, y, r 采用右手系
+            float rotation;
+            float pitch;
+        } remote;                            // 遥控数据
+
+        RemoteMouse mouse;
+
+        RemoteKeyboard keyboard;         // 键盘数据
+    };
+
     // 遥控器输出数据
-    RemoteDR16OutputData output_;
+    OutputData output_;
 
 protected:
+
+    struct RawData
+    {
+        struct 
+        {
+            uint16_t ch0, ch1, ch2, ch3;
+            uint8_t s1, s2;
+        } rc;
+
+        struct
+        {
+            int32_t x, y, z;
+            uint8_t pl, pr;
+        } mouse;
+
+        RemoteKeyboard keyboard;
+    };
+
     // 原始数据
-    RemoteDR16RawData raw_data_;
+    RawData raw_data_;
 
     void ClearData() override;
 

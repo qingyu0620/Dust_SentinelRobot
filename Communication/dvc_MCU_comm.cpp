@@ -71,8 +71,8 @@ void McuComm::TaskEntry(void *argument)
 void McuComm::UpdateAutoaimData(PCRecvAutoAimData* pc_recv_autoaim_data)
 {
      send_autoaim_data_.mode = pc_recv_autoaim_data->mode;
-     send_autoaim_data_.autoaim_yaw_angle.f = pc_recv_autoaim_data->yaw.yaw_ang;
-     send_autoaim_data_.flag = pc_recv_autoaim_data->flag;
+     send_autoaim_data_.autoaim_yaw_angle.f = pc_recv_autoaim_data->yaw_ang;
+     send_autoaim_data_.ratio = pc_recv_autoaim_data->ratio;
 }
 
 /**
@@ -133,7 +133,7 @@ void McuComm::CanSendAutoaimData()
 
      memcpy(&can_tx_frame[2], &send_autoaim_data_.autoaim_yaw_angle, 4);
 
-     can_tx_frame[6] = send_autoaim_data_.flag;
+     can_tx_frame[6] = send_autoaim_data_.ratio;
      can_tx_frame[7] = 0x00;
 
      can_send_data(can_manage_object_->can_handler, can_tx_id_, can_tx_frame, 8);
@@ -212,6 +212,11 @@ void McuComm::DataProcess(uint8_t* rx_data)
      // 处理数据 , 解包
      switch (rx_data[0])
      {
-         
+         case (0xAC):
+         {
+               recv_autoaim_data_.stage_enum = rx_data[1];
+               recv_autoaim_data_.robot_hp = rx_data[2] << 8 | rx_data[3];
+               recv_autoaim_data_.middle_buff_status = rx_data[4];
+         }
      }
 }

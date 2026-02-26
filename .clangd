@@ -1,14 +1,37 @@
 CompileFlags:
   Add:
+    # 核心：强制指定为 ARM 目标
     - --target=arm-none-eabi
-    - -mcpu=cortex-m4               # 根据你的 MCU
+    
+    # ARM 参数
+    - -mcpu=cortex-m4
     - -mthumb
-    - -IC:\\DevTools\\Arm-GNU-Toolchian\\arm-none-eabi\\include
-    - -IC:\\DevTools\\Arm-GNU-Toolchian\\arm-none-eabi\\include\\c++\\11.2.1
-    - -IC:\\DevTools\\Arm-GNU-Toolchian\\arm-none-eabi\\include\\c++\\11.2.1\\arm-none-eabi
-    # - -std=gnu11  # 或 c++17
+    - -mfloat-abi=hard
+    - -mfpu=fpv4-sp-d16
+    
+    # C++ 标准
+    - -std=gnu++17
+    
+    # 编译器特性
+    - -fno-exceptions
+    - -fno-rtti
+    - -ffunction-sections
+    - -fdata-sections
+    
+    # 包含路径
+    - -IC:/Program Files/Path/gcc-arm-none-eabi/arm-none-eabi/include/c++/14.2.1
+    - -IC:/Program Files/Path/gcc-arm-none-eabi/arm-none-eabi/include/c++/14.2.1/arm-none-eabi
+    - -IC:/Program Files/Path/gcc-arm-none-eabi/arm-none-eabi/include
+    - -IC:/Program Files/Path/gcc-arm-none-eabi/lib/gcc/arm-none-eabi/14.2.1/include
+    - -IC:/Program Files/Path/gcc-arm-none-eabi/lib/gcc/arm-none-eabi/14.2.1/include-fixed
+    
+    # 项目路径
+    - -I.
+    - -I./include
+    - -I./src
+    
   Remove:
-    "-mthumb-interwork"
+    - -mthumb-interwork
 
 Diagnostics:
   Suppress:

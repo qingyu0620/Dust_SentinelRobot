@@ -121,8 +121,6 @@ public:
     static void TaskEntry(void *param);  // FreeRTOS 入口，静态函数
 
 protected:
-    // uart管理模块
-    UartManageObject* uart_manage_object_;
 
     // 当前时刻flag
     uint32_t flag_ = 0;

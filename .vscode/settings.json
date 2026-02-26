@@ -1,0 +1,14 @@
+{
+    "clangd.arguments": [
+        "--compile-commands-dir=build"
+    ],
+    "clangd.path": "C:\\Users\\33527\\AppData\\Roaming\\Code\\User\\globalStorage\\llvm-vs-code-extensions.vscode-clangd\\install\\21.1.0\\clangd_21.1.0\\bin\\clangd.exe",
+    "C_Cpp.intelliSenseEngine": "disabled",
+    
+    "workbench.tree.indent": 10,
+    "workbench.tree.renderIndentGuides": "always",
+    "explorer.compactFolders": false,
+    "workbench.colorCustomizations": {
+        "tree.indentGuidesStroke": "#00ff73"
+    }
+}

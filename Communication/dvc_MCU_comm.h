@@ -8,6 +8,8 @@
  * @copyright Copyright (c) 2025
  * 
  */
+#pragma once
+
 #ifndef MODULES_COMM_H
 #define MODULES_COMM_H
 
@@ -22,6 +24,8 @@
 /* Exported macros -----------------------------------------------------------*/
 
 /* Exported types ------------------------------------------------------------*/
+
+struct PCRecvAutoAimData;      // 前置声明
 
 /**
  * @brief Mcu转换联合体
@@ -113,7 +117,7 @@ struct McuSendAutoaimData
     uint8_t         start_of_yaw_frame = 0xAC;
     uint8_t         mode;
     McuConv         autoaim_yaw_angle;            // 自瞄yaw轴角度
-    uint8_t         flag;
+    uint8_t         ratio;
 };
 
 /**
@@ -122,8 +126,10 @@ struct McuSendAutoaimData
  */
 struct McuRecvAutoaimData
 {
-    uint8_t         start_of_yaw_frame = 0xAC;
-    McuConv         autoaim_yaw_angle;
+    uint8_t start_of_yaw_frame = 0xAC;
+    uint8_t stage_enum;
+    uint16_t robot_hp;
+    uint8_t middle_buff_status;
 };
 
 /**
@@ -154,6 +160,13 @@ public:
     {   0xAC,
         0,
         {0,0,0,0},
+    };
+
+    McuRecvAutoaimData recv_autoaim_data_ = 
+    {
+        0xAC,
+        0,
+        0,
     };
 
     void Init(CAN_HandleTypeDef *hcan, uint8_t can_rx_id, uint8_t can_tx_id);
