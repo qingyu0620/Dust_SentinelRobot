@@ -11,6 +11,8 @@
 /* Includes ------------------------------------------------------------------*/
 
 #include "dvc_PC_comm.h"
+#include "bsp_usb.h"
+#include "dvc_MCU_comm.h"
 
 /* Private macros ------------------------------------------------------------*/
 
@@ -33,12 +35,12 @@ void PcComm::Init()
 {
     static const osThreadAttr_t KPcCommTaskAttr = 
     {
-        .name = "pccomm_task",
+        .name = "PcComm_task",
         .stack_size = 256,
         .priority = (osPriority_t) osPriorityNormal
     };
     // 启动任务，将 this 传入
-    // osThreadNew(PcComm::TaskEntry, this, &KPcCommTaskAttr);
+    osThreadNew(PcComm::TaskEntry, this, &KPcCommTaskAttr);
 }
 
 /**
@@ -56,73 +58,85 @@ void PcComm::TaskEntry(void *argument)
  * @brief PcComm更新自瞄数据函数
  * 
  */
-void PcComm::UpdataAutoaimData()
-{
-    memcpy(&send_autoaim_data1.q, INS.q, 16);
+// void PcComm::UpdataAutoaimData(McuRecvRefereeFastData& recv_fast_data, McuRecvRefereeSlowData& recv_slow_data)
+// {
+//     float rotation_q[4] = {0};
 
-    send_autoaim_data1.mode           = PC_AUTOAIM_MODE_IDLE;
+//     EularAngleToQuaternion(INS.Yaw, INS.Pitch, -INS.Roll, rotation_q);
     
-    send_autoaim_data1.yaw.ang        = INS.Yaw;
-    send_autoaim_data1.yaw.vel        = INS.Gyro[Z];
+//     memcpy(&send_autoaim_data.q, rotation_q, 16);
 
-    send_autoaim_data1.pitch.ang      = -INS.Roll;
-    send_autoaim_data1.pitch.vel      = -INS.Gyro[X]; 
+//     send_autoaim_data.yaw_angle      = INS.Yaw;
+//     send_autoaim_data.pitch_angle    = -INS.Roll;
 
-    send_autoaim_data1.bullet.speed   = 16;
-    send_autoaim_data1.bullet.count   = 20;
+//     send_autoaim_data.bullet.speed   = recv_fast_data.bullet_speed.f;
+//     send_autoaim_data.bullet.count   = recv_fast_data.bullet_number;
 
 
-    send_autoaim_data2.start_of_frame = 0xA6;
+//     send_navigation_data.start_of_frame = '@';
+    
+//     send_navigation_data.stage_enum     = recv_slow_data.stage_enum;
+//     send_navigation_data.current_hp     = recv_slow_data.robot_hp;
+//     send_navigation_data.middle_buff_status = recv_fast_data.middle_buff_status;
+//     send_navigation_data.stage_remain_time = recv_slow_data.stage_remain_time;
 
-    send_autoaim_data2.current_hp = 0;
-    send_autoaim_data2.checksum = 0;
+//     send_navigation_data.end_of_frame   = '#';
+// }
+
+/**
+ * @brief PcComm发送信息函数
+ * 
+ */
+void PcComm::SendAutoaimData()
+{
+    uint16_t length = sizeof(send_autoaim_data);
+    uint8_t buffer[length];
+
+    send_autoaim_data.crc16 = 0;
+
+    memcpy(buffer, &send_autoaim_data, length);
+    append_crc16_check_sum(buffer, length);
+
+    usb_transmit(buffer, length);
 }
 
 /**
  * @brief PcComm发送信息函数
  * 
  */
-void PcComm::Send_Message()
-{   
-    uint16_t length1 = sizeof(send_autoaim_data1);
-    static uint8_t buffer1[sizeof(send_autoaim_data1)];
-    
-    send_autoaim_data1.crc16 = 0;
+void PcComm::SendNavigationData()
+{
+    uint16_t length = sizeof(send_navigation_data);
+    uint8_t buffer[length];
 
-    memcpy(buffer1, &send_autoaim_data1, length1);
-    append_crc16_check_sum(buffer1, length1);
+    memcpy(buffer, &send_navigation_data, length);
 
-    usb_transmit(buffer1, length1);
-
-    uint16_t length2 = sizeof(send_autoaim_data2);
-    static uint8_t buffer2[sizeof(send_autoaim_data2)];
-
-    memcpy(buffer2, &send_autoaim_data2, length2);
-    // append_crc16_check_sum(buffer2, length2);
-    
-    usb_transmit(buffer2, length2);
+    usb_transmit(buffer, length); 
 }
 
 /**
- * @brief PcComm清理数据函数
+ * @brief PcComm清理自瞄数据函数
  * 
  */
-void PcComm::ClearData()
+void PcComm::ClearAutoaimData()
 {
     recv_autoaim_data.mode = PC_AUTOAIM_MODE_IDLE;
 
-    recv_autoaim_data.yaw.yaw_ang = 0;
-    recv_autoaim_data.yaw.yaw_vel = 0;
-    recv_autoaim_data.yaw.yaw_acc = 0;
+    recv_autoaim_data.yaw_ang = 0;
 
-    recv_autoaim_data.pitch.pitch_ang = 0;
-    recv_autoaim_data.pitch.pitch_acc = 0;
-    recv_autoaim_data.pitch.pitch_vel = 0;
+    recv_autoaim_data.pitch_ang = 0;
 
-    recv_autoaim_data.flag = 1;
+    recv_autoaim_data.ratio = 1;
+}
 
-    recv_navigation_data.linear_x.f = 1024.f;
-    recv_navigation_data.linear_y.f = 1024.f;
+/**
+ * @brief PcComm清理导航数据函数
+ * 
+ */
+void PcComm::ClearNavigationData()
+{
+    pc_chassis_x_ = 1024;
+    pc_chassis_y_ = 1024;
 }
 
 /**
@@ -133,17 +147,17 @@ void PcComm::AlivePeriodElapsedCallback()
 {
     if(++alive_beat_ >= MAX_PC_DISALIVE_PERIOD)
     {
-        if(pre_flag_ == flag_)
+        if(pre_autoaim_flag_ == autoaim_flag_)
         {
-            pc_alive_state = PC_ALIVE_STATE_DISABLE;
-            ClearData();
+            ClearAutoaimData();
         }
-        else
+        if(pre_navigation_flag_ == navigation_flag_)
         {
-            pc_alive_state = PC_ALIVE_STATE_ENABLE;
+            ClearNavigationData();
         }
 
-        pre_flag_ = flag_;
+        pre_autoaim_flag_ = autoaim_flag_;
+        pre_navigation_flag_ = navigation_flag_;
 
         alive_beat_ = 0;
     }
@@ -215,12 +229,24 @@ void PcComm::JudgeAutoaimStatus(PcAutoAimStatus* now_autoaim_status, PcAutoAimSt
  */
 void PcComm::Task()
 {
+    uint16_t send_flag = 0;
     for(;;)
     {
         AlivePeriodElapsedCallback();
-        UpdataAutoaimData();
-        Send_Message();
-        osDelay(pdMS_TO_TICKS(2));
+        
+        send_flag++;
+
+        if(send_flag == 1)
+        {
+            SendAutoaimData();
+        }
+        else if(send_flag == 2)
+        {
+            SendNavigationData();
+            send_flag = 0;
+        }
+        
+        osDelay(pdMS_TO_TICKS(5));
     }
 }
 
@@ -230,9 +256,6 @@ void PcComm::Task()
  */
 void PcComm::RxCpltCallback()
 {
-    // 滑动窗口, 判断是否在线
-    flag_ += 1;
-
     DataProcess();
 }
 
@@ -244,6 +267,9 @@ void PcComm::DataProcess()
 {
     if(bsp_usb_rx_buffer[0] == 'S' && bsp_usb_rx_buffer[1] == 'P')
     {
+        // 滑动窗口, 判断是否在线
+        autoaim_flag_ += 1;
+
         uint16_t lenth = sizeof(recv_autoaim_data);
         memcpy(&recv_autoaim_data, bsp_usb_rx_buffer, lenth);
 
@@ -258,8 +284,13 @@ void PcComm::DataProcess()
     }
     else if(bsp_usb_rx_buffer[0] == recv_navigation_data.start_of_frame)
     {
+        // 滑动窗口, 判断是否在线
+        navigation_flag_ += 1;
+
         memcpy(&recv_navigation_data.linear_x.b, &bsp_usb_rx_buffer[1], 4);
         memcpy(&recv_navigation_data.linear_y.b, &bsp_usb_rx_buffer[5], 4);
+
+        recv_navigation_data.all = bsp_usb_rx_buffer[9];
 
         pc_chassis_x_ = (uint16_t)(K_PC * (recv_navigation_data.linear_x.f / 2.1f + C_PC));
         pc_chassis_y_ = (uint16_t)(K_PC * (recv_navigation_data.linear_y.f / 2.1f + C_PC));

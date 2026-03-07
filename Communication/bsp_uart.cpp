@@ -11,6 +11,8 @@
 /* Includes ------------------------------------------------------------------*/
 
 #include "bsp_uart.h"
+#include "FreeRTOS.h"
+#include "task.h"
 
 /* Private types -------------------------------------------------------------*/
 
@@ -45,27 +47,36 @@ static const UartMapEntry uart_map_inquiry_[]
 
 /* Private function declarations ---------------------------------------------*/
 
-__weak void UartHardFault()
-{
-	while(1);
-}
-
 /**
- * @brief ：printf重定向函数（不用管）
+ * @brief printf重定向函数（不用管）
  * 
- * @param ch 
+ * @param file 
+ * @param ptr 
+ * @param len 
  * @return int 
  */
-int __io_putchar(int ch)
-{
-    HAL_UART_Transmit(&huart6, (uint8_t *)&ch, 1, HAL_MAX_DELAY);
-    return ch;
-}
-
-
 int _write(int file, char *ptr, int len)
 {
-    HAL_UART_Transmit(&huart6, (uint8_t *)ptr, len, HAL_MAX_DELAY);
+    UartManageObject* uart_obj = &uart1_manage_object;
+    
+    for (int i = 0; i < len; i++) 
+	{
+        uart_obj->tx_buffer[uart_obj->tx_head] = ptr[i];
+        uart_obj->tx_head = (uart_obj->tx_head + 1) % UART_BUFFER_LENGTH;
+    }
+    
+    if (!uart_obj->tx_busy) 
+	{
+        uart_obj->tx_busy = 1;
+        uint16_t send_len = (uart_obj->tx_head >= uart_obj->tx_tail) ? 
+							(uart_obj->tx_head - uart_obj->tx_tail) : 
+							(UART_BUFFER_LENGTH - uart_obj->tx_tail + uart_obj->tx_head);
+
+        if (send_len > 0) {
+			uart_obj->tx_sending_len = send_len;
+            HAL_UART_Transmit_DMA(&huart1, &uart_obj->tx_buffer[uart_obj->tx_tail], send_len);
+        }
+    }
     return len;
 }
 
@@ -99,17 +110,14 @@ static UartManageObject* GetUartManageObject(UART_HandleTypeDef* huart)
 void uart_init(UART_HandleTypeDef* huart, Uart_Callback callback_function, uint16_t rx_buffer_length)
 {
 	UartManageObject* uart_manage_object = GetUartManageObject(huart);
-	if(uart_manage_object != NULL)
-	{
-		uart_manage_object->uart_handle = huart;
-		uart_manage_object->callback_function = callback_function;
-		uart_manage_object->rx_buffer_length = rx_buffer_length;
-		HAL_UARTEx_ReceiveToIdle_DMA(uart_manage_object->uart_handle, uart_manage_object->rx_buffer, uart_manage_object->rx_buffer_length);
+	if(!uart_manage_object) {
+		configASSERT(false);
 	}
-	else
-	{
-		UartHardFault();
-	}
+
+	uart_manage_object->uart_handle = huart;
+	uart_manage_object->callback_function = callback_function;
+	uart_manage_object->rx_buffer_length = rx_buffer_length;
+	HAL_UARTEx_ReceiveToIdle_DMA(uart_manage_object->uart_handle, uart_manage_object->rx_buffer, uart_manage_object->rx_buffer_length);
 }
 	
 /**
@@ -122,16 +130,13 @@ void uart_init(UART_HandleTypeDef* huart, Uart_Callback callback_function, uint1
 void uart_reinit(UART_HandleTypeDef* huart, Uart_Callback callback_function, uint16_t rx_buffer_length)
 {
 	UartManageObject* uart_manage_object = GetUartManageObject(huart);
-	if(uart_manage_object != NULL)
-	{
-		HAL_UART_AbortReceive(uart_manage_object->uart_handle);
-		memset(uart_manage_object->rx_buffer, 0, uart_manage_object->rx_buffer_length);
-		HAL_UARTEx_ReceiveToIdle_DMA(uart_manage_object->uart_handle, uart_manage_object->rx_buffer, uart_manage_object->rx_buffer_length);
+	if(!uart_manage_object) {
+		configASSERT(false);
 	}
-	else
-	{
-		UartHardFault();
-	}
+
+	HAL_UART_AbortReceive(uart_manage_object->uart_handle);
+	memset(uart_manage_object->rx_buffer, 0, uart_manage_object->rx_buffer_length);
+	HAL_UARTEx_ReceiveToIdle_DMA(uart_manage_object->uart_handle, uart_manage_object->rx_buffer, uart_manage_object->rx_buffer_length);
 }
 
 /** 
@@ -143,15 +148,36 @@ void uart_reinit(UART_HandleTypeDef* huart, Uart_Callback callback_function, uin
 void HAL_UARTEx_RxEventCallback(UART_HandleTypeDef *huart, uint16_t Size)
 {
 	UartManageObject* uart_manage_object = GetUartManageObject(huart);
-	if(uart_manage_object->callback_function != NULL)
-	{
-		uart_manage_object->callback_function(uart_manage_object->rx_buffer, Size);
-		HAL_UARTEx_ReceiveToIdle_DMA(uart_manage_object->uart_handle, uart_manage_object->rx_buffer, uart_manage_object->rx_buffer_length);
-	}
-	else
-	{
-		UartHardFault();
-	}
+
+	uart_manage_object->callback_function(uart_manage_object->rx_buffer, Size);
+	memset(uart_manage_object->rx_buffer, 0, uart_manage_object->rx_buffer_length);
+	HAL_UARTEx_ReceiveToIdle_DMA(uart_manage_object->uart_handle, uart_manage_object->rx_buffer, uart_manage_object->rx_buffer_length);
+}
+
+/**
+ * @brief Uart发送完成回调函数
+ * 
+ * @param huart 
+ */
+void HAL_UART_TxCpltCallback(UART_HandleTypeDef *huart)
+{
+    UartManageObject* uart_obj = GetUartManageObject(huart);
+
+	uart_obj->tx_tail = (uart_obj->tx_tail + uart_obj->tx_sending_len) % UART_BUFFER_LENGTH;
+	uart_obj->tx_sending_len = 0;
+    
+	if (uart_obj->tx_head != uart_obj->tx_tail) {
+        uint16_t send_len = (uart_obj->tx_head >= uart_obj->tx_tail) ? 
+                            (uart_obj->tx_head - uart_obj->tx_tail) : 
+                            (UART_BUFFER_LENGTH - uart_obj->tx_tail + uart_obj->tx_head);
+        if (send_len > 0) {
+			uart_obj->tx_sending_len = send_len;
+            HAL_UART_Transmit_DMA(huart, &uart_obj->tx_buffer[uart_obj->tx_tail], send_len);
+        }
+    } 
+	else {
+        uart_obj->tx_busy = 0;
+    }
 }
 
 /**
@@ -168,27 +194,27 @@ void HAL_UART_ErrorCallback(UART_HandleTypeDef *huart)
 
 	if (error_code & HAL_UART_ERROR_ORE) 
 	{
-		uart_manage_object->error_code.check.overrun_error = 1;
+		uart_manage_object->error_code.overrun_error = 1;
 		__HAL_UART_CLEAR_OREFLAG(huart);
 	}
 	if (error_code & HAL_UART_ERROR_FE)
 	{
-		uart_manage_object->error_code.check.frame_error = 1;
+		uart_manage_object->error_code.frame_error = 1;
 		__HAL_UART_CLEAR_FEFLAG(huart);
 	}
 	if (error_code & HAL_UART_ERROR_NE)
 	{
-		uart_manage_object->error_code.check.noise_error = 1;
+		uart_manage_object->error_code.noise_error = 1;
 		__HAL_UART_CLEAR_NEFLAG(huart);
 	}
 	if (error_code & HAL_UART_ERROR_PE)
 	{
-		uart_manage_object->error_code.check.parity_error = 1;
+		uart_manage_object->error_code.parity_error = 1;
 		__HAL_UART_CLEAR_PEFLAG(huart);
 	}
 	if (error_code & HAL_UART_ERROR_DMA)
 	{
-		uart_manage_object->error_code.check.dma_error = 1;
+		uart_manage_object->error_code.dma_error = 1;
 	}
 
 	memset(uart_manage_object->rx_buffer, 0, UART_BUFFER_LENGTH);

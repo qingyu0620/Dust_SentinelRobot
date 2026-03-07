@@ -550,9 +550,6 @@ static const uint16_t crc_16_table[256] = {0x0000,
  */
 void Referee::Init(UART_HandleTypeDef *huart, Uart_Callback callback_function, uint16_t rx_buffer_length, uint8_t __Frame_Header)
 {
-    uart_manage_object_->uart_handle = huart;
-    uart_manage_object_->callback_function = callback_function;
-    uart_manage_object_->rx_buffer_length = rx_buffer_length;
     uart_init(huart, callback_function, rx_buffer_length);
     
     frame_header_ = __Frame_Header;
@@ -563,12 +560,12 @@ void Referee::Init(UART_HandleTypeDef *huart, Uart_Callback callback_function, u
  *
  * @param Rx_Data 接收的数据
  */
-void Referee::UartRxCpltCallback(uint8_t *Rx_Data, uint16_t Length)
+void Referee::UartRxCpltCallback(uint8_t *rx_data, uint16_t length)
 {
     // 滑动窗口, 判断裁判系统是否在线
     flag_ += 1;
 
-    DataProcess(Length);
+    DataProcess(rx_data, length);
 }
 
 /**
@@ -582,8 +579,6 @@ void Referee::AlivePeriodElapsedCallback()
     {
         // 裁判系统断开连接
         referee_status_ = Referee_Status_DISABLE;
-
-        uart_reinit(uart_manage_object_->uart_handle, uart_manage_object_->callback_function, uart_manage_object_->rx_buffer_length);
     }
     else
     {
@@ -650,14 +645,14 @@ uint16_t Referee::VerifyCrc16(uint8_t *Message, uint32_t Length)
  * 如遇到大规模丢包或错乱现象, 可重新启用校验过程
  *
  */
-void Referee::DataProcess(uint16_t Length)
+void Referee::DataProcess(uint8_t *rx_data, uint16_t length)
 {
     // 数据处理过程
     RefereeUartData *tmp_buffer;
 
-    for (int i = 0; i < Length;)
+    for (int i = 0; i < length;)
     {
-        tmp_buffer = (RefereeUartData *) &uart_manage_object_->rx_buffer[i];
+        tmp_buffer = (RefereeUartData*)&rx_data[i];
 
         // 未通过头校验
         if (tmp_buffer->Frame_Header != frame_header_)
@@ -665,20 +660,20 @@ void Referee::DataProcess(uint16_t Length)
             i++;
             continue;
         }
-        // 未通过CRC8校验, 顺一位继续判断
-        if (VerifyCrc8((uint8_t *) tmp_buffer, 4) != tmp_buffer->CRC_8)
-        {
-            i++;
-            continue;
-        }
-        // 未通过CRC16校验, 跨过当前包继续判断
-        if (VerifyCrc16((uint8_t *) tmp_buffer, 7 + tmp_buffer->Data_Length) != *(uint16_t *) ((uint32_t) tmp_buffer + 7 + tmp_buffer->Data_Length))
-        {
-            i += 9 + tmp_buffer->Data_Length;
-            continue;
-        }
+        // // 未通过CRC8校验, 顺一位继续判断
+        // if (VerifyCrc8((uint8_t *) tmp_buffer, 4) != tmp_buffer->CRC_8)
+        // {
+        //     i++;
+        //     continue;
+        // }
+        // // 未通过CRC16校验, 跨过当前包继续判断
+        // if (VerifyCrc16((uint8_t *) tmp_buffer, 7 + tmp_buffer->Data_Length) != *(uint16_t *) ((uint32_t) tmp_buffer + 7 + tmp_buffer->Data_Length))
+        // {
+        //     i += 9 + tmp_buffer->Data_Length;
+        //     continue;
+        // }
         // 通过校验但帧不够长
-        if (i + 7 + tmp_buffer->Data_Length + 2 > Length)
+        if (i + 7 + tmp_buffer->Data_Length + 2 > length)
         {
             break;
         }
@@ -710,6 +705,11 @@ void Referee::DataProcess(uint16_t Length)
                 memcpy(&robot_power_heat_, tmp_buffer->Data, sizeof(RefereeRxDataRobotPowerHeat));
                 break;
             }
+            case (Referee_Command_ID_ROBOT_REMAINING_AMMO):
+            {
+                memcpy(&robot_remaining_ammo_, tmp_buffer->Data, sizeof(RefereeRxDataRobotRemainingAmmo));
+                break;
+            }
             default:
             {
                 break;
@@ -719,5 +719,6 @@ void Referee::DataProcess(uint16_t Length)
         // 缓冲区直接推移
         i += 7 + tmp_buffer->Data_Length + 2;
     }
+    
 }
 

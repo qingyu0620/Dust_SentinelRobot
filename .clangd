@@ -9,9 +9,6 @@ CompileFlags:
     - -mfloat-abi=hard
     - -mfpu=fpv4-sp-d16
     
-    # C++ 标准
-    - -std=gnu++17
-    
     # 编译器特性
     - -fno-exceptions
     - -fno-rtti

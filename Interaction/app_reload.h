@@ -36,9 +36,19 @@ public:
 
     inline void SetTargetReloadRotation(float target_reload_rotation);
 
+    inline bool GetReloadState() {
+        return is_reloading;
+    }
+
 protected:
     // 目标装载速度 旋转
     float target_reload_rotation_ = 0.0f;
+
+    bool is_reloading = false;
+
+    float reload_now_angle = 0.0f;
+
+    float reload_pre_angld = 0.0f;
 
     void OutputToMotor();
 

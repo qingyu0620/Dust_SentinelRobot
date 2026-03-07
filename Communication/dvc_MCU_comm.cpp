@@ -11,10 +11,11 @@
 /* Includes ------------------------------------------------------------------*/
 
 #include "dvc_MCU_comm.h"
+#include <cstring>
 
 /* Private macros ------------------------------------------------------------*/
 
-#define MAX_MCU_DISALIVE_PERIOD   50          // 50ms
+#define MAX_MCU_DISALIVE_PERIOD   5   
 
 /* Private types -------------------------------------------------------------*/
 
@@ -63,20 +64,46 @@ void McuComm::TaskEntry(void *argument)
      self->Task();  // 调用成员函数
 }
 
-void McuComm::CanSendAutoaimData()
+
+/**
+ * @brief 
+ * 
+ */
+void McuComm::CanSendFastData()
+{
+     static uint8_t can_tx_frame[8];
+
+     can_tx_frame[0] = 0xAC;
+
+     can_tx_frame[1] = send_fast_data_.bullet_number >> 8;
+     can_tx_frame[2] = send_fast_data_.bullet_number;
+
+     can_tx_frame[3] = send_fast_data_.middle_buff_status;
+
+     memcpy(&can_tx_frame[4], &send_fast_data_.bullet_speed, 4);
+
+     can_send_data(can_manage_object_->can_handler, can_tx_id_, can_tx_frame, 8);
+}
+
+/**
+ * @brief 
+ * 
+ */
+void McuComm::CanSendSlowData()
 {
      static uint8_t can_tx_frame[8];
      
-     can_tx_frame[0] = 0xAC;
+     can_tx_frame[0] = 0xAF;
 
-     can_tx_frame[1] = send_autoaim_data_.stage_enum;
+     can_tx_frame[1] = send_slow_data_.stage_enum;
 
-     can_tx_frame[2] = send_autoaim_data_.robot_hp >> 8;
-     can_tx_frame[3] = send_autoaim_data_.robot_hp;
+     can_tx_frame[2] = send_slow_data_.stage_remain_time >> 8;
+     can_tx_frame[3] = send_slow_data_.stage_remain_time;
 
-     can_tx_frame[4] = send_autoaim_data_.middle_buff_status;
-     can_tx_frame[5] = 0;
-     can_tx_frame[6] = 0;
+     can_tx_frame[4] = send_slow_data_.robot_hp >> 8;
+     can_tx_frame[5] = send_slow_data_.robot_hp;
+
+     can_tx_frame[6] = send_slow_data_.is_jam;
      can_tx_frame[7] = 0;
 
      can_send_data(can_manage_object_->can_handler, can_tx_id_, can_tx_frame, 8);
@@ -91,9 +118,6 @@ void McuComm::ClearData()
      recv_chassis_data_.chassis_speed_x = 1024;
      recv_chassis_data_.chassis_speed_y = 1024;
      recv_chassis_data_.rotation = 1024;
-
-     recv_comm_data_.mouse_lr.all = 0;
-     recv_comm_data_.keyboard.all = 0;
 }
 
 /**
@@ -126,10 +150,18 @@ void McuComm::AlivePeriodElapsedCallback()
  */
 void McuComm::Task()
 {
+     static uint16_t count;
+     
      for (;;)
      {
-          CanSendAutoaimData();
-          osDelay(pdMS_TO_TICKS(1));
+          if (count++ >= 10){
+               CanSendSlowData();
+               count = 0;
+          }else {
+               CanSendFastData();
+          }
+          AlivePeriodElapsedCallback();
+          osDelay(pdMS_TO_TICKS(5));
      }
 }
 
@@ -166,11 +198,7 @@ void McuComm::DataProcess(uint8_t* rx_data)
           }
           case (0xAB): // 拨弹盘，yaw角包
           {
-               recv_comm_data_.mouse_lr.all = rx_data[1];
-
-               recv_comm_data_.keyboard.all = rx_data[2] << 8 | rx_data[3];
-
-               memcpy(&recv_comm_data_.imu_yaw.b, &rx_data[4], 4);
+               memcpy(&recv_comm_data_.imu_yaw.b, &rx_data[1], 4);
 
                break;
           }
@@ -179,6 +207,8 @@ void McuComm::DataProcess(uint8_t* rx_data)
                recv_autoaim_data_.mode = rx_data[1];
 
                memcpy(&recv_autoaim_data_.autoaim_yaw_ang, &rx_data[2], 4);
+
+               recv_autoaim_data_.all = rx_data[6];
 
                break;
           }

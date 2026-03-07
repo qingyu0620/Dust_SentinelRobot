@@ -108,10 +108,14 @@ void uart6_callback_function(uint8_t* buffer, uint16_t length)
 {	
     robot_.referee_.UartRxCpltCallback(buffer, length);
     
-    robot_.mcu_comm_.send_autoaim_data_.start_of_yaw_frame = 0xAC;
-    robot_.mcu_comm_.send_autoaim_data_.stage_enum = robot_.referee_.GetGameStage();
-    robot_.mcu_comm_.send_autoaim_data_.robot_hp = robot_.referee_.GetHP(CURRENT_ROBOT_ID);
-    robot_.mcu_comm_.send_autoaim_data_.middle_buff_status = robot_.referee_.GetMiddleBuffStatus();
+    robot_.mcu_comm_.send_fast_data_.bullet_number = robot_.referee_.Get17mmRemaining();
+    robot_.mcu_comm_.send_fast_data_.bullet_speed.f = robot_.referee_.GetShootSpeed();
+    robot_.mcu_comm_.send_fast_data_.middle_buff_status = robot_.referee_.GetMiddleBuffStatus();
+
+    robot_.mcu_comm_.send_slow_data_.stage_enum = robot_.referee_.GetGameStage();
+    robot_.mcu_comm_.send_slow_data_.stage_remain_time = robot_.referee_.GetRemainingTime();
+    robot_.mcu_comm_.send_slow_data_.robot_hp = robot_.referee_.GetHP(CURRENT_ROBOT_ID);
+    robot_.mcu_comm_.send_slow_data_.is_jam = robot_.reload_.GetReloadState();
 }
 
 /* Function prototypes -------------------------------------------------------*/

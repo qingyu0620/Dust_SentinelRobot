@@ -62,7 +62,7 @@ struct McuChassisData
             uint8_t switch_l : 2;
             uint8_t switch_r : 2;
             uint8_t reserved : 4;
-        } switchcode;
+        };
     } switch_lr;
 };
 
@@ -73,8 +73,6 @@ struct McuChassisData
 struct McuCommandData
 {
     uint8_t start_of_frame = 0xAB;
-    RemoteMouseLR  mouse_lr;
-    RemoteKeyboard keyboard;
     McuConv imu_yaw;                    // yaw轴角度
 };
 
@@ -82,24 +80,49 @@ struct McuCommandData
  * @brief McuComm接收自瞄数据结构体
  * 
  */
-struct McuRecvAutoaimData
+struct McuRecvAutoData
 {
     uint8_t start_of_yaw_frame = 0xAC;
     uint8_t mode;                       // 0-空闲 1-自瞄不开火 2-自瞄开火
     McuConv autoaim_yaw_ang;            // 自瞄yaw轴角度
-    uint8_t ratio;
+    union
+    {
+        uint8_t all = 0;
+        struct
+        {
+            uint8_t chassis_mode : 1;
+            uint8_t scan_status : 1;
+            uint8_t reserved : 6;
+        };   
+    };
 };
 
 /**
- * @brief McuComm发送自瞄数据结构体
+ * @brief 
  * 
  */
-struct McuSendAutoaimData
+struct McuSendRefereeFastData
 {
     uint8_t start_of_yaw_frame = 0xAC;
-    uint8_t stage_enum;
-    uint16_t robot_hp;
+
     uint8_t middle_buff_status;
+    uint16_t bullet_number;
+    McuConv bullet_speed;
+};
+
+/**
+ * @brief 
+ * 
+ */
+struct McuSendRefereeSlowData
+{
+    uint8_t start_of_yaw_frame = 0xAD;
+
+    uint8_t stage_enum;
+    uint16_t stage_remain_time;
+    uint16_t robot_hp;
+
+    uint8_t is_jam = false;
 };
 
 /**
@@ -109,7 +132,7 @@ struct McuSendAutoaimData
 class McuComm
 {
 public:
-    McuChassisData recv_chassis_data_ = 
+    McuChassisData recv_chassis_data_
     {
         0xAA,
         1024,
@@ -117,33 +140,41 @@ public:
         1024,
     };
 
-    McuCommandData recv_comm_data_ = 
+    McuCommandData recv_comm_data_
     {
         0xAB,
+        {0,0,0,0},
+    };
+
+    McuRecvAutoData recv_autoaim_data_
+    {   0xAC,
+        0,
+        {0, 0, 0, 0},
+        0,
+    };
+
+    McuSendRefereeFastData send_fast_data_
+    {   0xAC,
         0,
         0,
         {0,0,0,0},
     };
 
-    McuRecvAutoaimData recv_autoaim_data_ = 
-    {   0xAC,
-        0,
-        {0, 0, 0, 0},
-    };
-
-    McuSendAutoaimData send_autoaim_data_ = 
-    {   0xAC,
+    McuSendRefereeSlowData send_slow_data_
+    {   0xAD,
         0,
         0,
+        0,
+        false,
     };
 
     void Init(CAN_HandleTypeDef *hcan, uint8_t can_rx_id, uint8_t can_tx_id);
 
-    void Task();
-
     void ClearData();
 
-    void CanSendAutoaimData();
+    void CanSendSlowData();
+
+    void CanSendFastData();
 
     void CanRxCpltCallback(uint8_t *rx_data);
 
@@ -170,6 +201,8 @@ private:
     void DataProcess(uint8_t* rx_data);
 
     void AlivePeriodElapsedCallback();
+
+    void Task();
 
     // FreeRTOS 入口，静态函数
     static void TaskEntry(void *param);

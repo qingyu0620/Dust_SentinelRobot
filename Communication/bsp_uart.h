@@ -21,7 +21,7 @@
 /* Exported macros -----------------------------------------------------------*/
 
 // 串口缓冲区大小
-#define UART_BUFFER_LENGTH      128
+#define UART_BUFFER_LENGTH      130
 
 /* Exported types ------------------------------------------------------------*/
 
@@ -47,7 +47,7 @@ union UartErrorCode
         uint8_t parity_error : 1;       // 奇偶校验位错误
         uint8_t dma_error : 1;          // DMA传输错误
         uint8_t reseverd : 3;           // 保留位
-    } check;
+    };
 };
 
 /**
@@ -62,6 +62,11 @@ struct UartManageObject
     uint8_t rx_buffer[UART_BUFFER_LENGTH];
     uint16_t rx_buffer_length;
     Uart_Callback callback_function;
+
+    volatile uint16_t tx_head = 0;
+    volatile uint16_t tx_tail = 0;
+    volatile uint8_t tx_busy = 0;
+    volatile uint16_t tx_sending_len = 0;
 };
 
 /* Exported variables --------------------------------------------------------*/

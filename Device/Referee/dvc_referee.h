@@ -1,12 +1,13 @@
-
 /**
- * Command_ID分全局, 己方, 指定机器人
- * 0x00xx, 全局是Game
- * 0x01xx, 己方是Event_Self
- * 0x02xx, 指定机器人是Robot_x, 没有x则是任意己方机器人
- * 0x03xx的指令帧直接具体指明收发方
+ * @file dvc_referee.h
+ * @author qingyu
+ * @brief 
+ * @version 0.1
+ * @date 2026-02-27
+ * 
+ * @copyright Copyright (c) 2026
+ * 
  */
-
 #ifndef DVC_REFEREE_H
 #define DVC_REFEREE_H
 
@@ -480,13 +481,13 @@ struct RefereeRxDataEventSelfData
     uint32_t Power_Rune_Big_Status : 2;
     uint32_t Central_Highland_Status : 2;
     uint32_t Trapezoid_Highland_Status : 2;
-    uint32_t Enemy_Dart_Hit_Time : 9;
-    uint32_t Enemy_Dart_Hit_Target : 3;
+    uint32_t Enemy_Dart_Hit_Time : 10; 
     uint32_t Middle_Buff_Status : 2;
+    uint32_t Enemy_Dart_Hit_Target : 3;     
     uint32_t Fortress_Buff_Status : 2;
     uint32_t Outpost_Buff_Status : 2;
     uint32_t Base_Buff_Status : 1;
-    uint32_t Reserved : 2;
+    uint32_t Reserved : 1;
     uint16_t CRC_16;
 } __attribute__((packed));
 
@@ -988,7 +989,7 @@ struct RefereeTxDataInteractionClientReceiveRobotMinimap
 class Referee
 {
 public:
-    void Init(UART_HandleTypeDef *huart, Uart_Callback callback_function, uint16_t rx_buffer_length, uint8_t __Frame_Header = 0xa5);
+    void Init(UART_HandleTypeDef *huart, Uart_Callback callback_function, uint16_t rx_buffer_length, uint8_t __Frame_Header = 0xA5);
 
     inline RefereeStatus GetStatus();
 
@@ -1215,15 +1216,13 @@ public:
 
     inline void SetRefereeTrustStatus(RefereeDataStatus __Referee_Trust_Status);
 
-    void UartRxCpltCallback(uint8_t *Rx_Data, uint16_t Length);
+    void UartRxCpltCallback(uint8_t *rx_Data, uint16_t Length);
 
     void AlivePeriodElapsedCallback();
 
 protected:
     // 初始化相关常量
 
-    // 绑定的UART
-    UartManageObject *uart_manage_object_;
     // 数据包头标
     uint8_t frame_header_;
 
@@ -1306,7 +1305,7 @@ protected:
 
     uint16_t VerifyCrc16(uint8_t *Message, uint32_t Length);
 
-    void DataProcess(uint16_t Length);
+    void DataProcess(uint8_t *rx_data, uint16_t length);
 };
 
 /* Exported variables --------------------------------------------------------*/
@@ -1441,9 +1440,6 @@ inline uint16_t Referee::GetHP(RefereeDataRobotsID Robots_ID)
     }
 }
 
-
-//////////////////////////////////////////////////////////////
-
 /**
  * @brief 获取补给站前占领状态
  *
@@ -1573,8 +1569,6 @@ inline RefereeDataStatus Referee::GetBaseBuffStatus()
 {
     return (static_cast<RefereeDataStatus>(event_self_data_.Base_Buff_Status));
 }
-
-//////////////////////////////////////////////////////////////
 
 /**
  * @brief 获取请求补给的机器人ID

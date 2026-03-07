@@ -11,6 +11,8 @@
 /* Includes ------------------------------------------------------------------*/
 
 #include "app_reload.h"
+#include <cmath>
+#include <cstdio>
 
 /* Private macros ------------------------------------------------------------*/
 
@@ -36,7 +38,7 @@ void Reload::Init()
     static const osThreadAttr_t kReloadTaskAttr = 
     {
         .name = "reload_task",
-        .stack_size = 256,
+        .stack_size = 128 * 6,
         .priority = (osPriority_t) osPriorityNormal
     };
     // 启动任务，将 this 传入
@@ -74,8 +76,36 @@ void Reload::OutputToMotor()
  */
 void Reload::Task()
 {
+    uint16_t count = 0;
+
     for(;;)
     {
+        if (target_reload_rotation_ == MAX_RELOAD_SPEED) 
+        {
+            reload_now_angle = motor_reload_1_.GetNowAngle();
+
+            if (count >= 50)
+            {
+                if (fabsf(reload_now_angle - reload_pre_angld) < 0.5f) {
+                    is_reloading = true;
+                } else {
+                    is_reloading = false;
+                }
+
+                reload_pre_angld = reload_now_angle;
+
+                count = 0;
+            }
+
+            count++;
+        }
+        else
+        {
+            is_reloading = false;
+        }
+
+        printf("%d\n", is_reloading);
+
         OutputToMotor();
         osDelay(pdMS_TO_TICKS(10));
     }

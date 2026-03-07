@@ -193,7 +193,6 @@ public:
 
     void PowerLimitAfterCalculatePeriodElapsedCallback();
 
-    void Output(); // 暂时开放接口调试用
 protected:
     // 初始化相关变量
 
@@ -278,7 +277,7 @@ protected:
 
     void PowerLimitControl();
 
-    // void Output();
+    void Output();
 };
 
 class MotorDjiC610

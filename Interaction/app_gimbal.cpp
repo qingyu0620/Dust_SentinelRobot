@@ -43,7 +43,7 @@ void Gimbal::Init()
     );
     // yaw轴速度环pid
     yaw_omega_pid_.Init(
-        0.765f,
+        0.8f,
         0.003f,
         0.001f,
         0.5f,

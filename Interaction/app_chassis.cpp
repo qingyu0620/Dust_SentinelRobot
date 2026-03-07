@@ -15,7 +15,7 @@
 /* Private macros ------------------------------------------------------------*/
 
 #define DT      0.001f
-#define MAX_GYROSCOPE_SPEED     17.f
+#define MAX_GYROSCOPE_SPEED     5.f
 
 /* Private types -------------------------------------------------------------*/
 
@@ -224,15 +224,14 @@ void Chassis::Task()
 {
     for (;;)
     {
-        // 操作模式
         OperationMode();
-        // 旋转矩阵转换
+
         RotationMatrixTransform();
-        // 斜坡规划算法
+
         SlopePlanning();
-        // 运动学解析
+
         KinematicsInverseResolution();
-        // 输出
+
         OutputToMotor();
 
         osDelay(pdMS_TO_TICKS(1));
