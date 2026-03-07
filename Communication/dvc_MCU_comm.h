@@ -10,9 +10,6 @@
  */
 #pragma once
 
-#ifndef MODULES_COMM_H
-#define MODULES_COMM_H
-
 /* Includes ------------------------------------------------------------------*/
 
 #include "bsp_can.h"
@@ -65,7 +62,7 @@ struct McuChassisData
             uint8_t switch_l : 2;
             uint8_t switch_r : 2;
             uint8_t reserved : 4;
-        } switchcode;
+        };
     } switch_lr;
 };
 
@@ -77,34 +74,6 @@ struct McuCommandData
 {
     uint8_t         start_of_frame = 0xAB;
 
-    union 
-    {
-        uint8_t all;
-        struct 
-        {
-            uint8_t mouse_l : 2;
-            uint8_t mouse_r : 2;
-            uint8_t reserved : 4;
-        } mousecode;
-    } mouse_lr;
-
-    union
-    {
-        uint16_t all;
-        struct
-        {
-            uint16_t w : 1, 
-                     s : 1,
-                     a : 1,
-                     d : 1,
-                     q : 1, 
-                     e : 1;
-            uint16_t shift : 1, 
-                     ctrl : 1;
-            uint16_t reserved : 8;
-        } key;
-    } keyboard;                                 // 键盘数据
-
     McuConv         imu_yaw;                    // yaw轴角度
 };
 
@@ -112,24 +81,49 @@ struct McuCommandData
  * @brief Mcu接收自瞄数据结构体
  * 
  */
-struct McuSendAutoaimData
+struct McuSendAutoData
 {
-    uint8_t         start_of_yaw_frame = 0xAC;
-    uint8_t         mode;
-    McuConv         autoaim_yaw_angle;            // 自瞄yaw轴角度
-    uint8_t         ratio;
+    uint8_t start_of_yaw_frame = 0xAC;
+    uint8_t mode;
+    McuConv autoaim_yaw_angle;            // 自瞄yaw轴角度
+    union 
+    {
+        uint8_t all;
+        struct
+        {
+            uint8_t chassis_mode : 1;
+            uint8_t scan_status : 1;
+            uint8_t reserved : 6;
+        };
+    };
 };
 
 /**
- * @brief Mcu发送自瞄数据结构体
+ * @brief 
  * 
  */
-struct McuRecvAutoaimData
+struct McuRecvRefereeFastData
 {
     uint8_t start_of_yaw_frame = 0xAC;
-    uint8_t stage_enum;
-    uint16_t robot_hp;
-    uint8_t middle_buff_status;
+
+    uint8_t middle_buff_status = 0;
+    uint16_t bullet_number = 0;
+    McuConv bullet_speed;
+};
+
+/**
+ * @brief 
+ * 
+ */
+struct McuRecvRefereeSlowData
+{
+    uint8_t start_of_yaw_frame = 0xAF;
+
+    uint8_t stage_enum = 0;
+    uint16_t stage_remain_time = 0;
+    uint16_t robot_hp = 0;
+
+    uint8_t is_jam = false;
 };
 
 /**
@@ -151,20 +145,28 @@ public:
     McuCommandData send_command_data_ = 
     {
         0xAB,
-        0,
-        0,
         {0,0,0,0},
     };
 
-    McuSendAutoaimData send_autoaim_data_ = 
+    McuSendAutoData send_auto_data_ = 
     {   0xAC,
         0,
         {0,0,0,0},
+        0,
     };
 
-    McuRecvAutoaimData recv_autoaim_data_ = 
+    McuRecvRefereeFastData recv_fast_data_ = 
     {
         0xAC,
+        0,
+        0,
+        {0,0,0,0},
+    };
+
+    McuRecvRefereeSlowData recv_slow_data_ = 
+    {
+        0xAD,
+        0,
         0,
         0,
     };
@@ -173,15 +175,15 @@ public:
 
     void Task();
 
-    void ClearData();
+    void ClearRemoteData();
+
+    void ClearAutoData();
 
     void CanSendChassisData();
 
     void CanSendCommandData();
     
-    void CanSendAutoaimData();
-
-    void UpdateAutoaimData(PCRecvAutoAimData* pc_recv_autoaim_data);
+    void CanSendAutoData();
 
     void CanRxCpltCallback(uint8_t *rx_data);
 
@@ -222,4 +224,8 @@ inline McuAliveState McuComm::GetMcuAliveState()
     return (mcu_alive_state_);
 }
 
-#endif
+
+
+
+
+

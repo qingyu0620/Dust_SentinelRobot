@@ -26,8 +26,8 @@
  */
 void Shoot::Init()
 {
-    motor_shoot_1_.pid_omega_.Init(1.0f, 0.0f, 0.0f);
-    motor_shoot_2_.pid_omega_.Init(1.0f, 0.0f, 0.0f);
+    motor_shoot_1_.pid_omega_.Init(2.0f, 0.5f, 0.0f);
+    motor_shoot_2_.pid_omega_.Init(2.0f, 0.5f, 0.0f);
 
     motor_shoot_1_.Init(&hcan2, MOTOR_DJI_ID_0x201, MOTOR_DJI_CONTROL_METHOD_OMEGA);
     motor_shoot_2_.Init(&hcan2, MOTOR_DJI_ID_0x202, MOTOR_DJI_CONTROL_METHOD_OMEGA);
@@ -38,7 +38,7 @@ void Shoot::Init()
     static const osThreadAttr_t kShootTaskAttr = 
     {
         .name = "shoot_task",
-        .stack_size = 256,
+        .stack_size = 128 * 6,
         .priority = (osPriority_t) osPriorityNormal
     };
     // 启动任务，将 this 传入
@@ -70,6 +70,8 @@ void Shoot::MotorToOutput()
     motor_shoot_2_.CalculatePeriodElapsedCallback();
         
     can_send_data(&hcan2, 0x200, g_can2_0x200_tx_data, 4);
+
+    // printf("%f,%f\n", motor_shoot_1_.GetNowOmega(), motor_shoot_2_.GetNowOmega());
 }
 
 /**

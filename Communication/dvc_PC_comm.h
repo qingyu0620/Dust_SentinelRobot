@@ -10,9 +10,6 @@
  */
 #pragma once
 
-#ifndef PC_COMM_H
-#define PC_COMM_H
-
 /* Includes ------------------------------------------------------------------*/
 
 #include "dvc_MCU_comm.h"
@@ -27,7 +24,8 @@
 
 /* Exported types ------------------------------------------------------------*/
 
-struct McuRecvAutoaimData;      // 前置声明
+struct McuRecvRefereeFastData;      // 前置声明
+struct McuRecvRefereeSlowData;      // 前置声明
 
 /**
  * @brief PcComm转换联合体
@@ -54,10 +52,16 @@ enum PcAutoAimStatus : uint8_t
  * @brief PcComm存活状态枚举
  * 
  */
-enum PcAliveState
+enum PcAliveState : uint8_t
 {
     PC_ALIVE_STATE_ENABLE = 0,
     PC_ALIVE_STATE_DISABLE,
+};
+
+enum PcState : uint8_t 
+{
+    PC_STATE_ENABLE = 0,
+    PC_STATE_DISABLE,
 };
 
 #pragma pack(1)
@@ -66,7 +70,7 @@ enum PcAliveState
  * @brief PcComm自瞄发送结构体
  * 
  */
-struct PCSendAutoAimData1
+struct PCSendAutoAimData
 {
     uint8_t head[2] = {'S','P'};
 
@@ -86,51 +90,44 @@ struct PCSendAutoAimData1
 };
 
 /**
- * @brief PcComm自瞄发送结构体
+ * @brief PcComm导航发送结构体
  * 
  */
-struct PCSendAutoAimData2
+struct PCSendNavigationData
 {
-    uint8_t start_of_frame = 0xA6;
+    uint8_t start_of_frame = '@';
 
     uint8_t stage_enum = 0;
+    uint16_t stage_remain_time = 0;
     uint16_t current_hp = 0;
     uint8_t middle_buff_status = 0;
     
-    uint8_t end_of_frame = 0xEF;
+    uint8_t end_of_frame = '#';
 };
 
 /**
  * @brief PcComm自瞄接收结构体
  * 
  */
-struct PCRecvAutoAimData
+struct PCRecvAutoData
 {
-    uint8_t head[2] = {'S','P'};
-
-    PcAutoAimStatus mode = PC_AUTOAIM_MODE_IDLE;           // 0-空闲 1-后置摄像头 2-前置摄像头
-
-    float yaw_ang;              // yaw轴角度
-    
-    float pitch_ang;            // pitch轴角度
-
-    uint8_t ratio;
-
-    uint16_t crc16;             // 校验位
-};
-
-/**
- * @brief PcComm导航接收结构体
- * 
- */
-struct PCRecvNavigationData
-{
-    uint8_t start_of_frame = 0x6A;
-
+    uint8_t head[2] = {'S', 'P'};
+    PcAutoAimStatus mode = PC_AUTOAIM_MODE_IDLE;  // 0: 不控制, 1: 控制云台但不开火，2: 控制云台且开火
+    float yaw_ang;
+    float pitch_ang;
     PcConv linear_x;
     PcConv linear_y;
-
-    uint8_t crc16[2] = {0, 0};
+    union
+    {
+        uint8_t all = 0;
+        struct 
+        {
+            uint8_t classis_mode : 1;
+            uint8_t scan_status : 1;
+            uint8_t reserved : 6;
+        };
+    };
+    uint16_t crc16;
 };
 
 #pragma pack()
@@ -142,8 +139,8 @@ struct PCRecvNavigationData
 class PcComm
 {
 public:
-    // 发送自瞄数据1
-    PCSendAutoAimData1 send_autoaim_data1 = 
+    // 自瞄发送数据
+    PCSendAutoAimData send_autoaim_data = 
     {
         {'S','P'},
         {1,0,0,0},
@@ -152,30 +149,27 @@ public:
         {0,0},
         0,
     };
-    // 发送自瞄数据2
-    PCSendAutoAimData2 send_autoaim_data2 = 
+    // 导航发送数据
+    PCSendNavigationData send_navigation_data = 
     {
-        0xA6,
+        '@',
         0,
-        0xEF,
+        0,
+        0,
+        0,
+        '#',
     };
-    // 接收自瞄数据
-    PCRecvAutoAimData recv_autoaim_data = 
+    // 自瞄接收数据
+    PCRecvAutoData recv_auto_data = 
     {
         {'S','P'},
         PC_AUTOAIM_MODE_IDLE,
         0,
         0,
-        0,
-        0,
-    };
-    // 接收导航数据
-    PCRecvNavigationData recv_navigation_data = 
-    {
-        0x6A,
         {0,0,0,0},
         {0,0,0,0},
-        {0,0},
+        0,
+        0,
     };
 
     // 导航x通道值
@@ -186,27 +180,25 @@ public:
 
     void Init();
 
-    void Task();
+    void SendAutoaimData();
 
-    void Send_Message1();
-
-    void Send_Message2();
+    void SendNavigationData();
 
     void RxCpltCallback();
 
-    void UpdataAutoaimData(McuRecvAutoaimData& recv_autoaim_data);
+    void UpdataAutoaimData(McuRecvRefereeFastData& recv_fast_data, McuRecvRefereeSlowData& recv_slow_data);
 
     void JudgeAutoaimStatus(PcAutoAimStatus* now_autoaim_status, PcAutoAimStatus pre_autoaim_status);
 
+    inline PcAliveState GetAlivState() { 
+        return pc_alive_state; 
+    }
+
 private:
 
-    uint32_t autoaim_flag_ = 0;
+    uint32_t flag_ = 0;
 
-    uint32_t pre_autoaim_flag_ = 0;
-
-    uint32_t navigation_flag_ = 0;
-
-    uint32_t pre_navigation_flag_ = 0;
+    uint32_t pre_flag_ = 0;
 
     uint32_t alive_beat_ = 0;
 
@@ -214,13 +206,11 @@ private:
     
     PcAutoAimStatus pre_autoaim_status_ = PC_AUTOAIM_MODE_IDLE;
 
-    void ClearAutoaimData();
-
-    void ClearNavigationData();
-
     void DataProcess();
 
     void AlivePeriodElapsedCallback();
+
+    void Task();
 
     // FreeRTOS 入口，静态函数
     static void TaskEntry(void *param);
@@ -230,4 +220,4 @@ private:
 
 /* Exported function declarations --------------------------------------------*/
 
-#endif
+

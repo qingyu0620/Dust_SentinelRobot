@@ -60,7 +60,7 @@ typedef void (*CanCallback)(struct CanRxBuffer *);
 struct CanManageObject
 {
     CAN_HandleTypeDef *can_handler;
-    struct CanRxBuffer rx_buffer;
+    CanRxBuffer rx_buffer;
     CanCallback callback_function;
 };
 

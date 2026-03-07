@@ -13,11 +13,10 @@
 
 /* Includes ------------------------------------------------------------------*/
 
-#include "FreeRTOS.h"
-
 #include "dvc_motor_dji.h"
-
+#include "FreeRTOS.h"
 #include "cmsis_os2.h"
+#include "stdio.h"
 
 /* Exported macros -----------------------------------------------------------*/
 

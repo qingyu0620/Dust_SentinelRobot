@@ -21,7 +21,7 @@
 /* Exported macros -----------------------------------------------------------*/
 
 // 串口缓冲区大小
-#define UART_BUFFER_LENGTH      128
+#define UART_BUFFER_LENGTH      130
 
 /* Exported types ------------------------------------------------------------*/
 
@@ -62,6 +62,11 @@ struct UartManageObject
     uint8_t rx_buffer[UART_BUFFER_LENGTH];
     uint16_t rx_buffer_length;
     Uart_Callback callback_function;
+
+    volatile uint16_t tx_head = 0;
+    volatile uint16_t tx_tail = 0;
+    volatile uint8_t tx_busy = 0;
+    volatile uint16_t tx_sending_len = 0;
 };
 
 /* Exported variables --------------------------------------------------------*/
@@ -89,7 +94,6 @@ void uart3_callback_function(uint8_t* buffer, uint16_t length);
 void uart6_callback_function(uint8_t* buffer, uint16_t length);
 
 // printf重定义函数声明（当文件为cpp时需添加）
-int __io_putchar(int ch);
 int _write(int file, char *ptr, int len);
 
 #ifdef __cplusplus

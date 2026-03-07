@@ -1,14 +1,19 @@
 {
-    "clangd.arguments": [
-        "--compile-commands-dir=build"
-    ],
     "clangd.path": "C:\\Users\\33527\\AppData\\Roaming\\Code\\User\\globalStorage\\llvm-vs-code-extensions.vscode-clangd\\install\\21.1.0\\clangd_21.1.0\\bin\\clangd.exe",
-    "C_Cpp.intelliSenseEngine": "disabled",
+    
+    "C_Cpp.default.compilerPath": "arm-none-eabi-gcc",
+    "C_Cpp.default.cStandard": "c11",
+    "C_Cpp.default.cppStandard": "c++17",
+    "C_Cpp.default.intelliSenseMode": "gcc-arm",
+    "clangd.arguments": [
+        "--compile-commands-dir=${workspaceFolder}/build",
+        "--query-driver=arm-none-eabi-*"
+    ],
     
     "workbench.tree.indent": 10,
     "workbench.tree.renderIndentGuides": "always",
     "explorer.compactFolders": false,
     "workbench.colorCustomizations": {
         "tree.indentGuidesStroke": "#00ff73"
-    }
+    },
 }

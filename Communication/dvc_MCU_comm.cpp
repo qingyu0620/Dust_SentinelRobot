@@ -11,6 +11,7 @@
 /* Includes ------------------------------------------------------------------*/
 
 #include "dvc_MCU_comm.h"
+#include <cstring>
 
 /* Private macros ------------------------------------------------------------*/
 
@@ -64,18 +65,6 @@ void McuComm::TaskEntry(void *argument)
 }
 
 /**
- * @brief McuComm更新自瞄数据
- * 
- * @param pc_recv_autoaim_data 
- */
-void McuComm::UpdateAutoaimData(PCRecvAutoAimData* pc_recv_autoaim_data)
-{
-     send_autoaim_data_.mode = pc_recv_autoaim_data->mode;
-     send_autoaim_data_.autoaim_yaw_angle.f = pc_recv_autoaim_data->yaw_ang;
-     send_autoaim_data_.ratio = pc_recv_autoaim_data->ratio;
-}
-
-/**
  * @brief McuComm发送底盘数据函数
  * 
  */
@@ -111,11 +100,12 @@ void McuComm::CanSendCommandData()
      yaw_conv.f = INS.Yaw;
 
      can_tx_frame[0] = 0xAB;
-     can_tx_frame[1] = send_command_data_.mouse_lr.all;
-     can_tx_frame[2] = send_command_data_.keyboard.all >> 8;
-     can_tx_frame[3] = send_command_data_.keyboard.all;
 
-     memcpy(&can_tx_frame[4], yaw_conv.b, 4);
+     memcpy(&can_tx_frame[1], yaw_conv.b, 4);
+     
+     can_tx_frame[5] = 0x00;
+     can_tx_frame[6] = 0x00;
+     can_tx_frame[7] = 0x00;
 
      can_send_data(can_manage_object_->can_handler, can_tx_id_, can_tx_frame, 8);
 }
@@ -124,16 +114,16 @@ void McuComm::CanSendCommandData()
  * @brief McuComm发送自瞄数据函数
  * 
  */
-void McuComm::CanSendAutoaimData()
+void McuComm::CanSendAutoData()
 {
      static uint8_t can_tx_frame[8];
 
      can_tx_frame[0] = 0xAC;
-     can_tx_frame[1] = send_autoaim_data_.mode;
+     can_tx_frame[1] = send_auto_data_.mode;
 
-     memcpy(&can_tx_frame[2], &send_autoaim_data_.autoaim_yaw_angle, 4);
+     memcpy(&can_tx_frame[2], &send_auto_data_.autoaim_yaw_angle, 4);
 
-     can_tx_frame[6] = send_autoaim_data_.ratio;
+     can_tx_frame[6] = send_auto_data_.all;
      can_tx_frame[7] = 0x00;
 
      can_send_data(can_manage_object_->can_handler, can_tx_id_, can_tx_frame, 8);
@@ -143,12 +133,25 @@ void McuComm::CanSendAutoaimData()
  * @brief McuComm掉线数据函数
  * 
  */
-void McuComm::ClearData()
+void McuComm::ClearRemoteData()
 {
      send_chassis_data_.chassis_speed_x = 1024;
      send_chassis_data_.chassis_speed_y = 1024;
      send_chassis_data_.rotation = 1024;
 
+     send_chassis_data_.switch_lr.switch_l = 3;
+     send_chassis_data_.switch_lr.switch_r = 3;
+}
+
+/**
+ * @brief McuComm掉线数据函数
+ * 
+ */
+void McuComm::ClearAutoData()
+{
+     send_auto_data_.mode = 0;
+     send_auto_data_.autoaim_yaw_angle.f = 0.0f;
+     send_auto_data_.all = 0;
 }
 
 /**
@@ -162,7 +165,6 @@ void McuComm::AlivePeriodElapsedCallback()
           if(pre_flag_ == flag_)
           {
                mcu_alive_state_ = MCU_ALIVE_STATE_DISABLE;
-               ClearData();
           }
           else
           {
@@ -212,11 +214,22 @@ void McuComm::DataProcess(uint8_t* rx_data)
      // 处理数据 , 解包
      switch (rx_data[0])
      {
-         case (0xAC):
-         {
-               recv_autoaim_data_.stage_enum = rx_data[1];
-               recv_autoaim_data_.robot_hp = rx_data[2] << 8 | rx_data[3];
-               recv_autoaim_data_.middle_buff_status = rx_data[4];
-         }
+          case (0xAC):
+          {
+               recv_fast_data_.bullet_number = rx_data[1] << 8 | rx_data[2];
+               recv_fast_data_.middle_buff_status = rx_data[3];
+               memcpy(&recv_fast_data_.bullet_speed.f, &rx_data[4], 4);
+
+               break;
+          }
+          case (0xAF):
+          {
+               recv_slow_data_.stage_enum = rx_data[1];
+               recv_slow_data_.stage_remain_time = rx_data[2] << 8 | rx_data[3];
+               recv_slow_data_.robot_hp = rx_data[4] << 8 | rx_data[5];
+               recv_slow_data_.is_jam = rx_data[6];
+
+               break;
+          }
      }
 }

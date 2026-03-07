@@ -87,7 +87,7 @@ extern uint8_t GlobalDebugMode;
 #define VAL_MIN(a, b) ((a) < (b) ? (a) : (b))
 #define VAL_MAX(a, b) ((a) > (b) ? (a) : (b))
 
-typedef struct
+typedef struct ramp_function_source_t
 {
     float input;        //输入数据
     float out;          //输出数据

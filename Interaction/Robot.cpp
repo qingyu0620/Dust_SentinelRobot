@@ -11,7 +11,11 @@
 /* Includes ------------------------------------------------------------------*/
 
 #include "Robot.h"
+#include "app_shoot.h"
 #include "dvc_MCU_comm.h"
+#include "dvc_PC_comm.h"
+#include "dvc_remote_dr16.h"
+#include <cstdio>
 
 /* Private macros ------------------------------------------------------------*/
 
@@ -51,9 +55,6 @@ void Robot::Init()
 
     // 上位机通讯
     pc_comm_.Init();
-
-    // 等待云台yaw角回正
-    osDelay(pdMS_TO_TICKS(5000));
 
     // 云台初始化
     gimbal_.Init();
@@ -98,9 +99,15 @@ void Robot::SetControlMethod(RobotControlMethod robot_control_method)
  */
 void Robot::Task()
 {
-    McuRecvAutoaimData mcu_autoaim_data_local;
-    mcu_autoaim_data_local.gamestatus = 0;
-    mcu_autoaim_data_local.robot_hp = 0;
+    McuRecvRefereeFastData mcu_fast_data_local;
+    mcu_fast_data_local.bullet_number = 0;
+    mcu_fast_data_local.bullet_speed.f = 0.f;
+    mcu_fast_data_local.middle_buff_status = 0;
+
+    McuRecvRefereeSlowData mcu_slow_data_local;
+    mcu_slow_data_local.stage_enum = 0;
+    mcu_slow_data_local.stage_remain_time = 0;
+    mcu_slow_data_local.robot_hp = 0;
 
     for(;;)
     {
@@ -119,77 +126,53 @@ void Robot::Task()
 
         /****************************   McuComm   ****************************/
 
+        
         __disable_irq();
-        mcu_autoaim_data_local = *(static_cast<const McuRecvAutoaimData*>(&(mcu_comm_.recv_autoaim_data_)));
+        mcu_fast_data_local = *(static_cast<const McuRecvRefereeFastData*>(&(mcu_comm_.recv_fast_data_)));
+        mcu_slow_data_local = *(static_cast<const McuRecvRefereeSlowData*>(&(mcu_comm_.recv_slow_data_)));
         __enable_irq();
 
-        // 若掉线发送空白数据
-        if(remote_dr16_.remote_alive_status == REMOTE_ALIVE_STATUS_DISABLE)
-        {
-            mcu_comm_.ClearData();
+        // 如果断开连接，清理数据
+        if(remote_dr16_.remote_alive_status == REMOTE_ALIVE_STATUS_DISABLE) {
+            mcu_comm_.ClearRemoteData(); 
         }
 
-        mcu_comm_.UpdateAutoaimData(&pc_comm_.recv_autoaim_data);
+        if (pc_comm_.GetAlivState() == PC_ALIVE_STATE_DISABLE) {
+            mcu_comm_.ClearAutoData();
+        }
 
-        mcu_comm_.CanSendAutoaimData();
+        mcu_comm_.CanSendAutoData();
 
 
         /****************************   PcComm   ****************************/
 
 
-        pc_comm_.UpdataAutoaimData(mcu_autoaim_data_local);
-        
-        
+        pc_comm_.UpdataAutoaimData(mcu_fast_data_local, mcu_slow_data_local);
+
+
         /****************************   Gimbal   ****************************/
 
 
         // 自瞄模式
-        if(remote_dr16_.output_.remote.switch_r == SWITCH_UP || remote_dr16_.output_.mouse.mouse_lr.mousecode.mouse_r == REMOTE_KEY_STATUS_PRESS)
+        if(remote_dr16_.output_.remote.switch_r == SWITCH_UP)
         {
-            switch (pc_comm_.recv_autoaim_data.mode)
+            switch (pc_comm_.recv_auto_data.mode)
             {
-                case(PC_AUTOAIM_MODE_IDLE):
+                case (PC_AUTOAIM_MODE_IDLE):
                 {
-                    remote_radian = remote_dr16_.output_.remote.pitch + remote_dr16_.output_.mouse.mouse_y;
-
-                    INTERVAL_LIMIT(remote_radian, MAX_PITCH_RADIAN, MIN_PITCH_RADIAN);
-
-                    gimbal_.SetTargetPitchRadian(remote_radian);
-
-                    break;
-                }
-                case(PC_AUTOAIM_MODE_REAR):
-                {
-                    remote_radian = remote_dr16_.output_.remote.pitch + remote_dr16_.output_.mouse.mouse_y;
-
-                    INTERVAL_LIMIT(remote_radian, MAX_PITCH_RADIAN, MIN_PITCH_RADIAN);
-
-                    gimbal_.SetTargetPitchRadian(remote_radian);
-                    
-                    break;
-                }
-                case(PC_AUTOAIM_MODE_FRONT):
-                {
-                    float filtered_autoaim =  gimbal_.pitch_autoaim_filter_.Update(pc_comm_.recv_autoaim_data.pitch_ang);
-
-                    remote_radian -= filtered_autoaim / AUTOAIM_PITCH_RATIO;
+                    remote_radian = remote_dr16_.output_.remote.pitch;
 
                     INTERVAL_LIMIT(remote_radian, MAX_PITCH_RADIAN, MIN_PITCH_RADIAN);
 
                     gimbal_.SetTargetPitchRadian(remote_radian);
 
                     scan_pitch_count_ = 0;      // 累加数据清零，下一次扫描从头开始
-                    
+
+                    shoot_.SetTargetShootOmega(MAX_SHOOT_OMEGA);
+
                     break;
                 }
-            }
-        }
-        // 巡航模式
-        else if(remote_dr16_.output_.remote.switch_r == SWITCH_DOWN || remote_dr16_.output_.keyboard.keycode.q == REMOTE_KEY_STATUS_PRESS)
-        {
-            switch (pc_comm_.recv_autoaim_data.mode)
-            {
-                case(PC_AUTOAIM_MODE_IDLE):
+                case (PC_AUTOAIM_MODE_REAR):
                 {
                     scan_pitch_count_ += M_PI / SCAN_PITCH_RATIO;
                     scan_pitch_count_ = normalize_pi(scan_pitch_count_);
@@ -199,46 +182,44 @@ void Robot::Task()
 
                     gimbal_.SetTargetPitchRadian(remote_radian);
 
-                    // shoot_.SetTargetShootOmega(MAX_SHOOT_OMEGA);
+                    shoot_.SetTargetShootOmega(MAX_SHOOT_OMEGA);
 
                     break;
                 }
-                case(PC_AUTOAIM_MODE_REAR):
+                // 自瞄优先
+                case (PC_AUTOAIM_MODE_FRONT):
                 {
-                    scan_pitch_count_ += M_PI / SCAN_PITCH_RATIO;
-                    scan_pitch_count_ = normalize_pi(scan_pitch_count_);
-                    remote_radian = MIN_PITCH_RADIAN * arm_sin_f32(scan_pitch_count_);
+                    if (mcu_slow_data_local.is_jam)
+                    {
+                        scan_pitch_count_ += M_PI / SCAN_PITCH_RATIO;
+                        scan_pitch_count_ = normalize_pi(scan_pitch_count_);
+                        remote_radian = MIN_PITCH_RADIAN * arm_sin_f32(scan_pitch_count_);
+
+                        shoot_.SetTargetShootOmega(0);
+                    }
+                    else
+                    {
+                        float filtered_autoaim =  gimbal_.pitch_autoaim_filter_.Update(pc_comm_.recv_auto_data.pitch_ang);
+
+                        remote_radian -= filtered_autoaim / AUTOAIM_PITCH_RATIO;
+
+                        shoot_.SetTargetShootOmega(MAX_SHOOT_OMEGA);
+                    }
 
                     INTERVAL_LIMIT(remote_radian, MAX_PITCH_RADIAN, MIN_PITCH_RADIAN);
 
                     gimbal_.SetTargetPitchRadian(remote_radian);
-
-                    // shoot_.SetTargetShootOmega(MAX_SHOOT_OMEGA);
-
-                    break;
-                }
-                case(PC_AUTOAIM_MODE_FRONT):
-                {
-                    float filtered_autoaim =  gimbal_.pitch_autoaim_filter_.Update(pc_comm_.recv_autoaim_data.pitch_ang);
-
-                    remote_radian -= filtered_autoaim / AUTOAIM_PITCH_RATIO;
-
-                    INTERVAL_LIMIT(remote_radian, MAX_PITCH_RADIAN, MIN_PITCH_RADIAN);
-
-                    gimbal_.SetTargetPitchRadian(remote_radian);
-
-                    // shoot_.SetTargetShootOmega(MAX_SHOOT_OMEGA);
 
                     scan_pitch_count_ = 0;      // 累加数据清零，下一次扫描从头开始
-                    
+
                     break;
                 }
             }
         }
-        // 正常模式
-        else
+        // 正常遥控控制
+        else if (remote_dr16_.output_.remote.switch_r == SWITCH_MID)
         {
-            remote_radian = remote_dr16_.output_.remote.pitch + remote_dr16_.output_.mouse.mouse_y;
+            remote_radian = remote_dr16_.output_.remote.pitch;
 
             INTERVAL_LIMIT(remote_radian, MAX_PITCH_RADIAN, MIN_PITCH_RADIAN);
 
@@ -247,25 +228,82 @@ void Robot::Task()
             shoot_.SetTargetShootOmega(0);
 
             scan_pitch_count_ = 0;      // 累加数据清零，下一次扫描从头开始
+            
+        }
+        // 巡航模式
+        else if (remote_dr16_.output_.remote.switch_r == SWITCH_DOWN)
+        {
+            if (pc_comm_.recv_auto_data.scan_status == true)
+            {
+                switch (pc_comm_.recv_auto_data.mode)
+                {
+                    case (PC_AUTOAIM_MODE_IDLE):
+                    {
+                        scan_pitch_count_ += M_PI / SCAN_PITCH_RATIO;
+                        scan_pitch_count_ = normalize_pi(scan_pitch_count_);
+                        remote_radian = MIN_PITCH_RADIAN * arm_sin_f32(scan_pitch_count_);
+
+                        INTERVAL_LIMIT(remote_radian, MAX_PITCH_RADIAN, MIN_PITCH_RADIAN);
+
+                        gimbal_.SetTargetPitchRadian(remote_radian);
+
+                        shoot_.SetTargetShootOmega(0);
+
+                        break;
+                    }
+                    case (PC_AUTOAIM_MODE_REAR):
+                    {
+                        scan_pitch_count_ += M_PI / SCAN_PITCH_RATIO;
+                        scan_pitch_count_ = normalize_pi(scan_pitch_count_);
+                        remote_radian = MIN_PITCH_RADIAN * arm_sin_f32(scan_pitch_count_);
+
+                        INTERVAL_LIMIT(remote_radian, MAX_PITCH_RADIAN, MIN_PITCH_RADIAN);
+
+                        gimbal_.SetTargetPitchRadian(remote_radian);
+
+                        shoot_.SetTargetShootOmega(0);
+
+                        break;
+                    }
+                    case (PC_AUTOAIM_MODE_FRONT):
+                    {
+                        float filtered_autoaim =  gimbal_.pitch_autoaim_filter_.Update(pc_comm_.recv_auto_data.pitch_ang);
+
+                        remote_radian -= filtered_autoaim / AUTOAIM_PITCH_RATIO;
+
+                        INTERVAL_LIMIT(remote_radian, MAX_PITCH_RADIAN, MIN_PITCH_RADIAN);
+
+                        gimbal_.SetTargetPitchRadian(remote_radian);
+
+                        // shoot_.SetTargetShootOmega(MAX_SHOOT_OMEGA);
+
+                        scan_pitch_count_ = 0;      // 累加数据清零，下一次扫描从头开始
+                        
+                        break;
+                    }
+                }
+            }
+            else
+            {
+                remote_radian = remote_dr16_.output_.remote.pitch;
+
+                INTERVAL_LIMIT(remote_radian, MAX_PITCH_RADIAN, MIN_PITCH_RADIAN);
+
+                gimbal_.SetTargetPitchRadian(remote_radian);
+
+                shoot_.SetTargetShootOmega(0);
+
+                scan_pitch_count_ = 0;      // 累加数据清零，下一次扫描从头开始
+            }
         }
 
         gimbal_.SetNowImuPitchRadian(normalize_angle_pm_pi(imu_.GetRollAngle()));
 
 
-        if(remote_dr16_.output_.remote.switch_r == SWITCH_UP || 
-           remote_dr16_.output_.mouse.mouse_lr.mousecode.mouse_r || remote_dr16_.output_.keyboard.keycode.e)
-        {
-            shoot_.SetTargetShootOmega(MAX_SHOOT_OMEGA);
-        }
-        else
-        {
-            shoot_.SetTargetShootOmega(0);
-        }
+        // printf("%f,%f\n", remote_dr16_.output_.remote.chassis_x, remote_dr16_.output_.remote.chassis_y);
 
 
         /****************************   Debug   ****************************/
-
-
 
 
         osDelay(pdMS_TO_TICKS(1));

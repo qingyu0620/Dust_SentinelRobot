@@ -1,19 +1,22 @@
 {
-    "version": 4,
     "configurations": [
         {
-            "name": "ARM",
+            "name": "Win32",
             "includePath": [
-                "C:/Program Files/Path/gcc-arm-none-eabi/arm-none-eabi/include/c++/14.2.1",
-                "C:/Program Files/Path/gcc-arm-none-eabi/arm-none-eabi/include/c++/14.2.1/arm-none-eabi",
-                "C:/Program Files/Path/gcc-arm-none-eabi/arm-none-eabi/include",
                 "${workspaceFolder}/**"
             ],
-            "defines": ["__CLANGD__"],
-            "compilerPath": "C:/Program Files/Path/gcc-arm-none-eabi/bin/arm-none-eabi-g++.exe",
-            "cStandard": "gnu17",
-            "cppStandard": "gnu++17",
-            "intelliSenseMode": "gcc-arm"
+            "defines": [
+                "DEBUG",
+                "USE_HAL_DRIVER",
+                "STM32F407xx"
+            ],
+            "compilerPath": "arm-none-eabi-gcc",
+            "cStandard": "c11",
+            "cppStandard": "c++17",
+            "intelliSenseMode": "gcc-arm",
+            "compileCommands": "${workspaceFolder}/build/compile_commands.json",
+            "configurationProvider": "ms-vscode.cmake-tools"
         }
-    ]
+    ],
+    "version": 4
 }

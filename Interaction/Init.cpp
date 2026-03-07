@@ -12,7 +12,9 @@
 
 #include "Init.h"
 #include "Robot.h"
+#include "bsp_uart.h"
 #include "dvc_MCU_comm.h"
+#include "usart.h"
 
 /* Private macros ------------------------------------------------------------*/
 
@@ -93,53 +95,15 @@ void uart3_callback_function(uint8_t* buffer, uint16_t length)
     
     if(robot_.robot_control_method_ == ROBOT_CONTROL_METHOD_REMOTE)
     {
-        if(robot_.remote_dr16_.output_.keyboard.keycode.w)
-        {
-            robot_.mcu_comm_.send_chassis_data_.chassis_speed_x = 1684;
-        }
-        else if (robot_.remote_dr16_.output_.keyboard.keycode.s)
-        {
-            robot_.mcu_comm_.send_chassis_data_.chassis_speed_x = 364;
-        }
-        else
-        {
-            robot_.mcu_comm_.send_chassis_data_.chassis_speed_x = 1024;
-        }
+        robot_.mcu_comm_.send_chassis_data_.chassis_speed_x  = robot_.remote_dr16_.output_.remote.chassis_x;
 
-        if(robot_.remote_dr16_.output_.keyboard.keycode.a)
-        {
-            robot_.mcu_comm_.send_chassis_data_.chassis_speed_y = 364;
-        }
-        else if (robot_.remote_dr16_.output_.keyboard.keycode.d)
-        {
-            robot_.mcu_comm_.send_chassis_data_.chassis_speed_y = 1684;
-        }
-        else
-        {
-            robot_.mcu_comm_.send_chassis_data_.chassis_speed_y = 1024;
-        }
-
-        if(robot_.mcu_comm_.send_chassis_data_.chassis_speed_x == 1024)
-        {
-            robot_.mcu_comm_.send_chassis_data_.chassis_speed_x  = robot_.remote_dr16_.output_.remote.chassis_x;
-        }
-        if(robot_.mcu_comm_.send_chassis_data_.chassis_speed_y == 1024)
-        {
-            robot_.mcu_comm_.send_chassis_data_.chassis_speed_y  = robot_.remote_dr16_.output_.remote.chassis_y;
-        }
+        robot_.mcu_comm_.send_chassis_data_.chassis_speed_y  = robot_.remote_dr16_.output_.remote.chassis_y;
     }
 
-    robot_.mcu_comm_.send_chassis_data_.rotation = robot_.remote_dr16_.output_.remote.rotation -  robot_.remote_dr16_.output_.mouse.mouse_x + 1024;
+    robot_.mcu_comm_.send_chassis_data_.rotation = robot_.remote_dr16_.output_.remote.rotation;
 
-    robot_.mcu_comm_.send_chassis_data_.switch_lr.switchcode.switch_l = robot_.remote_dr16_.output_.remote.switch_l;
-    robot_.mcu_comm_.send_chassis_data_.switch_lr.switchcode.switch_r = robot_.remote_dr16_.output_.remote.switch_r;
-
-
-    robot_.mcu_comm_.send_command_data_.start_of_frame     = 0xAB;
-
-    robot_.mcu_comm_.send_command_data_.mouse_lr.mousecode.mouse_l = robot_.remote_dr16_.output_.mouse.mouse_lr.mousecode.mouse_l;
-    robot_.mcu_comm_.send_command_data_.mouse_lr.mousecode.mouse_r = robot_.remote_dr16_.output_.mouse.mouse_lr.mousecode.mouse_r;
-    robot_.mcu_comm_.send_command_data_.keyboard.all = robot_.remote_dr16_.output_.keyboard.all;
+    robot_.mcu_comm_.send_chassis_data_.switch_lr.switch_l = robot_.remote_dr16_.output_.remote.switch_l;
+    robot_.mcu_comm_.send_chassis_data_.switch_lr.switch_r = robot_.remote_dr16_.output_.remote.switch_r;
 }
 
 /**
@@ -156,6 +120,10 @@ void usb_rx_callback(uint16_t len)
         robot_.mcu_comm_.send_chassis_data_.chassis_speed_x  = robot_.pc_comm_.pc_chassis_x_;
         robot_.mcu_comm_.send_chassis_data_.chassis_speed_y  = robot_.pc_comm_.pc_chassis_y_;
     }
+
+    robot_.mcu_comm_.send_auto_data_.mode = robot_.pc_comm_.recv_auto_data.mode;
+    robot_.mcu_comm_.send_auto_data_.autoaim_yaw_angle.f = robot_.pc_comm_.recv_auto_data.yaw_ang;
+    robot_.mcu_comm_.send_auto_data_.all = robot_.pc_comm_.recv_auto_data.all;
 }
 
 /**
@@ -172,12 +140,13 @@ void usb_tx_callback(uint16_t len)
 
 void Init()
 {
-    // 上位机通讯
     usb_init(usb_tx_callback, usb_rx_callback);
-    // 下板通讯
+
     can_init(&hcan1, can1_callback_function);
-    // 摩擦轮 pitch角电机
+
     can_init(&hcan2, can2_callback_function);
+
+    uart_init(&huart6, nullptr, UART_BUFFER_LENGTH);
     
     robot_.Init();
 }
