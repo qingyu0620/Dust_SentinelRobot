@@ -73,7 +73,8 @@ struct McuChassisData
 struct McuCommandData
 {
     uint8_t start_of_frame = 0xAB;
-    McuConv imu_yaw;                    // yaw轴角度
+    float imu_yaw = 0.0f;                    // yaw轴角度
+    uint8_t first_power_on = true;
 };
 
 /**
@@ -92,7 +93,8 @@ struct McuRecvAutoData
         {
             uint8_t chassis_mode : 1;
             uint8_t scan_status : 1;
-            uint8_t reserved : 6;
+            uint8_t fire : 1;
+            uint8_t reserved : 5;
         };   
     };
 };
@@ -138,12 +140,14 @@ public:
         1024,
         1024,
         1024,
+        15,
     };
 
     McuCommandData recv_comm_data_
     {
         0xAB,
-        {0,0,0,0},
+        0.0f,
+        true,
     };
 
     McuRecvAutoData recv_autoaim_data_
@@ -167,6 +171,8 @@ public:
         0,
         false,
     };
+
+    uint8_t first_power_on = true;
 
     void Init(CAN_HandleTypeDef *hcan, uint8_t can_rx_id, uint8_t can_tx_id);
 

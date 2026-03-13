@@ -72,7 +72,7 @@ union SupercapControl
     {
         uint16_t supercap_switch : 1;    //电容开关
         uint16_t supercap_record : 1;    //记录功能开关
-    } control;
+    };
 };
 
 /**
@@ -235,7 +235,7 @@ inline void Supercap::SetChargePowerLimit(uint16_t charge_power_limit)
  */
 inline void Supercap::SetSupercapCharge(SupercapSwitchStatus supercap_switch_status)
 {
-    supercap_control_.control.supercap_switch = supercap_switch_status;
+    supercap_control_.supercap_switch = supercap_switch_status;
 }
 
 /**
@@ -245,7 +245,7 @@ inline void Supercap::SetSupercapCharge(SupercapSwitchStatus supercap_switch_sta
  */
 inline void Supercap::SetSupercapRecord(SupercapRecordStatus supercap_record_status)
 {
-    supercap_control_.control.supercap_record = supercap_record_status;
+    supercap_control_.supercap_record = supercap_record_status;
 }
 
 /**

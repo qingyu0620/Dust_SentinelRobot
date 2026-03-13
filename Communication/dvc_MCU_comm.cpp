@@ -44,6 +44,8 @@ void McuComm::Init(CAN_HandleTypeDef* hcan, uint8_t can_rx_id, uint8_t can_tx_id
      can_rx_id_ = can_rx_id;
      can_tx_id_ = can_tx_id;
 
+     first_power_on = true;
+
      static const osThreadAttr_t kMcuCommTaskAttr = {
           .name = "mcu_comm_task",
           .stack_size = 256,
@@ -118,6 +120,9 @@ void McuComm::ClearData()
      recv_chassis_data_.chassis_speed_x = 1024;
      recv_chassis_data_.chassis_speed_y = 1024;
      recv_chassis_data_.rotation = 1024;
+
+     recv_chassis_data_.switch_lr.switch_l = 3;
+     recv_chassis_data_.switch_lr.switch_r = 3;
 }
 
 /**
@@ -198,7 +203,8 @@ void McuComm::DataProcess(uint8_t* rx_data)
           }
           case (0xAB): // 拨弹盘，yaw角包
           {
-               memcpy(&recv_comm_data_.imu_yaw.b, &rx_data[1], 4);
+               memcpy(&recv_comm_data_.imu_yaw, &rx_data[1], 4);
+               recv_comm_data_.first_power_on = rx_data[5];
 
                break;
           }

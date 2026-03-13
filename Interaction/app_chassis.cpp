@@ -15,7 +15,7 @@
 /* Private macros ------------------------------------------------------------*/
 
 #define DT      0.001f
-#define MAX_GYROSCOPE_SPEED     5.f
+#define MAX_GYROSCOPE_SPEED     10.f
 
 /* Private types -------------------------------------------------------------*/
 

@@ -12,6 +12,8 @@
 
 #include "Init.h"
 #include "Robot.h"
+#include "bsp_uart.h"
+#include "usart.h"
 
 /* Private macros ------------------------------------------------------------*/
 
@@ -110,7 +112,7 @@ void uart6_callback_function(uint8_t* buffer, uint16_t length)
     
     robot_.mcu_comm_.send_fast_data_.bullet_number = robot_.referee_.Get17mmRemaining();
     robot_.mcu_comm_.send_fast_data_.bullet_speed.f = robot_.referee_.GetShootSpeed();
-    robot_.mcu_comm_.send_fast_data_.middle_buff_status = robot_.referee_.GetMiddleBuffStatus();
+    robot_.mcu_comm_.send_fast_data_.middle_buff_status = robot_.referee_.GetCenterRfidStatus();
 
     robot_.mcu_comm_.send_slow_data_.stage_enum = robot_.referee_.GetGameStage();
     robot_.mcu_comm_.send_slow_data_.stage_remain_time = robot_.referee_.GetRemainingTime();
@@ -124,5 +126,7 @@ void Init()
 {
     can_init(&hcan1, can1_callback_function);
     can_init(&hcan2, can2_callback_function);
+
+    uart_init(&huart1, nullptr, UART_BUFFER_LENGTH);
     robot_.Init();
 }

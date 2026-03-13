@@ -660,18 +660,18 @@ void Referee::DataProcess(uint8_t *rx_data, uint16_t length)
             i++;
             continue;
         }
-        // // 未通过CRC8校验, 顺一位继续判断
-        // if (VerifyCrc8((uint8_t *) tmp_buffer, 4) != tmp_buffer->CRC_8)
-        // {
-        //     i++;
-        //     continue;
-        // }
-        // // 未通过CRC16校验, 跨过当前包继续判断
-        // if (VerifyCrc16((uint8_t *) tmp_buffer, 7 + tmp_buffer->Data_Length) != *(uint16_t *) ((uint32_t) tmp_buffer + 7 + tmp_buffer->Data_Length))
-        // {
-        //     i += 9 + tmp_buffer->Data_Length;
-        //     continue;
-        // }
+        // 未通过CRC8校验, 顺一位继续判断
+        if (VerifyCrc8((uint8_t *) tmp_buffer, 4) != tmp_buffer->CRC_8)
+        {
+            i++;
+            continue;
+        }
+        // 未通过CRC16校验, 跨过当前包继续判断
+        if (VerifyCrc16((uint8_t *) tmp_buffer, 7 + tmp_buffer->Data_Length) != *(uint16_t *) ((uint32_t) tmp_buffer + 7 + tmp_buffer->Data_Length))
+        {
+            i += 9 + tmp_buffer->Data_Length;
+            continue;
+        }
         // 通过校验但帧不够长
         if (i + 7 + tmp_buffer->Data_Length + 2 > length)
         {
@@ -685,11 +685,6 @@ void Referee::DataProcess(uint8_t *rx_data, uint16_t length)
                 memcpy(&game_status_, tmp_buffer->Data, sizeof(RefereeRxDataGameStatus));
                 break;
             }
-            case (Referee_Command_ID_GAME_ROBOT_HP):
-            {
-                memcpy(&game_robot_hp_, tmp_buffer->Data, sizeof(RefereeRxDataGameRobotHP));
-                break;
-            }
             case (Referee_Command_ID_EVENT_SELF_DATA):
             {
                 memcpy(&event_self_data_, tmp_buffer->Data, sizeof(RefereeRxDataEventSelfData));
@@ -700,14 +695,19 @@ void Referee::DataProcess(uint8_t *rx_data, uint16_t length)
                 memcpy(&robot_status_, tmp_buffer->Data, sizeof(RefereeRxDataRobotStatus));
                 break;
             }
-            case (Referee_Command_ID_ROBOT_POWER_HEAT):
+            case (Referee_Command_ID_ROBOT_BOOSTER):
             {
-                memcpy(&robot_power_heat_, tmp_buffer->Data, sizeof(RefereeRxDataRobotPowerHeat));
+                memcpy(&robot_booster_, tmp_buffer->Data, sizeof(RefereeRxDataRobotBooster));
                 break;
             }
             case (Referee_Command_ID_ROBOT_REMAINING_AMMO):
             {
                 memcpy(&robot_remaining_ammo_, tmp_buffer->Data, sizeof(RefereeRxDataRobotRemainingAmmo));
+                break;
+            }
+            case (Referee_Command_ID_ROBOT_RFID):
+            {
+                memcpy(&robot_rfid_, tmp_buffer->Data, sizeof(RefereeRxDataRobotRFID));
                 break;
             }
             default:

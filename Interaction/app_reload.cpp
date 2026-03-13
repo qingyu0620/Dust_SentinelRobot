@@ -104,8 +104,6 @@ void Reload::Task()
             is_reloading = false;
         }
 
-        printf("%d\n", is_reloading);
-
         OutputToMotor();
         osDelay(pdMS_TO_TICKS(10));
     }

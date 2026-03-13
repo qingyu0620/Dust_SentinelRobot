@@ -11,10 +11,12 @@
 /* Includes ------------------------------------------------------------------*/
 
 #include "Robot.h"
+#include "alg_math.h"
 #include "app_chassis.h"
 #include "app_reload.h"
 #include "bsp_uart.h"
 #include "dvc_remote_dr16.h"
+#include "Timer.hpp"
 
 /* Private macros ------------------------------------------------------------*/
 
@@ -56,7 +58,7 @@ void Robot::Init()
     reload_.Init();
 
     // 超级电容初始化 
-    // supercap_.Init(&hcan2);
+    supercap_.Init(&hcan2);
 
     static const osThreadAttr_t kRobotTaskAttr = 
     {
@@ -93,7 +95,8 @@ void Robot::Task()
 
     // Mcu命令数据
     McuCommandData mcu_comm_data_local;
-    mcu_comm_data_local.imu_yaw.f               = 0.0f;
+    mcu_comm_data_local.imu_yaw                 = 0.0f;
+    mcu_comm_data_local.first_power_on          = true;
 
     // Mcu自瞄数据
     McuRecvAutoData mcu_auto_data_local;
@@ -101,6 +104,8 @@ void Robot::Task()
     mcu_auto_data_local.autoaim_yaw_ang.f       = 0;
     mcu_auto_data_local.all                     = 0;
     
+    uint32_t print_count = 0;
+
     for(;;)
     {
         /****************************   McuComm   ****************************/
@@ -113,13 +118,30 @@ void Robot::Task()
         mcu_auto_data_local = *(static_cast<const McuRecvAutoData*>(&(mcu_comm_.recv_autoaim_data_)));
         __enable_irq();
 
+        if (mcu_comm_data_local.first_power_on) {
+            remote_yaw_radian_ = 0;
+            mcu_comm_data_local.first_power_on = false;
+        } 
+
         // 检测MCU掉线
         if(mcu_comm_.GetMcuAliveState() == MCU_ALIVE_STATE_ENABLE)
         {
-            gimbal_.SetNowImuYawRadian(normalize_angle_pm_pi(mcu_comm_data_local.imu_yaw.f));
+            if (mcu_comm_.first_power_on) 
+            {
+                remote_yaw_radian_ = normalize_angle_pm_pi(mcu_comm_data_local.imu_yaw);
+                mcu_comm_.first_power_on = false;
+            }
+
+            gimbal_.SetNowImuYawRadian(normalize_angle_pm_pi(mcu_comm_data_local.imu_yaw));
         }
         else if (mcu_comm_.GetMcuAliveState() == MCU_ALIVE_STATE_DISABLE) 
         {
+            if (mcu_comm_.first_power_on) 
+            {
+                remote_yaw_radian_ = gimbal_.GetTargetYawRadian();
+                mcu_comm_.first_power_on = false;
+            }
+
             gimbal_.SetNowImuYawRadian(gimbal_.GetTargetYawRadian());
         }
 
@@ -135,10 +157,9 @@ void Robot::Task()
                 case(PC_AUTOAIM_MODE_IDLE):
                 {
                     remote_yaw_radian_ += (M_PI / 180.f * (K_NORM * mcu_chassis_data_local.rotation + C_NORM)) * REMOTE_YAW_RATIO;
+                    remote_yaw_radian_ = normalize_pi(remote_yaw_radian_);
 
                     gimbal_.SetTargetYawRadian(remote_yaw_radian_);
-
-                    reload_.SetTargetReloadRotation(0);
 
                     break;
                 }
@@ -148,8 +169,6 @@ void Robot::Task()
                     remote_yaw_radian_ = normalize_pi(remote_yaw_radian_);
 
                     gimbal_.SetTargetYawRadian(remote_yaw_radian_);
-
-                    reload_.SetTargetReloadRotation(0);
 
                     break;
                 }
@@ -162,8 +181,6 @@ void Robot::Task()
 
                     gimbal_.SetTargetYawRadian(remote_yaw_radian_);
 
-                    reload_.SetTargetReloadRotation(MAX_RELOAD_SPEED);
-
                     break;
                 }
             }
@@ -172,6 +189,7 @@ void Robot::Task()
         else if (mcu_chassis_data_local.switch_lr.switch_r == SWITCH_MID)
         {
             remote_yaw_radian_ += (M_PI / 180.f * (K_NORM * mcu_chassis_data_local.rotation + C_NORM)) * REMOTE_YAW_RATIO;
+            remote_yaw_radian_ = normalize_pi(remote_yaw_radian_);
 
             gimbal_.SetTargetYawRadian(remote_yaw_radian_);
 
@@ -191,8 +209,6 @@ void Robot::Task()
 
                         gimbal_.SetTargetYawRadian(remote_yaw_radian_);
 
-                        reload_.SetTargetReloadRotation(0);
-
                         break;
                     }
                     case(PC_AUTOAIM_MODE_REAR):
@@ -201,8 +217,6 @@ void Robot::Task()
                         remote_yaw_radian_ = normalize_pi(remote_yaw_radian_);
 
                         gimbal_.SetTargetYawRadian(remote_yaw_radian_);
-
-                        reload_.SetTargetReloadRotation(0);
 
                         break;
                     }
@@ -215,8 +229,6 @@ void Robot::Task()
 
                         gimbal_.SetTargetYawRadian(remote_yaw_radian_);
 
-                        reload_.SetTargetReloadRotation(MAX_RELOAD_SPEED);
-
                         break;
                     }
                 }
@@ -224,6 +236,7 @@ void Robot::Task()
             else 
             {
                 remote_yaw_radian_ += (M_PI / 180.f * (K_NORM * mcu_chassis_data_local.rotation + C_NORM)) * REMOTE_YAW_RATIO;
+                remote_yaw_radian_ = normalize_pi(remote_yaw_radian_);
 
                 gimbal_.SetTargetYawRadian(remote_yaw_radian_);
 
@@ -249,10 +262,11 @@ void Robot::Task()
             reload_.SetTargetReloadRotation(MAX_RELOAD_SPEED);
         } else if (mcu_chassis_data_local.switch_lr.switch_l == SWITCH_MID) {
             reload_.SetTargetReloadRotation(0);
+        } else if (mcu_auto_data_local.fire) {
+            reload_.SetTargetReloadRotation(MAX_RELOAD_SPEED);
         }
 
-
-        if (mcu_auto_data_local.chassis_mode) {
+        if (mcu_auto_data_local.chassis_mode || mcu_chassis_data_local.switch_lr.switch_l == SWITCH_DOWN) {
             chassis_.SetChassisOperationMode(CHASSIS_OPERATION_MODE_SPIN);
         } else {
             chassis_.SetChassisOperationMode(CHASSIS_OPERATION_MODE_NORMAL);
@@ -264,10 +278,16 @@ void Robot::Task()
 
 
 
+
         /****************************   Debug   ****************************/
 
+        if (print_count++ >= 20)
+        {
+            // printf("%d,%f\n", mcu_auto_data_local.fire, remote_yaw_radian_);
+            // printf("%f\n", remote_yaw_radian_);
+            print_count = 0;
+        }
         
-
         osDelay(pdMS_TO_TICKS(1));
     }
 }

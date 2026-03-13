@@ -11,6 +11,8 @@
 /* Includes ------------------------------------------------------------------*/
 
 #include "app_gimbal.h"
+#include "dvc_motor_dm.h"
+#include <cstdio>
 
 /* Private macros ------------------------------------------------------------*/
 
@@ -66,16 +68,16 @@ void Gimbal::Init()
     motor_yaw_.Init(&hcan2, 0x07, 0x06);
 
     // 发送清除错误指令
-    motor_yaw_.CanSendClearError();
-    osDelay(pdMS_TO_TICKS(1000));
+    // motor_yaw_.CanSendClearError();
+    // osDelay(pdMS_TO_TICKS(1000));
     
     // 保存零点（当云台与底盘上电有偏差时需重新设置零点）
     // motor_yaw_.CanSendSaveZero();
     // osDelay(pdMS_TO_TICKS(1000));
     
     // 发送使能命令
-    motor_yaw_.CanSendEnter();
-    osDelay(pdMS_TO_TICKS(1000));
+    // motor_yaw_.CanSendEnter();
+    // osDelay(pdMS_TO_TICKS(1000));
 
     // 力矩控制
     motor_yaw_.SetKp(0);  // MIT模式kp
@@ -110,10 +112,8 @@ void Gimbal::TaskEntry(void *argument)
  */
 void Gimbal::SelfResolution()
 {
-    motor_yaw_.AlivePeriodElapsedCallback();
-
     // 获取当前数据
-    now_yaw_status_ =  motor_yaw_.GetStatus();
+    now_yaw_status_ =  motor_yaw_.GetControlStatus();
     now_yaw_omega_ = motor_yaw_.GetNowOmega();
     now_yaw_angle_ = motor_yaw_.GetNowAngle() * 14.4f;
     now_yaw_radian_ = normalize_angle_pm_pi(now_yaw_angle_);
@@ -156,14 +156,46 @@ void Gimbal::Task()
     {
         SelfResolution();
 
-        if(now_yaw_status_ == MOTOR_DM_STATUS_ENABLE)
+        if (now_yaw_status_ == MOTOR_DM_CONTROL_STATUS_ENABLE)
         {
             Output();
+            if (!NoConnectTimer.IsFinish()) {
+                NoConnectTimer.Finish();
+            }
         }
-        else if(now_yaw_status_ == MOTOR_DM_STATUS_DISABLE)
+        else if(now_yaw_status_ == MOTOR_DM_CONTROL_STATUS_DISABLE)
         {
-            motor_yaw_.CanSendEnter();
-            osDelay(pdMS_TO_TICKS(1000));
+            NoConnectTimer.Tick([&]()
+            {
+                uint16_t step = NoConnectTimer.GetTimerCounter();
+
+                if (step == 0) {
+                    motor_yaw_.CanSendEnter();
+                }
+
+                now_yaw_status_ = motor_yaw_.GetControlStatus();
+
+                if (now_yaw_status_ == MOTOR_DM_CONTROL_STATUS_ENABLE) {
+                    NoConnectTimer.Finish();
+                }
+            });
+        } 
+        else
+        {
+            NoConnectTimer.Tick([&]()
+            {
+                uint16_t step = NoConnectTimer.GetTimerCounter();
+
+                if (step == 0) {
+                    motor_yaw_.CanSendClearError();
+                }
+
+                now_yaw_status_ = motor_yaw_.GetControlStatus();
+
+                if (now_yaw_status_ == MOTOR_DM_CONTROL_STATUS_ENABLE) {
+                    NoConnectTimer.Finish();
+                }
+            });
         }
         
         osDelay(pdMS_TO_TICKS(1));

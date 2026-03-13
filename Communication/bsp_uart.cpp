@@ -59,6 +59,9 @@ int _write(int file, char *ptr, int len)
 {
     UartManageObject* uart_obj = &uart1_manage_object;
     
+    // 使用 ISR 安全版本的临界区，兼容中断和任务上下文
+    UBaseType_t uxSavedInterruptStatus = taskENTER_CRITICAL_FROM_ISR();
+    
     for (int i = 0; i < len; i++) 
 	{
         uart_obj->tx_buffer[uart_obj->tx_head] = ptr[i];
@@ -68,15 +71,26 @@ int _write(int file, char *ptr, int len)
     if (!uart_obj->tx_busy) 
 	{
         uart_obj->tx_busy = 1;
-        uint16_t send_len = (uart_obj->tx_head >= uart_obj->tx_tail) ? 
-							(uart_obj->tx_head - uart_obj->tx_tail) : 
-							(UART_BUFFER_LENGTH - uart_obj->tx_tail + uart_obj->tx_head);
+        
+        // 计算要发送的数据长度
+        uint16_t send_len;
+        if (uart_obj->tx_head >= uart_obj->tx_tail) {
+            send_len = uart_obj->tx_head - uart_obj->tx_tail;
+        } else {
+            // 环形缓冲区回绕时，只发送到缓冲区末尾
+            send_len = UART_BUFFER_LENGTH - uart_obj->tx_tail;
+        }
 
         if (send_len > 0) {
 			uart_obj->tx_sending_len = send_len;
-            HAL_UART_Transmit_DMA(&huart1, &uart_obj->tx_buffer[uart_obj->tx_tail], send_len);
+            HAL_UART_Transmit_DMA(uart_obj->uart_handle, &uart_obj->tx_buffer[uart_obj->tx_tail], send_len);
+        } else {
+            uart_obj->tx_busy = 0;  // 没有数据可发送，清除忙标志
         }
     }
+    
+    taskEXIT_CRITICAL_FROM_ISR(uxSavedInterruptStatus);
+    
     return len;
 }
 
@@ -167,12 +181,20 @@ void HAL_UART_TxCpltCallback(UART_HandleTypeDef *huart)
 	uart_obj->tx_sending_len = 0;
     
 	if (uart_obj->tx_head != uart_obj->tx_tail) {
-        uint16_t send_len = (uart_obj->tx_head >= uart_obj->tx_tail) ? 
-                            (uart_obj->tx_head - uart_obj->tx_tail) : 
-                            (UART_BUFFER_LENGTH - uart_obj->tx_tail + uart_obj->tx_head);
+        // 计算要发送的数据长度
+        uint16_t send_len;
+        if (uart_obj->tx_head >= uart_obj->tx_tail) {
+            send_len = uart_obj->tx_head - uart_obj->tx_tail;
+        } else {
+            // 环形缓冲区回绕时，只发送到缓冲区末尾
+            send_len = UART_BUFFER_LENGTH - uart_obj->tx_tail;
+        }
+        
         if (send_len > 0) {
 			uart_obj->tx_sending_len = send_len;
             HAL_UART_Transmit_DMA(huart, &uart_obj->tx_buffer[uart_obj->tx_tail], send_len);
+        } else {
+            uart_obj->tx_busy = 0;
         }
     } 
 	else {

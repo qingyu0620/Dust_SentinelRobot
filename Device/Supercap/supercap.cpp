@@ -36,7 +36,7 @@
  * @param switch_status 
  * @param record_status 
  */
-void Supercap::Init(CAN_HandleTypeDef *hcan, uint16_t can_rx_id, uint16_t can_tx_id1, uint16_t can_tx_id2, 
+void Supercap::Init(CAN_HandleTypeDef *hcan, uint16_t can_rx_id, uint16_t can_tx_id1, uint16_t can_tx_id2,
                     uint16_t chassis_power_limit, uint16_t chassis_power_buffer, int16_t discharge_power_limit, 
                     uint16_t charge_power_limit, SupercapSwitchStatus switch_status, SupercapRecordStatus record_status)
 {
@@ -59,11 +59,11 @@ void Supercap::Init(CAN_HandleTypeDef *hcan, uint16_t can_rx_id, uint16_t can_tx
     // 放电功率限制
     discharge_power_limit_ = discharge_power_limit;
     // 充电功率限制
-    charge_power_limit_ = chassis_power_limit;
+    charge_power_limit_ = charge_power_limit;
 
     // 设置超电状态
-    supercap_control_.control.supercap_switch = switch_status;
-    supercap_control_.control.supercap_record = record_status;
+    supercap_control_.supercap_switch = switch_status;
+    supercap_control_.supercap_record = record_status;
 
     static const osThreadAttr_t kSupercapTaskAttr = {
         .name = "supercap_task",

@@ -84,6 +84,7 @@ include_directories(
         Device/Motor
         Device/Referee
         Device/Remote
+        Device/Supercap
         Interaction
         Modules
 )

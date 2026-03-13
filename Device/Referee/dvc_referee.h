@@ -672,8 +672,10 @@ struct RefereeRxDataRobotRFID
     uint32_t Engineer_Self_Status_Enum : 1;         //己方大资源岛增益点
     uint32_t Engineer_Enemy_Status_Enum : 1;        //对方大资源岛增益点
     uint32_t Center_Status_Enum : 1;                //中心增益点（仅 RMUL 适用）
-    uint32_t Enemy_Outpost_Status_Enum : 1;         //对方堡垒增益点
-    uint32_t Reserved : 7;
+    uint32_t Enemy_Fortress_Status_Enum : 1;        //对方堡垒增益点
+    uint32_t Enemy_Outpost_Status_Enum : 1;         //对方前哨战增益点
+    uint32_t Reserved : 6;
+    uint8_t rfid_status_2;
     uint16_t CRC_16;
 } __attribute__((packed));
 
