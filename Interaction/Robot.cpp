@@ -12,6 +12,7 @@
 
 #include "Robot.h"
 #include "app_shoot.h"
+#include "cmsis_os2.h"
 #include "dvc_MCU_comm.h"
 #include "dvc_PC_comm.h"
 #include "dvc_remote_dr16.h"
@@ -109,6 +110,8 @@ void Robot::Task()
     mcu_slow_data_local.stage_remain_time = 0;
     mcu_slow_data_local.robot_hp = 0;
 
+    static uint16_t print_count = 0;  // 打印计数器，每10ms打印一次
+
     for(;;)
     {
         /****************************   Robot    ****************************/
@@ -137,7 +140,13 @@ void Robot::Task()
             mcu_comm_.ClearRemoteData(); 
         }
 
-        if (pc_comm_.GetAlivState() == PC_ALIVE_STATE_DISABLE) {
+        if (pc_comm_.GetAlivState() == PC_ALIVE_STATE_DISABLE) 
+        {
+            if (remote_dr16_.output_.remote.switch_r == SWITCH_DOWN) 
+            {
+                mcu_comm_.send_chassis_data_.chassis_speed_x = 1024;
+                mcu_comm_.send_chassis_data_.chassis_speed_y = 1024;
+            }
             mcu_comm_.ClearAutoData();
         }
 
@@ -195,7 +204,7 @@ void Robot::Task()
                         scan_pitch_count_ = normalize_pi(scan_pitch_count_);
                         remote_radian = MIN_PITCH_RADIAN * arm_sin_f32(scan_pitch_count_);
 
-                        shoot_.SetTargetShootOmega(0);
+                        shoot_.SetTargetShootOmega(MAX_SHOOT_OMEGA);
                     }
                     else
                     {
@@ -204,13 +213,13 @@ void Robot::Task()
                         remote_radian -= filtered_autoaim / AUTOAIM_PITCH_RATIO;
 
                         shoot_.SetTargetShootOmega(MAX_SHOOT_OMEGA);
+
+                        scan_pitch_count_ = 0;      // 累加数据清零，下一次扫描从头开始
                     }
 
                     INTERVAL_LIMIT(remote_radian, MAX_PITCH_RADIAN, MIN_PITCH_RADIAN);
 
                     gimbal_.SetTargetPitchRadian(remote_radian);
-
-                    scan_pitch_count_ = 0;      // 累加数据清零，下一次扫描从头开始
 
                     break;
                 }
@@ -300,12 +309,11 @@ void Robot::Task()
         gimbal_.SetNowImuPitchRadian(normalize_angle_pm_pi(imu_.GetRollAngle()));
 
 
-        // printf("%f,%f\n", remote_dr16_.output_.remote.chassis_x, remote_dr16_.output_.remote.chassis_y);
-
-
         /****************************   Debug   ****************************/
 
+        printf("%d,%d\n", pc_comm_.recv_auto_data.mode, pc_comm_.GetAutoAimStatus());
 
+        
         osDelay(pdMS_TO_TICKS(1));
     }
 }

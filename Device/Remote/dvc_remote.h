@@ -85,7 +85,7 @@ union RemoteMouseLR
         uint8_t mouse_l : 1;
         uint8_t mouse_r : 1;
         uint8_t reserved : 6;
-    } mousecode;
+    };
 };
 
 /**

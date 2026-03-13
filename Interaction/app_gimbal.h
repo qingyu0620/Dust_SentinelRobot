@@ -18,6 +18,7 @@
 // alg
 #include "alg_math.h"
 #include "low_pass_filter.hpp"
+#include "Timer.hpp"
 // module
 #include "dvc_motor_dm.h"
 // bsp
@@ -96,6 +97,9 @@ public:
     inline float GetTargetPitchRadian();
 
 protected:
+    // 掉线保护定时器
+    Timer NoConnectTimer{200};
+
     // pitch轴当前值
     float now_pitch_angle_ = 0.0f;
 
@@ -123,7 +127,7 @@ protected:
     // 云台状态
     GimbalControlType gimbal_control_type_ = GIMBAL_CONTROL_TYPE_MANUAL;
 
-    MotorDmStatus now_pitch_status_ = MOTOR_DM_STATUS_ENABLE;
+    MotorDmControlStatusNormal now_pitch_status_ = MOTOR_DM_CONTROL_STATUS_DISABLE;
 
     void SelfResolution();
 

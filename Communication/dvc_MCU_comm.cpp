@@ -44,6 +44,8 @@ void McuComm::Init(CAN_HandleTypeDef* hcan, uint8_t can_rx_id, uint8_t can_tx_id
      can_rx_id_ = can_rx_id;
      can_tx_id_ = can_tx_id;
 
+     send_command_data_.first_power_on = true;
+
      static const osThreadAttr_t kMcuCommTaskAttr = {
           .name = "mcu_comm_task",
           .stack_size = 512,
@@ -103,7 +105,13 @@ void McuComm::CanSendCommandData()
 
      memcpy(&can_tx_frame[1], yaw_conv.b, 4);
      
-     can_tx_frame[5] = 0x00;
+     if (send_command_data_.first_power_on) {
+          can_tx_frame[5] = 0x01;
+          send_command_data_.first_power_on = 0x00;
+     } else {
+          can_tx_frame[5] = 0x00;
+     }
+     
      can_tx_frame[6] = 0x00;
      can_tx_frame[7] = 0x00;
 

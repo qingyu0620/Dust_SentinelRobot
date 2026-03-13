@@ -37,7 +37,7 @@ void RemoteDjiDR16::ClearData()
 
     output_.keyboard.all = 0;
     output_.mouse.mouse_x = output_.mouse.mouse_y = 0;
-    output_.mouse.mouse_lr.mousecode.mouse_l = output_.mouse.mouse_lr.mousecode.mouse_r = 0;
+    output_.mouse.mouse_lr.mouse_l = output_.mouse.mouse_lr.mouse_r = 0;
 }
 
 /**
@@ -89,8 +89,8 @@ void RemoteDjiDR16::DataProcess(uint8_t* buffer)
     output_.mouse.mouse_y += (float)raw_data_.mouse.y / 32767.f;
     output_.mouse.mouse_y = CLAMP(output_.mouse.mouse_y, MIN_PITCH_RADIAN, MAX_PITCH_RADIAN);
 
-    output_.mouse.mouse_lr.mousecode.mouse_l = raw_data_.mouse.pl;
-    output_.mouse.mouse_lr.mousecode.mouse_r = raw_data_.mouse.pr;
+    output_.mouse.mouse_lr.mouse_l = raw_data_.mouse.pl;
+    output_.mouse.mouse_lr.mouse_r = raw_data_.mouse.pr;
 
     // 键盘数据
     Process_Keyboard_Toggle(&output_.keyboard, raw_data_.keyboard);

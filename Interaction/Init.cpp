@@ -121,7 +121,7 @@ void usb_rx_callback(uint16_t len)
         robot_.mcu_comm_.send_chassis_data_.chassis_speed_y  = robot_.pc_comm_.pc_chassis_y_;
     }
 
-    robot_.mcu_comm_.send_auto_data_.mode = robot_.pc_comm_.recv_auto_data.mode;
+    robot_.mcu_comm_.send_auto_data_.mode = robot_.pc_comm_.GetAutoAimStatus();
     robot_.mcu_comm_.send_auto_data_.autoaim_yaw_angle.f = robot_.pc_comm_.recv_auto_data.yaw_ang;
     robot_.mcu_comm_.send_auto_data_.all = robot_.pc_comm_.recv_auto_data.all;
 }

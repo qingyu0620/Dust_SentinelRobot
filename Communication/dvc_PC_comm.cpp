@@ -21,6 +21,9 @@
 
 #define MAX_PC_DISALIVE_PERIOD  200     // 200ms
 
+// 自瞄状态切换参数
+#define REAR_TO_IDLE_DEBOUNCE_COUNT  200            // 后置退出到IDLE的防抖计数（足够覆盖180°旋转时间）
+
 /* Private types -------------------------------------------------------------*/
 
 /* Private variables ---------------------------------------------------------*/
@@ -36,7 +39,7 @@ void PcComm::Init()
     static const osThreadAttr_t KPcCommTaskAttr = 
     {
         .name = "PcComm_task",
-        .stack_size = 256,
+        .stack_size = 512,
         .priority = (osPriority_t) osPriorityNormal
     };
     // 启动任务，将 this 传入
@@ -143,51 +146,73 @@ void PcComm::JudgeAutoaimStatus(PcAutoAimStatus* now_autoaim_status, PcAutoAimSt
 {
     // 获取当前收到的目标状态
     PcAutoAimStatus input = *now_autoaim_status;
-    static uint16_t rear_beat = 0;      //后置摄像头运行节拍数
+    static uint16_t rear_run_time = 0;              // REAR状态运行时间累计（每次调用都增长，不依赖IDLE）
 
     switch (pre_autoaim_status)
     {
         case(PC_AUTOAIM_MODE_IDLE):
         {
             *now_autoaim_status = input;
-            rear_beat = 0;
+            rear_run_time = 0;
 
             break;
         }
         case(PC_AUTOAIM_MODE_FRONT):
         {
-            if(input == PC_AUTOAIM_MODE_REAR)  {
+            if (input == PC_AUTOAIM_MODE_FRONT)
+            {
+                // 前置持续识别目标，保持FRONT
                 *now_autoaim_status = PC_AUTOAIM_MODE_FRONT;
-            }  else  {
-                *now_autoaim_status = input;
+            } 
+            else if (input == PC_AUTOAIM_MODE_IDLE)
+            {
+                // 前置无目标，直接退出到IDLE
+                *now_autoaim_status = PC_AUTOAIM_MODE_IDLE;
+            } 
+            else 
+            {   // input == PC_AUTOAIM_MODE_REAR
+                // 前置丢目标且后置发现目标，立即切到REAR，避免云台在FRONT状态滞留疯转
+                *now_autoaim_status = PC_AUTOAIM_MODE_REAR;
             }
 
-            rear_beat = 0;
+            rear_run_time = 0;
 
             break;
         }
         case(PC_AUTOAIM_MODE_REAR):
         {
-            if(input == PC_AUTOAIM_MODE_IDLE) {
-                rear_beat++;
+            // 【关键】每次进入REAR case都累加运行时间，不依赖IDLE信号
+            rear_run_time++;
 
-                if(rear_beat >= 100) {
+            if (input == PC_AUTOAIM_MODE_IDLE)
+            {
+                // 后置无目标，但判断是否已度过最小保护时间
+                if (rear_run_time >= REAR_TO_IDLE_DEBOUNCE_COUNT) {
+                    // 最小保护时间已过，且收到IDLE，退出REAR
                     *now_autoaim_status = PC_AUTOAIM_MODE_IDLE;
-                    rear_beat = 0;
+                    rear_run_time = 0;
                 } else {
+                    // 还在保护时间内，继续保持REAR（云台正在旋转）
                     *now_autoaim_status = PC_AUTOAIM_MODE_REAR;
                 }
-            } else  {
-                *now_autoaim_status = input;
-                rear_beat = 0;
+            } 
+            else if (input == PC_AUTOAIM_MODE_FRONT) 
+            {
+                // 前置发现敌人，立即切换（前置优先）
+                *now_autoaim_status = PC_AUTOAIM_MODE_FRONT;
+                rear_run_time = 0;
+            }
+            else
+            {   // input == PC_AUTOAIM_MODE_REAR
+                // 后置持续看到目标，继续旋转搜索
+                // 【关键】rear_run_time继续累加（在本function开始已经累加过了）
+                *now_autoaim_status = PC_AUTOAIM_MODE_REAR;
             }
 
             break;
         }
     }
 }
-
-
 
 /**
  * @brief PcComm任务函数
@@ -240,9 +265,11 @@ void PcComm::DataProcess()
         uint16_t lenth = sizeof(recv_auto_data);
         memcpy(&recv_auto_data, bsp_usb_rx_buffer, lenth);
 
-        JudgeAutoaimStatus(&recv_auto_data.mode, pre_autoaim_status_);
+        // 使用临时变量保存处理后的状态，不修改原始接收数据
+        PcAutoAimStatus actual_status = recv_auto_data.mode;
+        JudgeAutoaimStatus(&actual_status, pre_autoaim_status_);
 
-        pre_autoaim_status_ = recv_auto_data.mode;
+        pre_autoaim_status_ = actual_status;
 
         pc_chassis_x_ = (uint16_t)(K_PC * (recv_auto_data.linear_x.f / 2.1f + C_PC));
         pc_chassis_y_ = (uint16_t)(K_PC * (recv_auto_data.linear_y.f / 2.1f + C_PC));

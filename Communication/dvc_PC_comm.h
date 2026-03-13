@@ -58,6 +58,10 @@ enum PcAliveState : uint8_t
     PC_ALIVE_STATE_DISABLE,
 };
 
+/**
+ * @brief PcComm状态
+ * 
+ */
 enum PcState : uint8_t 
 {
     PC_STATE_ENABLE = 0,
@@ -112,7 +116,7 @@ struct PCSendNavigationData
 struct PCRecvAutoData
 {
     uint8_t head[2] = {'S', 'P'};
-    PcAutoAimStatus mode = PC_AUTOAIM_MODE_IDLE;  // 0: 不控制, 1: 控制云台但不开火，2: 控制云台且开火
+    PcAutoAimStatus mode = PC_AUTOAIM_MODE_IDLE;  // 0: 不控制, 1: 后置，2: 前置
     float yaw_ang;
     float pitch_ang;
     PcConv linear_x;
@@ -124,6 +128,7 @@ struct PCRecvAutoData
         {
             uint8_t classis_mode : 1;
             uint8_t scan_status : 1;
+            uint8_t fire : 1;
             uint8_t reserved : 6;
         };
     };
@@ -192,6 +197,10 @@ public:
 
     inline PcAliveState GetAlivState() { 
         return pc_alive_state; 
+    }
+
+    inline PcAutoAimStatus GetAutoAimStatus() {
+        return pre_autoaim_status_;
     }
 
 private:

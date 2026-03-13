@@ -32,8 +32,8 @@ void RemoteDjiVT02::ClearData()
     output_.mouse.mouse_y = 0;
     output_.mouse.mouse_z = 0;
 
-    output_.mouse.mouse_lr.mousecode.mouse_l = REMOTE_KEY_STATUS_FREE;
-    output_.mouse.mouse_lr.mousecode.mouse_r = REMOTE_KEY_STATUS_FREE;
+    output_.mouse.mouse_lr.mouse_l = REMOTE_KEY_STATUS_FREE;
+    output_.mouse.mouse_lr.mouse_r = REMOTE_KEY_STATUS_FREE;
 
     output_.keyboard.all = REMOTE_KEY_STATUS_FREE;
 }
@@ -68,8 +68,8 @@ void RemoteDjiVT02::DataProcess(uint8_t* buffer)
     output_.mouse.mouse_x = (int16_t)raw_data_.mouse_x;
     output_.mouse.mouse_y = -(float)raw_data_.mouse_y / (float)INT16_MAX;
 
-    output_.mouse.mouse_lr.mousecode.mouse_l = raw_data_.mouse_l;
-    output_.mouse.mouse_lr.mousecode.mouse_r = raw_data_.mouse_r;
+    output_.mouse.mouse_lr.mouse_l = raw_data_.mouse_l;
+    output_.mouse.mouse_lr.mouse_r = raw_data_.mouse_r;
 
     Process_Keyboard_Toggle(&output_.keyboard, raw_data_.keyboard);
 }

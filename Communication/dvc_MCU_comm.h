@@ -75,6 +75,8 @@ struct McuCommandData
     uint8_t         start_of_frame = 0xAB;
 
     McuConv         imu_yaw;                    // yaw轴角度
+
+    uint8_t first_power_on = true;
 };
 
 /**
@@ -93,7 +95,8 @@ struct McuSendAutoData
         {
             uint8_t chassis_mode : 1;
             uint8_t scan_status : 1;
-            uint8_t reserved : 6;
+            uint8_t fire : 1;
+            uint8_t reserved : 5;
         };
     };
 };
