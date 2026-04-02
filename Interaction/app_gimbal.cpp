@@ -11,9 +11,6 @@
 /* Includes ------------------------------------------------------------------*/
 
 #include "app_gimbal.h"
-#include "alg_math.h"
-#include "dvc_motor_dm.h"
-#include "ins_task.h"
 
 /* Private macros ------------------------------------------------------------*/
 

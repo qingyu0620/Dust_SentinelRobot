@@ -20,7 +20,7 @@
 
 /* Exported macros -----------------------------------------------------------*/
 
-#define MAX_SHOOT_OMEGA             40.f
+constexpr float MAX_SHOOT_OMEGA  =  34.f;
 
 /* Exported types ------------------------------------------------------------*/
 

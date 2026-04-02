@@ -18,10 +18,9 @@
 #include "cmsis_os2.h"
 #include "alg_math.h"
 #include "app_gimbal.h"
+#include <algorithm>
 
 /* Exported macros -----------------------------------------------------------*/
-
-#define CLAMP(x, min, max)  ((x) > (max) ? (max) : ((x) < (min) ? (min) : (x)))
 
 /* Exported types ------------------------------------------------------------*/
 

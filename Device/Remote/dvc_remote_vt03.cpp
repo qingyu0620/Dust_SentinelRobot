@@ -55,8 +55,8 @@ void RemoteDjiVT03::DataProcess(uint8_t* buffer)
     int16_t dx = (int16_t)((uint16_t)buffer[7] | ((uint16_t)buffer[8] << 8));
     int16_t dy = (int16_t)((uint16_t)buffer[9] | ((uint16_t)buffer[10] << 8));
 
-    raw_data_.mouse_x = CLAMP(dx * 15, INT16_MIN, INT16_MAX);
-    raw_data_.mouse_y = CLAMP(dy, INT16_MIN, INT16_MAX);
+    raw_data_.mouse_x = std::clamp(dx * 15, (int)INT16_MIN, (int)INT16_MAX);
+    raw_data_.mouse_y = std::clamp((int)dy, (int)INT16_MIN, (int)INT16_MAX);
 
     raw_data_.mouse_l = buffer[13];
     raw_data_.mouse_r = buffer[14];

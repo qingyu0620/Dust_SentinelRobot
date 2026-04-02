@@ -129,7 +129,7 @@ struct PCRecvAutoData
             uint8_t classis_mode : 1;
             uint8_t scan_status : 1;
             uint8_t fire : 1;
-            uint8_t reserved : 6;
+            uint8_t reserved : 5;
         };
     };
     uint16_t crc16;
@@ -214,6 +214,9 @@ private:
     PcAliveState pc_alive_state = PC_ALIVE_STATE_DISABLE;
     
     PcAutoAimStatus pre_autoaim_status_ = PC_AUTOAIM_MODE_IDLE;
+
+    uint16_t rear_run_time_ = 0;            // REAR状态运行时间累计
+    uint16_t rear_confirm_count_ = 0;       // REAR进入确认计数
 
     void DataProcess();
 

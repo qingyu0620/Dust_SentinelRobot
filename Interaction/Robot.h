@@ -8,8 +8,7 @@
  * @copyright Copyright (c) 2025
  * 
  */
-#ifndef __ROBOT_H__
-#define __ROBOT_H__
+#pragma once
 
 /* Includes ------------------------------------------------------------------*/
 
@@ -19,6 +18,7 @@
 #include "dvc_remote_dr16.h"
 #include "dvc_MCU_comm.h"
 #include "dvc_PC_comm.h"
+// #include "referee.h"
 
 #include "app_gimbal.h"
 #include "app_shoot.h"
@@ -68,7 +68,7 @@ public:
 
     void Task();
 
-    RobotControlMethod robot_control_method_;
+    RobotControlMethod robot_control_method_ = ROBOT_CONTROL_METHOD_REMOTE;
 
     void SetControlMethod(RobotControlMethod robot_control_method);
 
@@ -88,4 +88,3 @@ protected:
 
 /* Exported function declarations --------------------------------------------*/
 
-#endif

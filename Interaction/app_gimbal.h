@@ -27,10 +27,10 @@
 
 /* Exported macros -----------------------------------------------------------*/
 
-#define K_PITCH                   13.f / 13200.f
-#define C_PITCH                   -832.f / 825.f
-#define MAX_PITCH_RADIAN          0.45f
-#define MIN_PITCH_RADIAN          -0.35f
+constexpr float K_PITCH           = 13.f / 13200.f;
+constexpr float C_PITCH           = -832.f / 825.f;
+constexpr float MAX_PITCH_RADIAN  = 0.45f;
+constexpr float MIN_PITCH_RADIAN  = -0.35f / 1.5f;
 
 /* Exported types ------------------------------------------------------------*/
 

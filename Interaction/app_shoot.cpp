@@ -70,8 +70,6 @@ void Shoot::MotorToOutput()
     motor_shoot_2_.CalculatePeriodElapsedCallback();
         
     can_send_data(&hcan2, 0x200, g_can2_0x200_tx_data, 4);
-
-    // printf("%f,%f\n", -motor_shoot_1_.GetNowOmega(), motor_shoot_2_.GetNowOmega());
 }
 
 /**

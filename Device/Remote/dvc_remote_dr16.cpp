@@ -59,8 +59,8 @@ void RemoteDjiDR16::DataProcess(uint8_t* buffer)
     int16_t dx = ((int16_t)buffer[6]) | ((int16_t)buffer[7] << 8);
     int16_t dy = ((int16_t)buffer[8]) | ((int16_t)buffer[9] << 8);
 
-    raw_data_.mouse.x = CLAMP(dx * 30, INT16_MIN, INT16_MAX);
-    raw_data_.mouse.y = CLAMP(dy * 2, INT16_MIN, INT16_MAX);
+    raw_data_.mouse.x = std::clamp((int32_t)(dx * 30), (int32_t)INT16_MIN, (int32_t)INT16_MAX);
+    raw_data_.mouse.y = std::clamp((int32_t)(dy * 2), (int32_t)INT16_MIN, (int32_t)INT16_MAX);
 
     raw_data_.mouse.pl = buffer[12];
     raw_data_.mouse.pr = buffer[13];
@@ -71,7 +71,7 @@ void RemoteDjiDR16::DataProcess(uint8_t* buffer)
 
     // 上板数据
     output_.remote.pitch = K_PITCH * raw_data_.rc.ch3 + C_PITCH;
-    output_.remote.pitch = CLAMP(output_.remote.pitch, MIN_PITCH_RADIAN, MAX_PITCH_RADIAN);
+    output_.remote.pitch = std::clamp(output_.remote.pitch, MIN_PITCH_RADIAN, MAX_PITCH_RADIAN);
 
     // 下板数据
     output_.remote.chassis_x  = raw_data_.rc.ch1;
@@ -87,7 +87,7 @@ void RemoteDjiDR16::DataProcess(uint8_t* buffer)
     // 鼠标数据
     output_.mouse.mouse_x = (1683 + 1320 * ((int16_t)raw_data_.mouse.x - 32767) / 65535);
     output_.mouse.mouse_y += (float)raw_data_.mouse.y / 32767.f;
-    output_.mouse.mouse_y = CLAMP(output_.mouse.mouse_y, MIN_PITCH_RADIAN, MAX_PITCH_RADIAN);
+    output_.mouse.mouse_y = std::clamp(output_.mouse.mouse_y, MIN_PITCH_RADIAN, MAX_PITCH_RADIAN);
 
     output_.mouse.mouse_lr.mouse_l = raw_data_.mouse.pl;
     output_.mouse.mouse_lr.mouse_r = raw_data_.mouse.pr;
