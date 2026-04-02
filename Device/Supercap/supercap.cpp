@@ -118,7 +118,7 @@ void Supercap::DataProcess()
     received_data_.supercap_voltage = int16_to_float(v_code, 32000, -32000, 30, 0);
     received_data_.supercap_current = int16_to_float(i_code, 32000, -32000, 20, -20);
     received_data_.supercap_status_code.all = all;
-    supercap_power_ = - received_data_.supercap_voltage * received_data_.supercap_current;
+    supercap_power_ = -received_data_.supercap_voltage * received_data_.supercap_current;
 }
 
 /**
@@ -160,7 +160,7 @@ void Supercap::Task()
     for (;;)
     {
         SendPeriodElapsedCallback();
-        osDelay(pdMS_TO_TICKS(10));
+        osDelay(pdMS_TO_TICKS(100));
     }
 }
 

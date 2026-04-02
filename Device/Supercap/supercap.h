@@ -29,8 +29,8 @@
  */
 enum SupercapSwitchStatus
 {
-    SUPERCAP_SWITCH_STATUS_ENABLE = 0,
-    SUPERCAP_SWITCH_STATUS_DISABLE,
+    SUPERCAP_SWITCH_STATUS_DISABLE = 0,
+    SUPERCAP_SWITCH_STATUS_ENABLE,
 };
 
 /**
@@ -39,8 +39,8 @@ enum SupercapSwitchStatus
  */
 enum SupercapRecordStatus
 {
-    SUPERCAP_RECORD_STATUS_ENABLE = 0,
-    SUPERCAP_RECORD_STATUS_DISABLE,
+    SUPERCAP_RECORD_STATUS_DISABLE = 0,
+    SUPERCAP_RECORD_STATUS_ENABLE,
 };
 
 /**
@@ -92,10 +92,10 @@ struct SupercapRecivedData
  */
 struct SupercapSendData
 {
-    uint16_t chassis_power_buffer;      //底盘功率缓冲
-    uint16_t chassis_power_limit;       //机器人底盘功率限制上限
-    int16_t discharge_power_limit;      //电容放电功率限制
-    uint16_t charge_power_limit;        //电容充电功率限制
+    uint16_t chassis_power_buffer;      // 底盘功率缓冲
+    uint16_t chassis_power_limit;       // 机器人底盘功率限制上限
+    int16_t discharge_power_limit;      // 电容放电功率限制
+    uint16_t charge_power_limit;        // 电容充电功率限制
     SupercapControl supercap_control;
 };
 
@@ -107,11 +107,9 @@ class Supercap
 {
 public:
     void Init(CAN_HandleTypeDef *hcan, uint16_t can_rx_id = 0x030, uint16_t can_tx_id1 = 0x02E, uint16_t can_tx_id2 = 0x02F,
-              uint16_t chassis_power_limit = 55, uint16_t chassis_power_buffer = 50, int16_t discharge_power_limit = 50, 
-              uint16_t charge_power_limit = 50, SupercapSwitchStatus switch_status = SUPERCAP_SWITCH_STATUS_DISABLE, 
+              uint16_t chassis_power_limit = 100, uint16_t chassis_power_buffer = 35, int16_t discharge_power_limit = 100,
+              uint16_t charge_power_limit = 30, SupercapSwitchStatus switch_status = SUPERCAP_SWITCH_STATUS_ENABLE,
               SupercapRecordStatus record_status = SUPERCAP_RECORD_STATUS_DISABLE);
-
-    void Task();
 
     void CanRxCpltCallback(uint8_t *rx_data);
 
@@ -179,7 +177,7 @@ protected:
 
     void DataProcess();
 
-    void Output();
+    void Task();
 
     static void TaskEntry(void *param);  // FreeRTOS 入口，静态函数
 };
@@ -278,6 +276,11 @@ inline uint16_t Supercap::GetSupercapStatus()
     return (received_data_.supercap_status_code.all);
 }
 
+/**
+ * @brief Supercap获取功率函数
+ * 
+ * @return float 
+ */
 inline float Supercap::GetSupercapPower()
 {
     return (supercap_power_);

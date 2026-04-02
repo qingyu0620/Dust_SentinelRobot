@@ -116,8 +116,13 @@ void uart6_callback_function(uint8_t* buffer, uint16_t length)
 
     robot_.mcu_comm_.send_slow_data_.stage_enum = robot_.referee_.GetGameStage();
     robot_.mcu_comm_.send_slow_data_.stage_remain_time = robot_.referee_.GetRemainingTime();
-    robot_.mcu_comm_.send_slow_data_.robot_hp = robot_.referee_.GetHP(CURRENT_ROBOT_ID);
+    robot_.mcu_comm_.send_slow_data_.robot_hp = robot_.referee_.GetSelfHP();
     robot_.mcu_comm_.send_slow_data_.is_jam = robot_.reload_.GetReloadState();
+
+    robot_.chassis_.SetRefereeBufferEnergy(robot_.referee_.GetChassisEnergyBuffer());
+    robot_.chassis_.SetRefereePowerLimit(robot_.referee_.GetSelfChassisPowerMax());
+
+    robot_.reload_.SetReloadHeat(robot_.referee_.GetBooster17mmHeat());
 }
 
 /* Function prototypes -------------------------------------------------------*/

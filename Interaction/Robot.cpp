@@ -11,22 +11,16 @@
 /* Includes ------------------------------------------------------------------*/
 
 #include "Robot.h"
-#include "alg_math.h"
-#include "app_chassis.h"
-#include "app_reload.h"
-#include "bsp_uart.h"
-#include "dvc_remote_dr16.h"
-#include "Timer.hpp"
 
 /* Private macros ------------------------------------------------------------*/
 
-#define K_NORM                  1.f / 660.f
-#define C_NORM                  -256.f / 165.f
+constexpr float K_NORM              = 1.f / 660.f;
+constexpr float C_NORM              = -256.f / 165.f;
 
-#define REMOTE_YAW_RATIO        0.5f
-#define AUTOAIM_YAW_RATIO       120.f
-#define SCAN_YAW_RATIO          0.16f
-#define REAR_YAW_RATIO          0.22f
+constexpr float REMOTE_YAW_RATIO    = 0.5f;
+constexpr float AUTOAIM_YAW_RATIO   = 120.f;
+constexpr float SCAN_YAW_RATIO      = 0.065f;
+constexpr float REAR_YAW_RATIO      = 0.08f;
 
 /* Private types -------------------------------------------------------------*/
 
@@ -103,9 +97,9 @@ void Robot::Task()
     mcu_auto_data_local.mode                    = 0;
     mcu_auto_data_local.autoaim_yaw_ang.f       = 0;
     mcu_auto_data_local.all                     = 0;
-    
-    uint32_t print_count = 0;
 
+    Timer print{20};
+    
     for(;;)
     {
         /****************************   McuComm   ****************************/
@@ -149,7 +143,6 @@ void Robot::Task()
         /****************************   Gimbal   ****************************/
 
 
-        // 自瞄模式
         if (mcu_chassis_data_local.switch_lr.switch_r == SWITCH_UP)
         {
             switch (mcu_auto_data_local.mode)
@@ -185,64 +178,55 @@ void Robot::Task()
                 }
             }
         }
-        // 遥控模式
         else if (mcu_chassis_data_local.switch_lr.switch_r == SWITCH_MID)
         {
             remote_yaw_radian_ += (M_PI / 180.f * (K_NORM * mcu_chassis_data_local.rotation + C_NORM)) * REMOTE_YAW_RATIO;
             remote_yaw_radian_ = normalize_pi(remote_yaw_radian_);
 
             gimbal_.SetTargetYawRadian(remote_yaw_radian_);
-
-            reload_.SetTargetReloadRotation(0);
         }
-        // 巡航模式
-        else if (mcu_chassis_data_local.switch_lr.switch_r == SWITCH_DOWN)
+        else if (mcu_comm_.send_slow_data_.stage_enum == Referee_Game_Status_Stage_BATTLE)
         {
-            if (mcu_auto_data_local.scan_status == true)
+
+            switch (mcu_auto_data_local.mode)
             {
-                switch (mcu_auto_data_local.mode)
+                case(PC_AUTOAIM_MODE_IDLE):
                 {
-                    case(PC_AUTOAIM_MODE_IDLE):
-                    {
-                        remote_yaw_radian_ += (M_PI / 180.f) * SCAN_YAW_RATIO;
-                        remote_yaw_radian_ = normalize_pi(remote_yaw_radian_);
+                    remote_yaw_radian_ += (M_PI / 180.f) * SCAN_YAW_RATIO;
+                    remote_yaw_radian_ = normalize_pi(remote_yaw_radian_);
 
-                        gimbal_.SetTargetYawRadian(remote_yaw_radian_);
+                    gimbal_.SetTargetYawRadian(remote_yaw_radian_);
 
-                        break;
-                    }
-                    case(PC_AUTOAIM_MODE_REAR):
-                    {
-                        remote_yaw_radian_ += (M_PI / 180.f) * REAR_YAW_RATIO;
-                        remote_yaw_radian_ = normalize_pi(remote_yaw_radian_);
+                    break;
+                }
+                case(PC_AUTOAIM_MODE_REAR):
+                {
+                    remote_yaw_radian_ += (M_PI / 180.f) * REAR_YAW_RATIO;
+                    remote_yaw_radian_ = normalize_pi(remote_yaw_radian_);
 
-                        gimbal_.SetTargetYawRadian(remote_yaw_radian_);
+                    gimbal_.SetTargetYawRadian(remote_yaw_radian_);
 
-                        break;
-                    }
-                    case(PC_AUTOAIM_MODE_FRONT):
-                    {
-                        float filtered_autoaim = gimbal_.yaw_autoaim_filter_.Update(mcu_auto_data_local.autoaim_yaw_ang.f);
+                    break;
+                }
+                case(PC_AUTOAIM_MODE_FRONT):
+                {
+                    float filtered_autoaim = gimbal_.yaw_autoaim_filter_.Update(mcu_auto_data_local.autoaim_yaw_ang.f);
 
-                        remote_yaw_radian_ += (filtered_autoaim / AUTOAIM_YAW_RATIO);
-                        remote_yaw_radian_ = normalize_pi(remote_yaw_radian_);
+                    remote_yaw_radian_ += (filtered_autoaim / AUTOAIM_YAW_RATIO);
+                    remote_yaw_radian_ = normalize_pi(remote_yaw_radian_);
 
-                        gimbal_.SetTargetYawRadian(remote_yaw_radian_);
+                    gimbal_.SetTargetYawRadian(remote_yaw_radian_);
 
-                        break;
-                    }
+                    break;
                 }
             }
-            else 
-            {
-                remote_yaw_radian_ += (M_PI / 180.f * (K_NORM * mcu_chassis_data_local.rotation + C_NORM)) * REMOTE_YAW_RATIO;
-                remote_yaw_radian_ = normalize_pi(remote_yaw_radian_);
-
-                gimbal_.SetTargetYawRadian(remote_yaw_radian_);
-
-                reload_.SetTargetReloadRotation(0);
-            }
         }
+
+        if (mcu_chassis_data_local.switch_lr.switch_l == SWITCH_UP)
+        {
+            gimbal_.motor_yaw_.CanSendSaveZero();
+            osDelay(100);
+        };
 
 
         /****************************   Chassis   ****************************/
@@ -251,43 +235,59 @@ void Robot::Task()
         chassis_.SetNowYawRadianDiff(-gimbal_.GetNowYawRadian());
 
         // 设置目标映射速度
-        chassis_.SetTargetVxInGimbal((K_NORM * mcu_chassis_data_local.chassis_speed_x + C_NORM) * MAX_OMEGA_SPEED);
-        chassis_.SetTargetVyInGimbal((K_NORM * mcu_chassis_data_local.chassis_speed_y + C_NORM) * MAX_OMEGA_SPEED);
+        chassis_.SetTargetVxInGimbal((K_NORM * mcu_chassis_data_local.chassis_speed_x + C_NORM) * chassis_.GetMaxOmegaSpeed());
+        chassis_.SetTargetVyInGimbal((K_NORM * mcu_chassis_data_local.chassis_speed_y + C_NORM) * chassis_.GetMaxOmegaSpeed());
 
-
-        /*****************************     Mode   *****************************/
-
-
-        if (mcu_chassis_data_local.switch_lr.switch_l == SWITCH_UP) {
-            reload_.SetTargetReloadRotation(MAX_RELOAD_SPEED);
-        } else if (mcu_chassis_data_local.switch_lr.switch_l == SWITCH_MID) {
-            reload_.SetTargetReloadRotation(0);
-        } else if (mcu_auto_data_local.fire) {
-            reload_.SetTargetReloadRotation(MAX_RELOAD_SPEED);
+        if (mcu_chassis_data_local.switch_lr.switch_l == SWITCH_DOWN && mcu_chassis_data_local.switch_lr.switch_r == SWITCH_DOWN)
+        {
+            if (mcu_comm_.send_slow_data_.robot_hp <= 380 || mcu_comm_.send_fast_data_.middle_buff_status || mcu_auto_data_local.chassis_mode)
+            {
+                chassis_.SetChassisOperationMode(CHASSIS_OPERATION_MODE_SPIN);
+            }
+            else
+            {
+                chassis_.SetChassisOperationMode(CHASSIS_OPERATION_MODE_NORMAL);
+            }
         }
-
-        if (mcu_auto_data_local.chassis_mode || mcu_chassis_data_local.switch_lr.switch_l == SWITCH_DOWN) {
+        else if (mcu_chassis_data_local.switch_lr.switch_l == SWITCH_DOWN && mcu_chassis_data_local.switch_lr.switch_r == SWITCH_MID) 
+        {
             chassis_.SetChassisOperationMode(CHASSIS_OPERATION_MODE_SPIN);
-        } else {
+        }
+        else
+        {
             chassis_.SetChassisOperationMode(CHASSIS_OPERATION_MODE_NORMAL);
         }
 
-
-        /****************************   Supercap   ****************************/
-
-
+        
+        /*****************************     Reload   *****************************/
 
 
+        if (mcu_chassis_data_local.switch_lr.switch_l == SWITCH_DOWN && mcu_chassis_data_local.switch_lr.switch_r == SWITCH_DOWN)
+        {
+            if (mcu_auto_data_local.fire) {
+                reload_.SetTargetReloadRotation(MAX_RELOAD_SPEED);
+            } else {
+                reload_.SetTargetReloadRotation(0);
+            }
+        }
+        else if (mcu_chassis_data_local.switch_lr.switch_l == SWITCH_DOWN && mcu_chassis_data_local.switch_lr.switch_r == SWITCH_UP)
+        {
+            reload_.SetTargetReloadRotation(MAX_RELOAD_SPEED);
+        }
+        else
+        {
+            reload_.SetTargetReloadRotation(0);
+        }
+    
 
         /****************************   Debug   ****************************/
 
-        if (print_count++ >= 20)
-        {
-            // printf("%d,%f\n", mcu_auto_data_local.fire, remote_yaw_radian_);
-            // printf("%f\n", remote_yaw_radian_);
-            print_count = 0;
-        }
-        
+        // print.Clock([&]()
+        // {
+        //     printf("%d\n", referee_.GetChassisEnergyBuffer());
+        // });
+
+
         osDelay(pdMS_TO_TICKS(1));
     }
 }

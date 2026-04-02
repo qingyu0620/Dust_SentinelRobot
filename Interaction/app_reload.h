@@ -1,6 +1,6 @@
 /**
  * @file app_reload.h
- * @author your name (you@domain.com)
+ * @author qingyu
  * @brief 
  * @version 0.1
  * @date 2025-11-04
@@ -20,7 +20,7 @@
 
 /* Exported macros -----------------------------------------------------------*/
 
-#define MAX_RELOAD_SPEED        -5.0f
+constexpr float MAX_RELOAD_SPEED = -8.5f;
 
 /* Exported types ------------------------------------------------------------*/
 
@@ -37,14 +37,23 @@ public:
     inline void SetTargetReloadRotation(float target_reload_rotation);
 
     inline bool GetReloadState() {
-        return is_reloading;
+        return is_jaming;
+    }
+
+    inline void SetReloadHeat(uint16_t Shooting_heat) {
+        shooting_heat_ = Shooting_heat;
     }
 
 protected:
+
+    uint16_t shooting_heat_ = 0;
+
+    bool is_jaming = false;
+
+    bool is_overheat = false;
+
     // 目标装载速度 旋转
     float target_reload_rotation_ = 0.0f;
-
-    bool is_reloading = false;
 
     float reload_now_angle = 0.0f;
 

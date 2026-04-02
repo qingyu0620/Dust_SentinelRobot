@@ -20,10 +20,9 @@
 #include "cmsis_os2.h"
 #include "bsp_can.h"
 #include "stdio.h"
+#include "arm_math.h"
 
 /* Exported macros -----------------------------------------------------------*/
-
-#define MAX_OMEGA_SPEED         10.f
 
 /* Exported types ------------------------------------------------------------*/
 
@@ -36,6 +35,7 @@ enum ChassisOperationMode
     CHASSIS_OPERATION_MODE_SPIN = 0,        // 小陀螺模式
     CHASSIS_OPERATION_MODE_NORMAL,          // 正常模式
     CHASSIS_OPERATION_MODE_FOLLOW,          // 底盘跟随
+    CHASSIS_OPERATION_MODE_VARIABLE,        // 变速小陀螺
 };
 
 /**
@@ -56,8 +56,6 @@ public:
 
     void Init();
 
-    void Task();
-
     inline void SetChassisOperationMode(ChassisOperationMode chassis_opreation_mode);
 
     inline void SetTargetVxInGimbal(float target_velocity_x);
@@ -67,6 +65,14 @@ public:
     inline void SetTargetVelocityRotation(float target_velocity_rotation);
 
     inline void SetNowYawRadianDiff(float yaw_radian_diff);
+
+    inline void SetMaxOmegaSpeed(float max_omega_speed);
+
+    inline float GetMaxOmegaSpeed();
+
+    inline void SetRefereePowerLimit(uint16_t power_limit);
+
+    inline void SetRefereeBufferEnergy(uint16_t buffer_energy);
 
 protected:
     // 底盘操作模式
@@ -86,24 +92,29 @@ protected:
     // yaw轴角度差
     float yaw_radian_diff_ = 0.0f;
 
+    float variable_spin = 0.0f;
+
 // 斜坡规划参数
 
     // xyr轴最大加速度
-
-    float max_accel_xy_ = 70.f;
-    float max_accel_r_  = 100.f;
-
-    // xyr当前加速度
-
-    float now_accel_x_ = 0.0f;
-    float now_accel_y_ = 0.0f;
-    float now_accel_r_ = 0.0f;
+    float max_accel_xy_ = 30.f;
+    float max_accel_r_  = 50.f;
 
     // xyr上一次目标速度
-
     float last_target_vx_ = 0.0f;
     float last_target_vy_ = 0.0f;
     float last_target_rotation_ = 0.0f;
+
+    float max_omega_speed_ = 12.f;
+
+    // 功率控制参数
+    uint16_t referee_power_limit_ = 100;
+    uint16_t referee_buffer_energy_ = 60;
+
+    float buffer_target_ = 50.0f;
+    float power_pd_kp_ = 80.0f;
+    float power_pd_kd_ = 30.0f;
+    float last_buffer_sqrt_error_ = 0.0f;
 
 // 底盘驱动
 
@@ -115,7 +126,11 @@ protected:
 
     void KinematicsInverseResolution();
 
+    void PowerControl();
+
     void OutputToMotor();
+
+    void Task();
 
     static void TaskEntry(void *param);  // FreeRTOS 入口，静态函数
 };
@@ -174,4 +189,45 @@ inline void Chassis::SetNowYawRadianDiff(float yaw_radian_diff)
     yaw_radian_diff_ = yaw_radian_diff;
 }
 
-#endif // !APP_CHASSIS_H_
+/**
+ * @brief 设置底盘最大角速度
+ * 
+ * @param max_omega_speed
+ */
+inline void Chassis::SetMaxOmegaSpeed(float max_omega_speed)
+{
+    max_omega_speed_ = max_omega_speed;
+}
+
+/**
+ * @brief 获取底盘最大角速度
+ * 
+ * @return float
+ */
+inline float Chassis::GetMaxOmegaSpeed()
+{
+    return max_omega_speed_;
+}
+
+/**
+ * @brief 设置裁判系统缓冲能量
+ * 
+ * @param buffer_energy 缓冲能量, J
+ */
+inline void Chassis::SetRefereeBufferEnergy(uint16_t buffer_energy)
+{
+    referee_buffer_energy_ = buffer_energy;
+}
+
+/**
+ * @brief 设置裁判系统功率上限
+ * 
+ * @param power_limit 功率上限, W
+ */
+inline void Chassis::SetRefereePowerLimit(uint16_t power_limit)
+{
+    referee_power_limit_ = power_limit;
+}
+
+
+#endif

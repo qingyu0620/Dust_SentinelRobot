@@ -11,8 +11,7 @@
 /* Includes ------------------------------------------------------------------*/
 
 #include "app_reload.h"
-#include <cmath>
-#include <cstdio>
+#include "Timer.hpp"
 
 /* Private macros ------------------------------------------------------------*/
 
@@ -62,9 +61,20 @@ void Reload::TaskEntry(void *argument)
  */
 void Reload::OutputToMotor()
 {
-    // 设置拨弹速度
-    motor_reload_1_.SetTargetOmega( target_reload_rotation_);
+    // 当热量过高时，只有降下来才允许继续拨弹
+    if (shooting_heat_ >= 220)  {
+        is_overheat = true;
+    } else if (shooting_heat_ <= 100)  {
+        is_overheat = false;
+    }
 
+    // 如果此时没有过热
+    if (!is_overheat) {
+        motor_reload_1_.SetTargetOmega( target_reload_rotation_);
+    } else {
+        motor_reload_1_.SetTargetOmega( 0);
+    }
+   
     motor_reload_1_.CalculatePeriodElapsedCallback();
 
     can_send_data(&hcan1, 0x1FF, g_can1_0x1ff_tx_data, 2);
@@ -76,35 +86,38 @@ void Reload::OutputToMotor()
  */
 void Reload::Task()
 {
-    uint16_t count = 0;
+    Timer is_jaw(50), print(10);
 
     for(;;)
     {
         if (target_reload_rotation_ == MAX_RELOAD_SPEED) 
         {
-            reload_now_angle = motor_reload_1_.GetNowAngle();
-
-            if (count >= 50)
+            is_jaw.Clock([&]()
             {
-                if (fabsf(reload_now_angle - reload_pre_angld) < 0.5f) {
-                    is_reloading = true;
+                reload_now_angle = motor_reload_1_.GetNowAngle();
+
+                if (fabsf(reload_now_angle - reload_pre_angld) < 0.25f) {
+                    is_jaming = true;
                 } else {
-                    is_reloading = false;
+                    is_jaming = false;
                 }
 
                 reload_pre_angld = reload_now_angle;
-
-                count = 0;
-            }
-
-            count++;
+            });
         }
         else
         {
-            is_reloading = false;
+            is_jaming = false;
+            is_jaw.Finish();
+            reload_pre_angld = motor_reload_1_.GetNowAngle();
         }
 
         OutputToMotor();
+
+        // print.Clock([&](){
+        //     printf("%d\n", is_jaming);
+        // });
+
         osDelay(pdMS_TO_TICKS(10));
     }
 }

@@ -11,8 +11,6 @@
 /* Includes ------------------------------------------------------------------*/
 
 #include "app_gimbal.h"
-#include "dvc_motor_dm.h"
-#include <cstdio>
 
 /* Private macros ------------------------------------------------------------*/
 
@@ -30,10 +28,10 @@ void Gimbal::Init()
 {
     // yaw轴角度环pid
     yaw_angle_pid_.Init(
-        16.5f,
+        18.0f,
         1.0f,
-        0.97f,
-        10.f,
+        0.975f,
+        15.f,
         0.f,
         44.0f,
         0.001f,
@@ -45,9 +43,9 @@ void Gimbal::Init()
     );
     // yaw轴速度环pid
     yaw_omega_pid_.Init(
-        0.8f,
+        0.84f,
         0.003f,
-        0.001f,
+        0.0012f,
         0.5f,
         0.0f,
         9.9f,
@@ -66,17 +64,9 @@ void Gimbal::Init()
 
     // 4310电机初始化
     motor_yaw_.Init(&hcan2, 0x07, 0x06);
-
-    // 发送清除错误指令
-    // motor_yaw_.CanSendClearError();
-    // osDelay(pdMS_TO_TICKS(1000));
     
     // 保存零点（当云台与底盘上电有偏差时需重新设置零点）
     // motor_yaw_.CanSendSaveZero();
-    // osDelay(pdMS_TO_TICKS(1000));
-    
-    // 发送使能命令
-    // motor_yaw_.CanSendEnter();
     // osDelay(pdMS_TO_TICKS(1000));
 
     // 力矩控制
